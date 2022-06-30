@@ -1,0 +1,222 @@
+use \
+	private show | [$i] -> [], \
+	private show | [$iu] -> [], \
+	private show | [$id] -> [], \
+	private show | [$f] -> [], \
+	private show | [$fd] -> [], \
+	private show | [$b] -> [], \
+
+	private throwOutOfMemory | [] -> [], \
+	private throwStackOverflow | [] -> [] \
+at 'imports'
+
+stackPointer := 0u
+stackTopPointer := 0u
+heapPointer := 0u
+freeChunkPointer := 0u
+
+let initialize[staticDataSize | $iu, stackSize | $iu, heapSize | $iu]
+	--( Align parameters )--
+	staticDataSize = staticDataSize + getPadding[staticDataSize, 4u]
+	stackSize = stackSize + getPadding[stackSize, 4u]
+	heapSize = heapSize + getPadding[heapSize, 4u]
+
+	--( Set values of global variables )--
+	stackPointer = staticDataSize
+	stackTopPointer = stackPointer
+	heapPointer = stackPointer + stackSize
+	freeChunkPointer = heapPointer
+
+	--( Increase memory )--
+	memorySize := getMemorySize
+	requestedMemorySize := staticDataSize + stackSize + heapSize
+	if memorySize < requestedMemorySize
+		growMemory[requestedMemorySize - memorySize, true]
+
+--(
+	Return a value that satisfies the following condition:
+		(value + padding) % align == 0
+)--
+let getPadding[value | $iu, align | $iu] | $iu
+	return (align - (value % align)) % align
+
+--( Return the current size of the memory in bytes )--
+let getMemorySize | $iu
+	return $getMemorySize * 65536u
+
+--(
+	Increase the size of memory by at least the given number of bytes.
+	If the increase is impossible and the value of 'throw' is equal to 'true', throw an error.
+)--
+let growMemory[size | $iu, throw | $b]
+	size = size + getPadding[size, 65536u]
+	if $growMemory[size / 65536u] == -1
+		if throw
+			throwOutOfMemory
+
+let allocate[chunkBlockSize | $iu] | $iu
+	chunkSize := 4u + 4u + 4u + chunkBlockSize
+	chunkSize = chunkSize + getPadding[chunkSize, 4u]
+	memorySize := getMemorySize
+	if (memorySize - freeChunkPointer) < chunkSize
+		growMemory[chunkSize - (memorySize - freeChunkPointer), false]
+		memorySize = getMemorySize
+		if (memorySize - freeChunkPointer) < chunkSize
+			--markChunks
+			--sweepMemory
+			if (memorySize - freeChunkPointer) < chunkSize
+				throwOutOfMemory
+
+	--( Create a new chunk )--
+	chunkPointer := freeChunkPointer
+	freeChunkPointer = freeChunkPointer + chunkSize
+	setChunkSize[chunkPointer, chunkSize]
+	setChunkReachableStatus[chunkPointer, 0u]
+	setChunkChildPointerIndex[chunkPointer, 0u]
+	return chunkPointer
+
+let setChunkSize[chunkPointer | $iu, chunkSize | $iu]
+	$store[chunkPointer, chunkSize]
+
+let getChunkSize[chunkPointer | $iu] | $iu
+	return $load_$iu[chunkPointer]
+
+let setChunkReachableStatus[chunkPointer | $iu, chunkReachableStatus | $iu]
+	pointer := chunkPointer + 4u
+	value := $load_$iu[pointer]
+	if chunkReachableStatus == 0u
+		--( The chunk is unreachable )--
+		value = $and[value, $not[$shl[1u, 1u]]]
+	else
+		--( The chunk is reachable )--
+		value = $or[value, $shl[1u, 1u]]
+	$store[pointer, value]
+
+let getChunkReachableStatus[chunkPointer | $iu] | $iu
+	pointer := chunkPointer + 4u
+	value := $load_$iu[pointer]
+	if $and[value, $shl[1u, 1u]] == 0u
+		return 0u
+	else
+		return 1u
+
+let setChunkChildPointerListSize[chunkPointer | $iu, chunkChildPointerListSize | $iu]
+	pointer := chunkPointer + 4u
+	value := $load_$iu[pointer]
+	value = $or[$and[value, $not[$shl[-1u, 2u]]], $shl[chunkChildPointerListSize, 2u]]
+	$store[pointer, value]
+
+let getChunkChildPointerListSize[chunkPointer | $iu] | $iu
+	pointer := chunkPointer + 4u
+	value := $load_$iu[pointer]
+	return $shr[value, 2u]
+
+let setChunkChildPointerIndex[chunkPointer | $iu, chunkChildPointerIndex | $iu]
+	pointer := chunkPointer + 4u + 4u
+	$store[pointer, chunkChildPointerIndex]
+
+let getChunkChildPointerIndex[chunkPointer | $iu] | $iu
+	pointer := chunkPointer + 4u + 4u
+	return $load_$iu[pointer]
+
+let setChunkNewPointer[chunkPointer | $iu, chunkNewPointer | $iu]
+	pointer := chunkPointer + 4u + 4u
+	$store[pointer, chunkNewPointer]
+
+let getChunkNewPointer[chunkPointer | $iu] | $iu
+	pointer := chunkPointer + 4u + 4u
+	return $load_$iu[pointer]
+
+let setChunkChildPointer[chunkPointer | $iu, chunkChildPointerIndex | $iu, chunkChildPointer | $iu]
+	pointer := chunkPointer + 4u + 4u + 4u + 4u * chunkChildPointerIndex
+	$store[pointer, chunkChildPointer]
+
+let getChunkChildPointer[chunkPointer | $iu, chunkChildPointerIndex | $iu] | $iu
+	pointer := chunkPointer + 4u + 4u + 4u + 4u * chunkChildPointerIndex
+	return $load_$iu[pointer]
+
+let stackPush[chunkPointer | $iu]
+	if stackTopPointer < heapPointer
+		$store[stackTopPointer, chunkPointer]
+		stackTopPointer = stackTopPointer + 4u
+	else
+		throwStackOverflow
+
+let stackPop[size | $iu]
+	stackTopPointer = stackTopPointer - 4u * size
+
+let markChunks
+	pointer := stackPointer
+	while pointer < stackTopPointer
+		chunkPointer := $load_$iu[pointer]
+		chunkParentPointer := -1u
+		while chunkPointer != -1u
+			chunkChildPointerIndex := getChunkChildPointerIndex[chunkPointer]
+			chunkChildPointerListSize := getChunkChildPointerListSize[chunkPointer]
+			if chunkChildPointerIndex < chunkChildPointerListSize
+				chunkChildPointer := getChunkChildPointer[chunkPointer, chunkChildPointerIndex]
+				setChunkChildPointer[chunkPointer, chunkChildPointerIndex, chunkParentPointer]
+				chunkParentPointer = chunkPointer
+				chunkPointer = chunkChildPointer
+			else
+				setChunkReachableStatus[chunkPointer, 1u]
+				chunkChildPointer := chunkPointer
+				chunkPointer = chunkParentPointer
+				if chunkPointer != -1u
+					chunkChildPointerIndex = getChunkChildPointerIndex[chunkPointer]
+					chunkParentPointer = getChunkChildPointer[chunkPointer, chunkChildPointerIndex]
+					setChunkChildPointer[chunkPointer, chunkChildPointerIndex, chunkChildPointer]
+					setChunkChildPointerIndex[chunkPointer, chunkChildPointerIndex + 1u]
+		pointer = pointer + 4u
+
+let sweepMemory
+	--( Recalculate pointer of every reachable chunk )--
+	chunkPointer := heapPointer
+	freeChunkNewPointer := heapPointer
+	while chunkPointer < freeChunkPointer
+		chunkSize := getChunkSize[chunkPointer]
+		if getChunkReachableStatus[chunkPointer] == 1u
+			setChunkNewPointer[chunkPointer, freeChunkNewPointer]
+			freeChunkNewPointer = freeChunkNewPointer + chunkSize
+		chunkPointer = chunkPointer + chunkSize
+
+	--( Update pointers in the stack )--
+	pointer := stackPointer
+	while pointer < stackTopPointer
+		chunkPointer = $load_$iu[pointer]
+		chunkNewPointer := getChunkNewPointer[chunkPointer]
+		$store[pointer, chunkNewPointer]
+		pointer = pointer + 4u
+
+	--( Update pointers in the heap )--
+	chunkPointer = heapPointer
+	while chunkPointer < freeChunkPointer
+		chunkSize := getChunkSize[chunkPointer]
+		if getChunkReachableStatus[chunkPointer] == 1u
+			chunkChildPointerIndex := 0u
+			chunkChildPointerListSize := getChunkChildPointerListSize[chunkPointer]
+			while chunkChildPointerIndex < chunkChildPointerListSize
+				chunkChildPointer := getChunkChildPointer[chunkPointer, chunkChildPointerIndex]
+				chunkChildNewPointer := getChunkNewPointer[chunkChildPointer]
+				setChunkChildPointer[chunkPointer, chunkChildPointerIndex, chunkChildNewPointer]
+				chunkChildPointerIndex = chunkChildPointerIndex + 1u
+		chunkPointer = chunkPointer + chunkSize
+
+	--( Compact chunks )--
+	chunkPointer = heapPointer
+	while chunkPointer < freeChunkPointer
+		chunkSize := getChunkSize[chunkPointer]
+		if getChunkReachableStatus[chunkPointer] == 1u
+			chunkNewPointer := getChunkNewPointer[chunkPointer]
+			$copyMemory[chunkNewPointer, chunkPointer, chunkSize]
+		chunkPointer = chunkPointer + chunkSize
+
+	--( Prepare the for the next sweep of memory )--
+	freeChunkPointer = freeChunkNewPointer
+	chunkPointer = heapPointer
+	while chunkPointer < freeChunkPointer
+		chunkSize := getChunkSize[chunkPointer]
+		setChunkReachableStatus[chunkPointer, 0u]
+		setChunkChildPointerIndex[chunkPointer, 0u]
+		chunkPointer = chunkPointer + chunkSize
+
