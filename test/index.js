@@ -17,6 +17,14 @@ async function main() {
                 '$memory': new WebAssembly.Memory({
                     initial: 1
                 }),
+                '$table': new WebAssembly.Table({
+                    element: 'anyfunc',
+                    /* The maximum number of references in the table */
+                    initial: 10000000
+                }),
+                '$tableOffset': new WebAssembly.Global({
+                    value: 'i32'
+                }, 0),
                 'show_[$i]->[]': function(value) {
                     console.log((new Int32Array([value]))[0]);
                 },

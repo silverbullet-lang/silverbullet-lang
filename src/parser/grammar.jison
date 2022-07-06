@@ -334,9 +334,7 @@ moduleStmt
     : lineList moduleBlock eof
         {
             $$ = [
-                yy.module.getNewNode('moduleStmt', @0, [
-                    yy.module.getNewNode('module', @0, [], '').id
-                ].concat($2), '').id
+                yy.module.getNewNode('moduleStmt', @0, $2, '').id
             ];
         }
     ;

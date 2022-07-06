@@ -50,49 +50,6 @@ function getModule(url) {
             node.object.id = id;
         },
 
-        /* Modules */
-        modules: {
-            id: 0,
-            list: []
-        },
-        getNewModule: function() {
-            let module = {
-                id: this.modules.id,
-                blockId: -1,
-                functions: {
-                    index: 0,
-                    idList: [],
-                    mainId: -1
-                }
-            };
-
-            this.modules.id++;
-            this.modules.list.push(module);
-            return module;
-        },
-        getModuleById: function(id) {
-            return this.modules.list[id];
-        },
-        getActiveModule: function() {
-            let activeModule;
-            let block = this.getActiveBlock();
-
-            while (block.host.type !== 'module') {
-                block = this.getBlockById(block.parentId);
-            }
-            activeModule = this.getModuleById(block.host.id);
-            return activeModule;
-        },
-        setModuleFunction: function(module, $function) {
-            module.functions.index++;
-            module.functions.idList.push($function.id);
-        },
-        setActiveModuleMainFunction: function($function) {
-            let module = this.getActiveModule();
-
-            module.functions.mainId = $function.id;
-        },
-
         /* Blocks */
         blocks: {
             id: 0,
@@ -194,7 +151,8 @@ function getModule(url) {
         /* Functions */
         functions: {
             id: 0,
-            list: []
+            list: [],
+            mainId: -1
         },
         getNewFunction: function(nodeId, isPrivate, name, typeId) {
             let $function = {
@@ -207,8 +165,7 @@ function getModule(url) {
                 variables: {
                     index: 0,
                     idList: []
-                },
-                index: -1
+                }
             };
 
             this.functions.id++;
@@ -234,16 +191,13 @@ function getModule(url) {
             $function.variables.index++;
             $function.variables.idList.push(variable.id);
         },
-        setFunctionIndex: function($function) {
-            let activeModule = this.getActiveModule();
-
-            $function.index = activeModule.functions.index;
-            this.setModuleFunction(activeModule, $function);
-        },
         getFunctionName: function($function) {
             let functionType = this.getTypeById($function.typeId);
 
             return `${ $function.name }_${ functionType.name.replace(/\s/g, '') }`;
+        },
+        setMainFunction($function) {
+            this.functions.mainId = $function.id;
         },
 
         /* Variables */
@@ -300,6 +254,10 @@ function getModule(url) {
                     list: typeIdList,
                     index: typeIdIndex
                 },
+                valueId: {
+                    list: [],
+                    index: -1
+                },
                 ir: -1
             };
 
@@ -316,18 +274,14 @@ function getModule(url) {
             if (expression.typeId.index === -1) {
                 /* This is a reference expression */
                 /* The type of the expression is unknown, because it refers to a polymorphic function (a function with the same name, but different types of parameters)  */
-                /* Let's find the function we need to call as well as the final type of this reference expression */
+                /* Let's find the final type of the expression and the polymorphic function we need to call */
 
                 let i = 0;
 
                 while ((i < expression.typeId.list.length) && (expression.typeId.index === -1)) {
                     if (expression.typeId.list[i] === type.id) {
-                        let referenceNode = this.getNodeById(expression.nodeId);
-                        let nameNode = this.getNodeById(referenceNode.childIdList[0]);
-                        let object = this.getObjectByName(nameNode.value);
-
-                        nameNode.object.id = object.idList[i];
                         expression.typeId.index = i;
+                        expression.valueId.index = i;
                         answer = true;
                     }
                     i++;
@@ -369,6 +323,40 @@ function getModule(url) {
                 expressionType = this.getTypeById(expression.typeId.list[expression.typeId.index]);
             }
             return expressionType;
+        },
+        setExpressionValueId: function(expression, valueId, valueIndex) {
+            expression.valueId.list.push(valueId);
+            expression.valueId.index = valueIndex;
+        },
+        getExpressionValueId: function(expression) {
+            return expression.valueId.list[expression.valueId.index];
+        },
+
+        /* References */
+        references: {
+            id: 0,
+            list: [],
+            names: {},
+            pointer: 0
+        },
+        getNewReference: function(name) {
+            let reference = {
+                id: this.references.id,
+                name: name,
+                pointer: this.references.pointer
+            };
+
+            this.references.id++;
+            this.references.list.push(reference);
+            this.references.names[reference.name] = reference.id;
+            this.references.pointer++;
+            return reference;
+        },
+        getReferenceByName: function(name) {
+            return this.getReferenceById(this.references.names[name]);
+        },
+        getReferenceById: function(id) {
+            return this.references.list[id];
         },
 
         /* Intermediate representation */

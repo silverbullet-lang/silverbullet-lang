@@ -14,8 +14,6 @@ function check(module) {
 
         if (node.name === 'moduleStmt') {
             checkModuleStmt(module, node);
-        } else if (node.name === 'module') {
-            checkModule(module, node);
         } else if (node.name === 'moduleBlock') {
             checkModuleBlock(module, node);
         } else if (node.name === 'importStmt') {
@@ -77,15 +75,9 @@ function check(module) {
 
 function checkModuleStmt(module, node) {
     if (node.status === 'CREATED') {
-        module.setActiveNodeList([node.childIdList[0]]);
-        node.status = '1';
-    } else if (node.status === '1') {
-        let moduleNode = module.getNodeById(node.childIdList[0]);
-        let moduleObject = module.getModuleById(moduleNode.object.id);
-        let blockObject = module.getNewBlock('module', moduleObject.id);
+        let blockObject = module.getNewBlock('module', -1);
 
-        moduleObject.blockId = blockObject.id;
-        module.setActiveBlock(moduleObject.blockId);
+        module.setActiveBlock(blockObject.id);
 
         /* Register basic types */
         module.getNewType('', '$v', [], -1);
@@ -293,24 +285,14 @@ function checkModuleStmt(module, node) {
         /* $copyMemory */
         module.setObject('$copyMemory', 'function', module.getNewFunction(-1, true, '$copyMemory', module.getTypeByName('[$iu, $iu, $iu] -> []').id).id);
 
-        module.setActiveNodeList([node.childIdList[1]]);
-        node.status = '2';
+        module.setActiveNodeList(node.childIdList);
+        node.status = '1';
 
         //console.log(JSON.stringify(module.types, null, 2), JSON.stringify(module.functions, null, 2));
         //process.exit();
 
-    } else if (node.status === '2') {
+    } else if (node.status === '1') {
         module.unsetActiveBlock();
-        module.unsetActiveNode();
-        node.status = 'CHECKED';
-    }
-}
-
-function checkModule(module, node) {
-    if (node.status === 'CREATED') {
-        let moduleObject = module.getNewModule();
-
-        module.setNodeObject(node, 'module', moduleObject.id);
         module.unsetActiveNode();
         node.status = 'CHECKED';
     }
@@ -500,7 +482,7 @@ function checkFunction(module, node) {
         if (functionObject.name === 'start') {
             /* Check if the signature of the starting function is correct */
             if ((typeObject.fromIdList.length === 0) && (typeObject.toId === module.getTypeByName('$v').id)) {
-                module.setActiveModuleMainFunction(functionObject);
+                module.setMainFunction(functionObject);
             } else {
                 throwError(module, {
                     code: 'E_CHECK_FUNCTION_START_SIGNATURE',
@@ -947,17 +929,20 @@ function checkReference(module, node) {
             for (let i = 0; i < object.idList.length; i++) {
                 let functionObject = module.getFunctionById(object.idList[i]);
                 let functionTypeObject = module.getTypeById(functionObject.typeId);
+                let functionName = module.getFunctionName(functionObject);
+                let reference = module.getReferenceByName(functionName);
 
-                module.setNodeObject(nameNode, 'function', functionObject.id);
-                if (i === 0) {
-                    module.setExpressionTypeId(expressionObject, functionTypeObject.id, i);
-                } else {
-                    module.setExpressionTypeId(expressionObject, functionTypeObject.id, -1);
+                if (!reference) {
+                    reference = module.getNewReference(functionName);
                 }
-                if (functionObject.index === -1) {
-                    /* This functions is not added to the table of functions */
-                    /* Let's add it */
-                    module.setFunctionIndex(functionObject);
+                if (i === 0) {
+                    module.setNodeObject(nameNode, 'function', functionObject.id);
+                    module.setExpressionTypeId(expressionObject, functionTypeObject.id, i);
+                    module.setExpressionValueId(expressionObject, reference.id, i);
+                } else {
+                    module.setNodeObject(nameNode, 'function', -1);
+                    module.setExpressionTypeId(expressionObject, functionTypeObject.id, -1);
+                    module.setExpressionValueId(expressionObject, reference.id, -1);
                 }
             }
         } else if (object.type === '') {

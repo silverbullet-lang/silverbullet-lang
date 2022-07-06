@@ -24,8 +24,6 @@ function translate(module) {
 
         if (node.name === 'moduleStmt') {
             translateModuleStmt(module, node, binaryen);
-        } else if (node.name === 'module') {
-            translateModule(module, node, binaryen);
         } else if (node.name === 'moduleBlock') {
             translateModuleBlock(module, node, binaryen);
         } else if (node.name === 'importStmt') {
@@ -88,9 +86,6 @@ function translate(module) {
 
 function translateModuleStmt(module, node, binaryen) {
     if (node.status === 'CHECKED') {
-        module.setActiveNodeList([node.childIdList[0]]);
-        node.status = '1';
-    } else if (node.status === '1') {
         /* Translate basic types */
         module.getTypeByName('$v').ir = binaryen.none;
         module.getTypeByName('$i').ir = binaryen.i32;
@@ -100,12 +95,10 @@ function translateModuleStmt(module, node, binaryen) {
         module.getTypeByName('$fd').ir = binaryen.f64;
         module.getTypeByName('$b').ir = binaryen.i32;
 
-        module.setActiveNodeList([node.childIdList[1]]);
-        node.status = '2';
-    } else if (node.status === '2') {
-        let moduleNode = module.getNodeById(node.childIdList[0]);
-        let moduleObject = module.getModuleById(moduleNode.object.id);
-        let functionIdList = moduleObject.functions.idList;
+        module.setActiveNodeList(node.childIdList);
+        node.status = '1';
+    } else if (node.status === '1') {
+        let referenceNameList = [];
 
         /* Import and export memory */
         module.ir.addMemoryImport(
@@ -122,34 +115,42 @@ function translateModuleStmt(module, node, binaryen) {
             false
         );
 
-        if (functionIdList.length > 0) {
-            /* Create and fill the table of functions */
-            let functionNameList = [];
+        /* Import table */
+        module.ir.addTableImport(
+            '$table',
+            'imports',
+            '$table'
+        );
 
-            module.ir.addTable(
-                '$table',
-                functionIdList.length,
-                functionIdList.length
-            );
-            for (let i = 0; i < functionIdList.length; i++) {
-                let functionObject = module.getFunctionById(functionIdList[i]);
-                let functionName = module.getFunctionName(functionObject);
+        /* Import a global variable that determines where to store references to functions in the table */
+        /* Linker is responsible for the exact value of this variable */
+        module.ir.addGlobalImport(
+            '$tableOffset',
+            'imports',
+            '$tableOffset',
+            binaryen.i32,
+            false
+        );
 
-                functionNameList.push(functionName);
-            }
-            module.ir.addActiveElementSegment(
-                '$table',
-                'functions',
-                functionNameList
-            );
-            module.ir.addTableExport(
-                '$table',
-                '$table'
-            );
+        /* Fill the table */
+        for (let i = 0; i < module.references.list.length; i++) {
+            let reference = module.references.list[i];
+
+            referenceNameList.push(reference.name);
         }
-        if (moduleObject.functions.mainId > -1) {
+        module.ir.addActiveElementSegment(
+            '$table',
+            '$functions',
+            referenceNameList,
+            module.ir.global.get(
+                '$tableOffset',
+                binaryen.i32
+            )
+        );
+
+        if (module.functions.mainId > -1) {
             /* Set the starting function */
-            let functionObject = module.getFunctionById(moduleObject.functions.mainId);
+            let functionObject = module.getFunctionById(module.functions.mainId);
             let functionName = module.getFunctionName(functionObject);
 
             module.ir.setStart(
@@ -158,13 +159,6 @@ function translateModuleStmt(module, node, binaryen) {
                 )
             );
         }
-        module.unsetActiveNode();
-        node.status = 'TRANSLATED';
-    }
-}
-
-function translateModule(module, node, binaryen) {
-    if (node.status === 'CHECKED') {
         module.unsetActiveNode();
         node.status = 'TRANSLATED';
     }
@@ -609,10 +603,17 @@ function translateReference(module, node, binaryen) {
                 );
             }
         } else if (object.type === 'function') {
-            let functionObject = module.getFunctionById(object.id);
+            let expressionValueId = module.getExpressionValueId(expressionObject);
+            let reference = module.getReferenceById(expressionValueId);
 
-            expressionObject.ir = module.ir.i32.const(
-                functionObject.index
+            expressionObject.ir = module.ir.i32.add(
+                module.ir.global.get(
+                    '$tableOffset',
+                    binaryen.i32
+                ),
+                module.ir.i32.const(
+                    reference.pointer
+                )
             );
         }
         module.unsetActiveNode();

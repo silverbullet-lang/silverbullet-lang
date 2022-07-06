@@ -86,9 +86,7 @@ switch (yystate) {
 case 1:
 
             this.$ = [
-                yy.module.getNewNode('moduleStmt', this._$, [
-                    yy.module.getNewNode('module', this._$, [], '').id
-                ].concat($$[$0-1]), '').id
+                yy.module.getNewNode('moduleStmt', this._$, $$[$0-1], '').id
             ];
         
 break;
