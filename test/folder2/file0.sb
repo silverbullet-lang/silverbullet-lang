@@ -1,0 +1,24 @@
+use function2 as external-function2 from folderUp-folder1-folder0-file1 at '../folder1/folder0/file1.sb'
+use variable2 as external-variable2 | $i, function2 as external-function2 | [$id] -> [$b] from folderUp-folder1-folder0-file0 at '../folder1/folder0/file0.sb'
+
+variable0 := 65u
+private variable1 := 123
+variable2 := false
+
+private let function0 | $b
+	return variable2
+
+let function1[x | $id] | $id
+	return 35741d - 258d
+
+private let function1 | $id
+	return function1[123d]
+
+private let function2[a | $i, b | $i]
+	nothing
+
+private let function2[x | $fd] | $fd
+	return x * 3.0d - 0.8d
+
+private let function2 | $fd
+	return function2[123456.0d]

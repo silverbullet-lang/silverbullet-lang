@@ -1,0 +1,21 @@
+variable0 := 365u
+variable1 := 74
+variable2 := 123.4d
+
+let function0 | $f
+	return 159.357
+
+private let function1 | $i
+	return 10
+
+private let function1[a | $b]
+	nothing
+
+let function2 | $fd
+	return variable2 - 12.5d
+
+private let function2[a-b | $b]
+	nothing
+
+private let function2[x | $iu, y | $iu] | $iu
+	return (x + y) / 2u

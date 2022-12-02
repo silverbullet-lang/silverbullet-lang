@@ -1,0 +1,23 @@
+use function0 as external-function0 from file1
+
+variable0 := 45u
+variable1 := false
+variable2 := 85
+
+let function0
+	nothing
+
+let function1 | $iu
+	return variable0 - 1u
+
+let function1[x | $fd] | $fd
+	return x * 2.0d
+
+private let function2[x | $i]
+	nothing
+
+let function2[x | $id] | $b
+	return x == 7d
+
+let function2 | $b
+	return function2[7d]

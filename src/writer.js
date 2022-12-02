@@ -1,14 +1,14 @@
 import fs from 'fs';
-import throwError from './error.js';
 
-async function write(module) {
+async function write(compiler) {
     try {
-        await fs.promises.writeFile(new URL(`${ module.url.href }.js`), module.executable);
+        await fs.promises.writeFile(new URL(compiler.options.output), compiler.executable);
     } catch (err) {
-        throwError(module, {
-            message: `the file '${ module.url.href }.js' cannot be created`
-        });
+        throw {
+            message: `the file '${ compiler.options.output }' cannot be created (${ err.message })`,
+            code: 'E_WRITE'
+        };
     }
 }
 
-export default write;
+export { write };

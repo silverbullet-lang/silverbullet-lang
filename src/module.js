@@ -1,370 +1,529 @@
-function getModule(url) {
-    return {
-        url: url,
+/* Module object */
+function getNewModule(compiler, path) {
+    let module = {
+        id: compiler.modules.id,
+        path: path,
+        name: '',
         code: '',
 
-        /* Nodes */
+        /* Child of a module is a sub-module */
+        childIdList: [],
+
         nodes: {
             id: 0,
             list: [],
-            stack: [-1]
+            stack: [-1],
+            mainId: -1
         },
-        getNewNode: function(name, location, childIdList, value) {
-            let node = {
-                id: this.nodes.id,
-                name: name,
-                location: location,
-                childIdList: childIdList,
-                value: value,
-                status: 'CREATED',
-                object: {
-                    type: '',
-                    id: -1
-                },
-                ir: -1
-            };
-
-            this.nodes.id++;
-            this.nodes.list.push(node);
-            return node;
-        },
-        getLastNode: function() {
-            return this.getNodeById(this.nodes.list.length - 1);
-        },
-        getNodeById: function(id) {
-            return this.nodes.list[id];
-        },
-        setActiveNodeList: function(idList) {
-            for (let i = idList.length - 1; i > -1; i--) {
-                this.nodes.stack.unshift(idList[i]);
-            }
-        },
-        getActiveNode: function() {
-            return this.getNodeById(this.nodes.stack[0]);
-        },
-        unsetActiveNode: function() {
-            this.nodes.stack.shift();
-        },
-        setNodeObject: function(node, type, id) {
-            node.object.type = type;
-            node.object.id = id;
-        },
-
-        /* Blocks */
         blocks: {
             id: 0,
             list: [],
             stack: [-1]
         },
-        getNewBlock: function(hostType, hostId) {
-            let block = {
-                id: this.blocks.id,
-                parentId: this.blocks.stack[0],
-                host: {
-                    type: hostType,
-                    id: hostId
-                },
-                scope: {},
-                ir: -1
-            };
-
-            this.blocks.id++;
-            this.blocks.list.push(block);
-            return block;
-        },
-        setActiveBlock: function(id) {
-            this.blocks.stack.unshift(id);
-        },
-        getObjectByName: function(name) {
-            let object = {
-                type: '',
-                idList: []
-            };
-            let block = this.getActiveBlock();
-
-            while (block && !(name in block.scope)) {
-                block = this.getBlockById(block.parentId);
-            }
-            if (block) {
-                object = block.scope[name];
-            }
-            return object;
-        },
-        getActiveBlock: function() {
-            return this.getBlockById(this.blocks.stack[0]);
-        },
-        getBlockById: function(id) {
-            return this.blocks.list[id];
-        },
-        setObject: function(name, type, id) {
-            let block = this.getActiveBlock();
-
-            if (name in block.scope) {
-                block.scope[name].idList.push(id);
-            } else {
-                block.scope[name] = {
-                    type: type,
-                    idList: [id]
-                };
-            }
-        },
-        unsetActiveBlock: function() {
-            this.blocks.stack.shift();
-        },
-
-        /* Types */
         types: {
             id: 0,
             list: [],
             names: {}
         },
-        getNewType: function(kind, name, fromIdList, toId) {
-            let type = {
-                id: this.types.id,
-                kind: kind,
-                name: name,
-                fromIdList: fromIdList,
-                toId: toId,
-                ir: -1
-            };
-
-            this.types.id++;
-            this.types.list.push(type);
-            this.types.names[type.name] = type.id;
-            return type;
-        },
-        getTypeByName: function(name) {
-            return this.getTypeById(this.types.names[name]);
-        },
-        getTypeById: function(id) {
-            return this.types.list[id];
-        },
-        getTypeName: function(type) {
-            let typeName = type.name;
-
-            if (type.id === this.getTypeByName('$v').id) {
-                typeName = '\'void\'';
-            }
-            return typeName;
-        },
-
-        /* Functions */
         functions: {
             id: 0,
             list: [],
             mainId: -1
         },
-        getNewFunction: function(nodeId, isPrivate, name, typeId) {
-            let $function = {
-                id: this.functions.id,
-                nodeId: nodeId,
-                isPrivate: isPrivate,
-                name: name,
-                typeId: typeId,
-                blockId: -1,
-                variables: {
-                    index: 0,
-                    idList: []
-                }
-            };
-
-            this.functions.id++;
-            this.functions.list.push($function);
-            return $function;
-        },
-        getFunctionById: function(id) {
-            return this.functions.list[id];
-        },
-        getActiveFunction: function() {
-            let activeFunction;
-            let block = this.getActiveBlock();
-
-            while (block && (block.host.type !== 'function')) {
-                block = this.getBlockById(block.parentId);
-            }
-            if (block) {
-                activeFunction = this.getFunctionById(block.host.id);
-            }
-            return activeFunction;
-        },
-        setFunctionVariable: function($function, variable) {
-            $function.variables.index++;
-            $function.variables.idList.push(variable.id);
-        },
-        getFunctionName: function($function) {
-            let functionType = this.getTypeById($function.typeId);
-
-            return `${ $function.name }_${ functionType.name.replace(/\s/g, '') }`;
-        },
-        setMainFunction($function) {
-            this.functions.mainId = $function.id;
-        },
-
-        /* Variables */
         variables: {
             id: 0,
             list: []
         },
-        getNewVariable: function(nodeId, isConstant, isPrivate, name, typeId) {
-            let variable = {
-                id: this.variables.id,
-                nodeId: nodeId,
-                isConstant: isConstant,
-                isPrivate: isPrivate,
-                name: name,
-                typeId: typeId,
-                isParameter: false,
-                index: -1
-            };
-
-            /* Set some initial values */
-            this.setVariableIsParameter(variable);
-            this.setVariableIndex(variable);
-
-            this.variables.id++;
-            this.variables.list.push(variable);
-            return variable;
-        },
-        getVariableById: function(id) {
-            return this.variables.list[id];
-        },
-        setVariableIsParameter: function(variable) {
-            variable.isParameter = this.getActiveBlock().host.type === 'function';
-        },
-        setVariableIndex: function(variable) {
-            let activeFunction = this.getActiveFunction();
-
-            if (activeFunction) {
-                variable.index = activeFunction.variables.index;
-                this.setFunctionVariable(activeFunction, variable);
-            }
-        },
-
-        /* Expressions */
         expressions: {
             id: 0,
             list: []
         },
-        getNewExpression: function(nodeId, isLiteral, typeIdList, typeIdIndex) {
-            let expression = {
-                id: this.expressions.id,
-                nodeId: nodeId,
-                isLiteral: isLiteral,
-                typeId: {
-                    list: typeIdList,
-                    index: typeIdIndex
-                },
-                valueId: {
-                    list: [],
-                    index: -1
-                },
-                ir: -1
-            };
-
-            this.expressions.id++;
-            this.expressions.list.push(expression);
-            return expression;
-        },
-        getExpressionById: function(id) {
-            return this.expressions.list[id];
-        },
-        isExpressionInstanceOf: function(expression, type) {
-            let answer = false;
-
-            if (expression.typeId.index === -1) {
-                /* This is a reference expression */
-                /* The type of the expression is unknown, because it refers to a polymorphic function (a function with the same name, but different types of parameters)  */
-                /* Let's find the final type of the expression and the polymorphic function we need to call */
-
-                let i = 0;
-
-                while ((i < expression.typeId.list.length) && (expression.typeId.index === -1)) {
-                    if (expression.typeId.list[i] === type.id) {
-                        expression.typeId.index = i;
-                        expression.valueId.index = i;
-                        answer = true;
-                    }
-                    i++;
-                }
-            } else {
-                answer = this.getExpressionType(expression).id === type.id;
-            }
-            return answer;
-        },
-        getExpressionTypeName: function(expression) {
-            let expressionTypeName = '';
-            let type;
-
-            if (expression.typeId.index === -1) {
-                if (expression.typeId.list.length > 1) {
-                    expressionTypeName = 'either ';
-                }
-                for (let i = 0; i < expression.typeId.list.length; i++) {
-                    type = this.getTypeById(expression.typeId.list[i]);
-                    expressionTypeName += this.getTypeName(type);
-                    if (i < expression.typeId.list.length - 1) {
-                        expressionTypeName += ' or ';
-                    }
-                }
-            } else {
-                type = this.getExpressionType(expression);
-                expressionTypeName = this.getTypeName(type);
-            }
-            return expressionTypeName;
-        },
-        setExpressionTypeId: function(expression, typeId, typeIdIndex) {
-            expression.typeId.list.push(typeId);
-            expression.typeId.index = typeIdIndex;
-        },
-        getExpressionType: function(expression) {
-            let expressionType;
-
-            if (expression.typeId.index > -1) {
-                expressionType = this.getTypeById(expression.typeId.list[expression.typeId.index]);
-            }
-            return expressionType;
-        },
-        setExpressionValueId: function(expression, valueId, valueIndex) {
-            expression.valueId.list.push(valueId);
-            expression.valueId.index = valueIndex;
-        },
-        getExpressionValueId: function(expression) {
-            return expression.valueId.list[expression.valueId.index];
-        },
-
-        /* References */
         references: {
             id: 0,
             list: [],
             names: {},
             pointer: 0
         },
-        getNewReference: function(name) {
-            let reference = {
-                id: this.references.id,
-                name: name,
-                pointer: this.references.pointer
-            };
-
-            this.references.id++;
-            this.references.list.push(reference);
-            this.references.names[reference.name] = reference.id;
-            this.references.pointer++;
-            return reference;
+        submodules: {
+            id: 0,
+            list: []
         },
-        getReferenceByName: function(name) {
-            return this.getReferenceById(this.references.names[name]);
-        },
-        getReferenceById: function(id) {
-            return this.references.list[id];
-        },
+        status: 'CREATED',
 
         /* Intermediate representation */
-        ir: {},
-
-        /* Output of the compiler */
-        executable: ''
+        ir: {}
     };
+
+    /* Set some initial values */
+    setModuleName(compiler, module);
+
+    compiler.modules.id++;
+    compiler.modules.list.push(module);
+    compiler.modules.paths[module.path] = module.id;
+    return module;
 }
 
-export default getModule;
+function setModuleName(compiler, module) {
+    let fileName = module.path.split('/').pop();
+
+    module.name = fileName.slice(0, fileName.lastIndexOf('.'));
+}
+
+function setActiveModule(compiler, idList) {
+    for (let i = idList.length - 1; i > -1; i--) {
+        compiler.modules.stack.unshift(idList[i]);
+    }
+}
+
+function unsetActiveModule(compiler) {
+    compiler.modules.stack.shift();
+}
+
+function getModuleById(compiler, id) {
+    return compiler.modules.list[id];
+}
+
+function getModuleByPath(compiler, path) {
+    return getModuleById(compiler, compiler.modules.paths[path]);
+}
+
+function getActiveModule(compiler) {
+    return getModuleById(compiler, compiler.modules.stack[0]);
+}
+
+function getMainModule(compiler) {
+    return getModuleById(compiler, compiler.modules.mainId);
+}
+
+function setModuleChild(compiler, module, child) {
+    module.childIdList.push(child.id);
+}
+
+/* Nodes */
+function getNewNode(compiler, module, name, location, childIdList, value) {
+    let node = {
+        id: module.nodes.id,
+        name: name,
+        location: location,
+        childIdList: childIdList,
+        value: value,
+        object: {
+            type: '',
+            id: -1
+        },
+        status: 'CREATED',
+        isVisited: false,
+        ir: -1
+    };
+
+    module.nodes.id++;
+    module.nodes.list.push(node);
+    return node;
+}
+
+function getNodeById(compiler, module, id) {
+    return module.nodes.list[id];
+}
+
+function setActiveNodeList(compiler, module, idList) {
+    for (let i = idList.length - 1; i > -1; i--) {
+        module.nodes.stack.unshift(idList[i]);
+    }
+}
+
+function getActiveNode(compiler, module) {
+    return getNodeById(compiler, module, module.nodes.stack[0]);
+}
+
+function unsetActiveNode(compiler, module) {
+    module.nodes.stack.shift();
+}
+
+function setNodeObject(compiler, module, node, type, id) {
+    node.object.type = type;
+    node.object.id = id;
+}
+
+function getNodeFromNode(compiler, module, submodule, nodeId) {
+    let nodeFromNode;
+    let node = getNodeById(compiler, submodule, nodeId);
+    let stack0 = [node.id];
+    let stack1 = [];
+
+    while (node) {
+        if ((node.childIdList.length > 0) && !node.isVisited) {
+            for (let i = node.childIdList.length - 1; i > -1; i--) {
+                stack0.unshift(node.childIdList[i]);
+            }
+            node.isVisited = true;
+        } else {
+            nodeFromNode = getNewNode(compiler, module, node.name, node.location, node.childIdList.slice(), node.value);
+            for (let i = nodeFromNode.childIdList.length - 1; i > -1; i--) {
+                nodeFromNode.childIdList[i] = stack1.shift();
+            }
+            stack1.unshift(nodeFromNode.id);
+            stack0.shift();
+            node.isVisited = false;
+        }
+        node = getNodeById(compiler, submodule, stack0[0]);
+    }
+    stack1.shift();
+    return nodeFromNode;
+}
+
+function setMainNode(compiler, module, node) {
+    module.nodes.mainId = node.id;
+}
+
+function getMainNode(compiler, module) {
+    return getNodeById(compiler, module, module.nodes.mainId);
+}
+
+/* Blocks */
+function getNewBlock(compiler, module, hostType, hostId) {
+    let block = {
+        id: module.blocks.id,
+        parentId: module.blocks.stack[0],
+        host: {
+            type: hostType,
+            id: hostId
+        },
+        scope: {},
+        ir: -1
+    };
+
+    module.blocks.id++;
+    module.blocks.list.push(block);
+    return block;
+}
+
+function setActiveBlock(compiler, module, id) {
+    module.blocks.stack.unshift(id);
+}
+
+function getActiveBlock(compiler, module) {
+    return getBlockById(compiler, module, module.blocks.stack[0]);
+}
+
+function getBlockById(compiler, module, id) {
+    return module.blocks.list[id];
+}
+
+function getBlockObjectByName(compiler, module, block, name) {
+    let object = {
+        type: '',
+        idList: []
+    };
+
+    /* Review blocks from the current to the top one */
+    /* This allows us to define polymorphic functions in different blocks */
+    while (block) {
+        if (name in block.scope) {
+            object.type = block.scope[name].type;
+            object.idList = object.idList.concat(block.scope[name].idList);
+        }
+        block = getBlockById(compiler, module, block.parentId);
+    }
+    return object;
+}
+
+function setBlockObject(compiler, module, block, name, type, id) {
+    if (!(name in block.scope)) {
+        block.scope[name] = {
+            type: type,
+            idList: []
+        };
+    }
+    block.scope[name].idList.push(id);
+}
+
+function unsetActiveBlock(compiler, module) {
+    module.blocks.stack.shift();
+}
+
+/* Types */
+function getNewType(compiler, module, nodeId, kind, name, fromIdList, toId) {
+    let type = {
+        id: module.types.id,
+        nodeId: nodeId,
+        kind: kind,
+        name: name,
+        fromIdList: fromIdList,
+        toId: toId,
+        ir: -1
+    };
+
+    module.types.id++;
+    module.types.list.push(type);
+    module.types.names[type.name] = type.id;
+    return type;
+}
+
+function getTypeByName(compiler, module, name) {
+    return getTypeById(compiler, module, module.types.names[name]);
+}
+
+function getTypeById(compiler, module, id) {
+    return module.types.list[id];
+}
+
+function getTypeName(compiler, module, type) {
+    let typeName = `'${ type.name }'`;
+
+    if (type.id === getTypeByName(compiler, module, '$v').id) {
+        typeName = '\'void\'';
+    }
+    return typeName;
+}
+
+/* Functions */
+function getNewFunction(compiler, module, nodeId, isPrivate, name, typeId) {
+    let $function = {
+        id: module.functions.id,
+        nodeId: nodeId,
+        isPrivate: isPrivate,
+        name: name,
+        typeId: typeId,
+        blockId: -1,
+        variables: {
+            index: 0,
+            idList: []
+        }
+    };
+
+    module.functions.id++;
+    module.functions.list.push($function);
+    return $function;
+}
+
+function getFunctionById(compiler, module, id) {
+    return module.functions.list[id];
+}
+
+function getActiveFunction(compiler, module) {
+    let activeFunction;
+    let block = getActiveBlock(compiler, module);
+
+    while (block && (block.host.type !== 'function')) {
+        block = getBlockById(compiler, module, block.parentId);
+    }
+    if (block) {
+        activeFunction = getFunctionById(compiler, module, block.host.id);
+    }
+    return activeFunction;
+}
+
+function setFunctionVariable(compiler, module, $function, variable) {
+    $function.variables.index++;
+    $function.variables.idList.push(variable.id);
+}
+
+function getFunctionName(compiler, module, $function) {
+    let functionName = $function.name;
+    let isPolymorphic = getBlockObjectByName(compiler, module, getBlockById(compiler, module, 1), $function.name).idList.length > 1;
+
+    if (isPolymorphic) {
+        let functionType = getTypeById(compiler, module, $function.typeId);
+
+        functionName = `${ functionName }_${ functionType.name.replace(/\s/g, '') }`;
+    }
+    return functionName;
+}
+
+function setMainFunction(compiler, module, $function) {
+    module.functions.mainId = $function.id;
+}
+
+/* Variables */
+function getNewVariable(compiler, module, nodeId, isConstant, isPrivate, name, typeId) {
+    let variable = {
+        id: module.variables.id,
+        nodeId: nodeId,
+        isConstant: isConstant,
+        isPrivate: isPrivate,
+        name: name,
+        typeId: typeId,
+        isParameter: false,
+        index: -1
+    };
+
+    /* Set some initial values */
+    setVariableIsParameter(compiler, module, variable);
+    setVariableIndex(compiler, module, variable);
+
+    module.variables.id++;
+    module.variables.list.push(variable);
+    return variable;
+}
+
+function getVariableById(compiler, module, id) {
+    return module.variables.list[id];
+}
+
+function setVariableIsParameter(compiler, module, variable) {
+    variable.isParameter = getActiveBlock(compiler, module).host.type === 'function';
+}
+
+function setVariableIndex(compiler, module, variable) {
+    let activeFunction = getActiveFunction(compiler, module);
+
+    if (activeFunction) {
+        variable.index = activeFunction.variables.index;
+        setFunctionVariable(compiler, module, activeFunction, variable);
+    }
+}
+
+/* Expressions */
+function getNewExpression(compiler, module, nodeId, isLiteral, typeIdList, typeIdIndex) {
+    let expression = {
+        id: module.expressions.id,
+        nodeId: nodeId,
+        isLiteral: isLiteral,
+        typeId: {
+            list: typeIdList,
+            index: typeIdIndex
+        },
+        valueId: {
+            list: [],
+            index: -1
+        },
+        ir: -1
+    };
+
+    module.expressions.id++;
+    module.expressions.list.push(expression);
+    return expression;
+}
+
+function getExpressionById(compiler, module, id) {
+    return module.expressions.list[id];
+}
+
+function isExpressionInstanceOf(compiler, module, expression, type) {
+    let answer = false;
+
+    if (expression.typeId.index === -1) {
+        /* This is a reference expression */
+        /* The type of the expression is unknown, because it refers to a polymorphic function (a function with the same name, but different types of parameters)  */
+        /* Let's find the final type of the expression and the polymorphic function we need to call */
+
+        let i = 0;
+
+        while ((i < expression.typeId.list.length) && (expression.typeId.index === -1)) {
+            if (expression.typeId.list[i] === type.id) {
+                expression.typeId.index = i;
+                expression.valueId.index = i;
+                answer = true;
+            }
+            i++;
+        }
+    } else {
+        answer = getExpressionType(compiler, module, expression).id === type.id;
+    }
+    return answer;
+}
+
+function getExpressionTypeName(compiler, module, expression) {
+    let expressionTypeName = '';
+    let type;
+
+    if (expression.typeId.index === -1) {
+        if (expression.typeId.list.length > 1) {
+            expressionTypeName = 'either ';
+        }
+        for (let i = 0; i < expression.typeId.list.length; i++) {
+            type = getTypeById(compiler, module, expression.typeId.list[i]);
+            expressionTypeName += getTypeName(compiler, module, type);
+            if (i < expression.typeId.list.length - 1) {
+                expressionTypeName += ' or ';
+            }
+        }
+    } else {
+        type = getExpressionType(compiler, module, expression);
+        expressionTypeName = getTypeName(compiler, module, type);
+    }
+    return expressionTypeName;
+}
+
+function setExpressionTypeId(compiler, module, expression, typeId, typeIdIndex) {
+    expression.typeId.list.push(typeId);
+    expression.typeId.index = typeIdIndex;
+}
+
+function getExpressionType(compiler, module, expression) {
+    let expressionType;
+
+    if (expression.typeId.index > -1) {
+        expressionType = getTypeById(compiler, module, expression.typeId.list[expression.typeId.index]);
+    }
+    return expressionType;
+}
+
+function setExpressionValueId(compiler, module, expression, valueId, valueIndex) {
+    expression.valueId.list.push(valueId);
+    expression.valueId.index = valueIndex;
+}
+
+function getExpressionValueId(compiler, module, expression) {
+    return expression.valueId.list[expression.valueId.index];
+}
+
+/* References */
+function getNewReference(compiler, module, name) {
+    let reference = {
+        id: module.references.id,
+        name: name,
+        pointer: module.references.pointer
+    };
+
+    module.references.id++;
+    module.references.list.push(reference);
+    module.references.names[reference.name] = reference.id;
+    module.references.pointer++;
+    return reference;
+}
+
+function getReferenceByName(compiler, module, name) {
+    return getReferenceById(compiler, module, module.references.names[name]);
+}
+
+function getReferenceById(compiler, module, id) {
+    return module.references.list[id];
+}
+
+/* Sub-modules */
+function getNewSubmodule(compiler, module, nodeId, name) {
+    let submodule = {
+        id: module.submodules.id,
+        nodeId: nodeId,
+        name: name,
+        path: '',
+
+        /* Objects which are imported from this sub-module */
+        objectList: []
+    };
+
+    module.submodules.id++;
+    module.submodules.list.push(submodule);
+    return submodule;
+}
+
+function setSubmodulePath(compiler, module, submodule, path) {
+    submodule.path = path;
+}
+
+function getSubmoduleById(compiler, module, id) {
+    return module.submodules.list[id];
+}
+
+function setSubmoduleObject(compiler, module, submodule, type, id, internalId) {
+    let object = {
+        type: type,
+        id: id,
+        internalId: internalId
+    };
+
+    submodule.objectList.push(object);
+}
+
+export { getNewModule, setActiveModule, unsetActiveModule, getModuleById, getModuleByPath, getActiveModule, getMainModule, setModuleChild, getNewNode, getNodeById, setActiveNodeList, getActiveNode, unsetActiveNode, setNodeObject, getNodeFromNode, setMainNode, getMainNode, getNewBlock, setActiveBlock, getActiveBlock, getBlockObjectByName, getBlockById, setBlockObject, unsetActiveBlock, getNewType, getTypeByName, getTypeById, getTypeName, getNewFunction, getFunctionById, getActiveFunction, getFunctionName, setMainFunction, getNewVariable, getVariableById, getNewExpression, getExpressionById, isExpressionInstanceOf, getExpressionTypeName, setExpressionTypeId, getExpressionType, setExpressionValueId, getExpressionValueId, getNewReference, getReferenceByName, getReferenceById, getNewSubmodule, setSubmodulePath, getSubmoduleById, setSubmoduleObject };

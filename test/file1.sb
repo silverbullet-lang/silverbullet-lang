@@ -1,0 +1,24 @@
+use variable2 as external-variable2 from file2
+use function0 as external-function0 | [] -> [$b] from folder1-file0 at './folder1/file0.sb'
+
+variable0 := 18.5
+variable1 := true
+variable2 := 95u
+
+let function0[x | $i, y | $fd] | $id
+	return 17d
+
+let function1 | $i
+	return 19
+
+let function1[x | $f]
+	nothing
+
+let function2[x | $iu, y | $fd, z | $b]
+	nothing
+
+let function2 | $b
+	return true or false
+
+let function2[x | $f] | $f
+	return x + variable0

@@ -1,0 +1,24 @@
+use variable0 as external-variable0 | $iu from folderUp-folder2-file0 at '../folder2/file0.sb'
+use function2 as external-function2, variable2 as external-variable2 from folderUp-folder1-file0 at '../folder1/file0.sb'
+
+variable0 := false
+variable1 := 64
+variable3 := 158.36d
+
+private let function0
+	nothing
+
+let function1 | $fd
+	return variable3 - 1.0d
+
+let function1[x | $iu]
+	nothing
+
+let function2[x | $b] | $b
+	return not x
+
+let function2
+	nothing
+
+private let function2[x | $id] | $f
+	return 2.8 + 6.2

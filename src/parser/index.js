@@ -1,12 +1,17 @@
 import Jison from './jison.js';
-import throwError from '../error.js';
+import { getNewNode, getNodeById, setMainNode } from '../module.js';
 
-function parse(module) {
+function parseModule(compiler, module) {
     let jison = Jison;
 
+    module.status = 'PARSING';
+    jison.yy.getNewNode = getNewNode;
+    jison.yy.getNodeById = getNodeById;
+    jison.yy.setMainNode = setMainNode;
+    jison.yy.compiler = compiler;
     jison.yy.module = module;
-    jison.yy.throwError = throwError;
     jison.parse(module.code);
+    module.status = 'PARSED';
 }
 
-export default parse;
+export { parseModule };

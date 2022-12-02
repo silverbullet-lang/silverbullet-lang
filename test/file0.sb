@@ -1,0 +1,25 @@
+use variable0 as external-variable0 | $f, function2 as external-function2 from file1
+use function1 as external-function1 | [$iu] -> [] from folder0-file0 at './folder0/file0.sb'
+use variable2 as external-variable2 | $i, function0 as external-function0 | [] -> [] from folder1-folder0-file0 at './folder1/folder0/file0.sb'
+
+variable0 := 763
+variable1 := false
+variable2 := 4956.7
+
+let function0
+	nothing
+
+let function1[x | $f]
+	nothing
+
+let function1
+	nothing
+
+let function2 | $id
+	return 14d
+
+let function2[x | $fd]
+	nothing
+
+let function2[x | $iu, y | $fd]
+	nothing

@@ -1,14 +1,16 @@
 import fs from 'fs';
-import throwError from './error.js';
 
-async function read(module) {
+async function readModule(compiler, module) {
+    module.status = 'READING';
     try {
-        module.code = (await fs.promises.readFile(module.url)).toString();
+        module.code = (await fs.promises.readFile(new URL(module.path))).toString();
     } catch (err) {
-        throwError(module, {
-            message: `the file '${ module.url.href }' cannot be opened`
-        });
+        throw {
+            message: `the file '${ module.path }' cannot be opened (${ err.message })`,
+            code: 'E_READ'
+        };
     }
+    module.status = 'READ';
 }
 
-export default read;
+export { readModule };

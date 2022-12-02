@@ -1,0 +1,24 @@
+use variable2 as external-variable2 | $fd, function2 as external-function2 from folder1-folder0-file1 at './folder1/folder0/file1.sb'
+use variable0 as external-variable0, function1 as external-function1 | [$id] -> [$id] from folder2-file0 at './folder2/file0.sb'
+
+variable0 := true
+private variable1 := 45.0d
+constant variable2 := 456u
+
+let function0 | $iu
+	return 2u * variable2
+
+let function1
+	nothing
+
+let function1[x | $i, y | $i] | $b
+	return x > y
+
+let function2 | $fd
+	return variable1 * 3.0d
+
+let function2[x | $b]
+	nothing
+
+let function2[x | $fd] | $iu
+	return 7u
