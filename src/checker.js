@@ -1,9 +1,6 @@
 import { getNewModule, setActiveModule, getModuleByPath, setModuleChild, getNewNode, getNodeById, setActiveNodeList, getActiveNode, unsetActiveNode, getMainNode, setNodeObject, getNodeFromNode, getNewBlock, setActiveBlock, getActiveBlock, getBlockById, getBlockObjectByName, setBlockObject, unsetActiveBlock, getNewType, getTypeByName, getTypeById, getTypeName, getNewFunction, getFunctionById, getActiveFunction, getFunctionName, setMainFunction, getNewVariable, getVariableById, getNewExpression, getExpressionById, isExpressionInstanceOf, getExpressionTypeName, setExpressionTypeId, getExpressionType, setExpressionValueId, getNewReference, getReferenceByName, getNewSubmodule, setSubmodulePath, getSubmoduleById, setSubmoduleObject } from './module.js';
 
 function checkModule(compiler, module) {
-
-    //console.log(module.nodes.list);
-
     let node = getMainNode(compiler, module);
 
     module.status = 'CHECKING';
@@ -15,9 +12,6 @@ function checkModule(compiler, module) {
         node = getActiveNode(compiler, module);
     }
     while (node && (module.status === 'CHECKING')) {
-
-        //console.log(module.nodes.stack);
-
         if (node.name === 'moduleStmt') {
             checkModuleStmt(compiler, module, node);
         } else if (node.name === 'moduleBlock') {
@@ -70,14 +64,22 @@ function checkModule(compiler, module) {
             checkVoid(compiler, module, node);
         } else if (node.name === 'reference') {
             checkReference(compiler, module, node);
+        } else if (node.name === 'identifier') {
+            checkIdentifier(compiler, module, node);
+        } else if (node.name === 'externalIdentifier') {
+            checkExternalIdentifier(compiler, module, node);
         } else if (node.name === 'name') {
             checkName(compiler, module, node);
+        } else if (node.name === 'instruction') {
+            checkInstruction(compiler, module, node);
         } else if (node.name === 'callByName') {
             checkCallByName(compiler, module, node);
+        } else if (node.name === 'operator') {
+            checkOperator(compiler, module, node);
         } else if (node.name === 'callByExpression') {
             checkCallByExpression(compiler, module, node);
-        } else if (node.name === 'targetStmt') {
-            checkTargetStmt(compiler, module, node);
+        } else if (node.name === 'exprStmt') {
+            checkExprStmt(compiler, module, node);
         }
         node = getActiveNode(compiler, module);
     }
@@ -229,7 +231,9 @@ function checkExternalObject(compiler, module, node) {
         let externalNameNode = getNodeById(compiler, module, node.childIdList[0]);
         let objectNodeListNode = getNodeById(compiler, module, node.childIdList[1]);
         let objectNode = getNodeById(compiler, module, objectNodeListNode.childIdList[0]);
-        let submoduleNode = getNodeById(compiler, module, node.childIdList[2]);
+        let externalObjectNodeListNode = getNodeById(compiler, module, node.parentIdList[0]);
+        let importStmtNode = getNodeById(compiler, module, externalObjectNodeListNode.parentIdList[0]);
+        let submoduleNode = getNodeById(compiler, module, importStmtNode.childIdList[1]);
         let submoduleObject = getSubmoduleById(compiler, module, submoduleNode.object.id);
         let submodule = getModuleByPath(compiler, submoduleObject.path);
         let externalObject = getBlockObjectByName(compiler, submodule, getBlockById(compiler, submodule, 1), externalNameNode.value);
@@ -247,6 +251,7 @@ function checkExternalObject(compiler, module, node) {
                     let variableTypeNode = getNodeFromNode(compiler, module, submodule, externalVariableTypeNode.id);
 
                     objectNode.childIdList[2] = variableTypeNode.id;
+                    variableTypeNode.parentIdList.push(objectNode.id);
                 }
             } else {
                 throw {
@@ -270,6 +275,7 @@ function checkExternalObject(compiler, module, node) {
                         /* Let's make a new node for such an external function */
                         objectNode = getNewNode(compiler, module, 'object', objectNode.location, [objectNode.childIdList[0], objectNode.childIdList[1], -1], '');
                         objectNodeListNode.childIdList.push(objectNode.id);
+                        objectNode.parentIdList.push(objectNodeListNode.id);
                     }
                     objectNode.name = 'function';
                     if (objectNode.childIdList[2] === -1) {
@@ -280,6 +286,7 @@ function checkExternalObject(compiler, module, node) {
                         let functionTypeNode = getNodeFromNode(compiler, module, submodule, externalFunctionTypeNode.id);
 
                         objectNode.childIdList[2] = functionTypeNode.id;
+                        functionTypeNode.parentIdList.push(objectNode.id);
                     } else {
                         /* Type is declared */
                         /* Stop the processing of the external function(s) */
@@ -313,7 +320,9 @@ function checkExternalObject(compiler, module, node) {
     } else if (node.status === '1') {
         let externalNameNode = getNodeById(compiler, module, node.childIdList[0]);
         let objectNodeListNode = getNodeById(compiler, module, node.childIdList[1]);
-        let submoduleNode = getNodeById(compiler, module, node.childIdList[2]);
+        let externalObjectNodeListNode = getNodeById(compiler, module, node.parentIdList[0]);
+        let importStmtNode = getNodeById(compiler, module, externalObjectNodeListNode.parentIdList[0]);
+        let submoduleNode = getNodeById(compiler, module, importStmtNode.childIdList[1]);
         let submoduleObject = getSubmoduleById(compiler, module, submoduleNode.object.id);
         let submodule = getModuleByPath(compiler, submoduleObject.path);
         let externalObject = getBlockObjectByName(compiler, submodule, getBlockById(compiler, submodule, 1), externalNameNode.value);
@@ -992,6 +1001,9 @@ function checkReturnStmt(compiler, module, node) {
 
 function checkReference(compiler, module, node) {
     if (node.status === 'CREATED') {
+        setActiveNodeList(compiler, module, node.childIdList);
+        node.status = '1';
+    } else if (node.status === '1') {
         let nameNode = getNodeById(compiler, module, node.childIdList[0]);
         let object = getBlockObjectByName(compiler, module, getActiveBlock(compiler, module), nameNode.value);
         let expressionObject = getNewExpression(compiler, module, node.id, false, [], -1);
@@ -1048,8 +1060,83 @@ function checkReference(compiler, module, node) {
     }
 }
 
+function checkIdentifier(compiler, module, node) {
+    if (node.status === 'CREATED') {
+        unsetActiveNode(compiler, module);
+        node.status = 'CHECKED';
+    }
+}
+
+function checkExternalIdentifier(compiler, module, node) {
+    if (node.status === 'CREATED') {
+        let object = getBlockObjectByName(compiler, module, getBlockById(compiler, module, 1), node.value);
+
+        if (object.type === '') {
+            /* This external object is not imported yet */
+            /* Let's try to import it */
+
+            let submoduleNameNode = getNodeById(compiler, module, node.childIdList[0]);
+            let externalNameNode = getNodeById(compiler, module, node.childIdList[1]);
+
+            object = getBlockObjectByName(compiler, module, getActiveBlock(compiler, module), submoduleNameNode.value);
+            if (object.type === 'variable') {
+                throw {
+                    code: 'E_CHECK_EXTERNAL_IDENTIFIER_VARIABLE',
+                    message: `'${ submoduleNameNode.value }' is a variable; '${ externalNameNode.value }' cannot be imported from a variable; '${ submoduleNameNode.value }' must be a sub-module`,
+                    location: node.location
+                };
+            } else if (object.type === 'function') {
+                throw {
+                    code: 'E_CHECK_EXTERNAL_IDENTIFIER_FUNCTION',
+                    message: `'${ submoduleNameNode.value }' is a function; '${ externalNameNode.value }' cannot be imported from a function; '${ submoduleNameNode.value }' must be a sub-module`,
+                    location: node.location
+                };
+            } else if (object.type === 'submodule') {
+                /* We are trying to import from a real sub-module */
+                /* Behind the scene, 'submoduleName.name' is equivalent to the following statement: 'use name as submoduleName.name from submodule' */
+
+                let submoduleObject = getSubmoduleById(compiler, module, object.idList[0]);
+                let submoduleNode = getNodeById(compiler, module, submoduleObject.nodeId);
+                let importStmtNode = getNodeById(compiler, module, submoduleNode.parentIdList[0]);
+                let externalObjectNodeListNode = getNodeById(compiler, module, importStmtNode.childIdList[0]);
+                let externalObjectNode = getNewNode(compiler, module, 'externalObject', node.location, [
+                    externalNameNode.id,
+                    getNewNode(compiler, module, 'list', node.location, [
+                        getNewNode(compiler, module, 'object', node.location, [
+                            getNewNode(compiler, module, 'list', node.location, [
+                                getNewNode(compiler, module, 'modifier', node.location, [], 'private').id
+                            ], '').id,
+                            getNewNode(compiler, module, 'identifier', node.location, [], node.value).id,
+                            -1
+                        ], '').id
+                    ], '').id
+                ], '');
+
+                externalObjectNodeListNode.childIdList.push(externalObjectNode.id);
+                externalObjectNode.parentIdList.push(externalObjectNodeListNode.id);
+                setActiveNodeList(compiler, module, [externalObjectNode.id]);
+            } else if (object.type === '') {
+                throw {
+                    code: 'E_CHECK_EXTERNAL_IDENTIFIER_OBJECT_NOT_FOUND',
+                    message: `there is no object associated with the name '${ submoduleNameNode.value }'`,
+                    location: submoduleNameNode.location
+                };
+            }
+        }
+        setActiveBlock(compiler, module, 1);
+        node.status = '1';
+    } else if (node.status === '1') {
+        unsetActiveBlock(compiler, module);
+        unsetActiveNode(compiler, module);
+        node.status = 'CHECKED';
+    }
+}
+
 function checkName(compiler, module, node) {
     if (node.status === 'CREATED') {
+        setActiveNodeList(compiler, module, node.childIdList);
+        node.status = '1';
+    } else if (node.status === '1') {
         let nameNode = getNodeById(compiler, module, node.childIdList[0]);
         let object = getBlockObjectByName(compiler, module, getActiveBlock(compiler, module), nameNode.value);
         let expressionObject = getNewExpression(compiler, module, node.id, false, [], -1);
@@ -1112,9 +1199,16 @@ function checkName(compiler, module, node) {
     }
 }
 
+function checkInstruction(compiler, module, node) {
+    if (node.status === 'CREATED') {
+        unsetActiveNode(compiler, module);
+        node.status = 'CHECKED';
+    }
+}
+
 function checkCallByName(compiler, module, node) {
     if (node.status === 'CREATED') {
-        setActiveNodeList(compiler, module, [node.childIdList[1]]);
+        setActiveNodeList(compiler, module, node.childIdList);
         node.status = '1';
     } else if (node.status === '1') {
         let nameNode = getNodeById(compiler, module, node.childIdList[0]);
@@ -1262,6 +1356,13 @@ function checkCallByName(compiler, module, node) {
     }
 }
 
+function checkOperator(compiler, module, node) {
+    if (node.status === 'CREATED') {
+        unsetActiveNode(compiler, module);
+        node.status = 'CHECKED';
+    }
+}
+
 function checkCallByExpression(compiler, module, node) {
     if (node.status === 'CREATED') {
         setActiveNodeList(compiler, module, node.childIdList);
@@ -1309,7 +1410,7 @@ function checkCallByExpression(compiler, module, node) {
     }
 }
 
-function checkTargetStmt(compiler, module, node) {
+function checkExprStmt(compiler, module, node) {
     if (node.status === 'CREATED') {
         setActiveNodeList(compiler, module, node.childIdList);
         node.status = '1';

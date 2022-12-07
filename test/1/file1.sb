@@ -1,0 +1,18 @@
+use f as F from file2
+
+Y := 17
+
+private let f
+	show[11]
+
+let f[x | $b]
+	show[12]
+	show[Y]
+
+private let f[x | $fd]
+	y := &f | [$b] -> []
+	show[13]
+
+let f[x | [$i] -> []]
+	show[14]
+	x[144]

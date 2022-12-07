@@ -103,6 +103,7 @@ function setModuleChild(compiler, module, child) {
 function getNewNode(compiler, module, name, location, childIdList, value) {
     let node = {
         id: module.nodes.id,
+        parentIdList: [],
         name: name,
         location: location,
         childIdList: childIdList,
@@ -116,9 +117,24 @@ function getNewNode(compiler, module, name, location, childIdList, value) {
         ir: -1
     };
 
+    /* Set this node as a parent of every child */
+    setNodeChildParent(compiler, module, node);
+
     module.nodes.id++;
     module.nodes.list.push(node);
     return node;
+}
+
+function setNodeChildParent(compiler, module, node) {
+    for (let i = 0; i < node.childIdList.length; i++) {
+        if (node.childIdList[i] > -1) {
+            let childNode = getNodeById(compiler, module, node.childIdList[i]);
+
+            /* Some nodes may have more than one parent */
+            /* This allows us to reduce the number of nodes */
+            childNode.parentIdList.push(node.id);
+        }
+    }
 }
 
 function getNodeById(compiler, module, id) {
@@ -146,8 +162,8 @@ function setNodeObject(compiler, module, node, type, id) {
 
 function getNodeFromNode(compiler, module, submodule, nodeId) {
     let nodeFromNode;
-    let node = getNodeById(compiler, submodule, nodeId);
-    let stack0 = [node.id];
+    let stack0 = [nodeId];
+    let node = getNodeById(compiler, submodule, stack0[0]);
     let stack1 = [];
 
     while (node) {
@@ -157,10 +173,12 @@ function getNodeFromNode(compiler, module, submodule, nodeId) {
             }
             node.isVisited = true;
         } else {
-            nodeFromNode = getNewNode(compiler, module, node.name, node.location, node.childIdList.slice(), node.value);
-            for (let i = nodeFromNode.childIdList.length - 1; i > -1; i--) {
-                nodeFromNode.childIdList[i] = stack1.shift();
+            let childIdList = [];
+
+            for (let i = node.childIdList.length - 1; i > -1; i--) {
+                childIdList.unshift((stack1.shift()));
             }
+            nodeFromNode = getNewNode(compiler, module, node.name, node.location, childIdList, node.value);
             stack1.unshift(nodeFromNode.id);
             stack0.shift();
             node.isVisited = false;

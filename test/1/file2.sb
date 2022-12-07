@@ -1,0 +1,9 @@
+let f
+	show[21]
+
+let g
+	show[22]
+
+let f[x | $b]
+	y := &g
+	show[23]

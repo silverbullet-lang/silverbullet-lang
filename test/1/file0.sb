@@ -1,0 +1,13 @@
+use Y from file1
+
+X := 14
+
+private let f[x | $i]
+	show[x]
+
+private let start
+	show[Y]
+	x := &file1.f | [$b] -> []
+	x[159 == 158 + 1]
+	Y = 159
+	x[false]

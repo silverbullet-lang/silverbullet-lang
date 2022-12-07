@@ -2,9 +2,6 @@ import Binaryen from './binaryen.js';
 import { getModuleByPath, getNodeById, setActiveNodeList, getActiveNode, unsetActiveNode, getMainNode, getBlockById, getBlockObjectByName, getTypeByName, getTypeById, getFunctionById, getFunctionName, getVariableById, getExpressionById, getExpressionType, getExpressionValueId, getReferenceById, getSubmoduleById } from '../module.js';
 
 function translateModule(compiler, module) {
-
-    //console.log(module.nodes.list);
-
     let node = getMainNode(compiler, module);
     let binaryen = Binaryen();
 
@@ -19,9 +16,6 @@ function translateModule(compiler, module) {
         binaryen.Features.BulkMemory
     );
     while (node) {
-
-        //console.log(module.nodes.stack);
-
         if (node.name === 'moduleStmt') {
             translateModuleStmt(compiler, module, node, binaryen);
         } else if (node.name === 'moduleBlock') {
@@ -74,14 +68,22 @@ function translateModule(compiler, module) {
             translateVoid(compiler, module, node, binaryen);
         } else if (node.name === 'reference') {
             translateReference(compiler, module, node, binaryen);
+        } else if (node.name === 'identifier') {
+            translateIdentifier(compiler, module, node, binaryen);
+        } else if (node.name === 'externalIdentifier') {
+            translateExternalIdentifier(compiler, module, node, binaryen);
         } else if (node.name === 'name') {
             translateName(compiler, module, node, binaryen);
+        } else if (node.name === 'instruction') {
+            translateInstruction(compiler, module, node, binaryen);
         } else if (node.name === 'callByName') {
             translateCallByName(compiler, module, node, binaryen);
+        } else if (node.name === 'operator') {
+            translateOperator(compiler, module, node, binaryen);
         } else if (node.name === 'callByExpression') {
             translateCallByExpression(compiler, module, node, binaryen);
-        } else if (node.name === 'targetStmt') {
-            translateTargetStmt(compiler, module, node, binaryen);
+        } else if (node.name === 'exprStmt') {
+            translateExprStmt(compiler, module, node, binaryen);
         }
         node = getActiveNode(compiler, module);
     }
@@ -629,6 +631,9 @@ function translateVoid(compiler, module, node, binaryen) {
 
 function translateReference(compiler, module, node, binaryen) {
     if (node.status === 'CHECKED') {
+        setActiveNodeList(compiler, module, node.childIdList);
+        node.status = '1';
+    } else if (node.status === '1') {
         let nameNode = getNodeById(compiler, module, node.childIdList[0]);
         let object = nameNode.object;
         let expressionObject = getExpressionById(compiler, module, node.object.id);
@@ -667,8 +672,25 @@ function translateReference(compiler, module, node, binaryen) {
     }
 }
 
+function translateIdentifier(compiler, module, node, binaryen) {
+    if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
+        node.status = 'TRANSLATED';
+    }
+}
+
+function translateExternalIdentifier(compiler, module, node, binaryen) {
+    if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
+        node.status = 'TRANSLATED';
+    }
+}
+
 function translateName(compiler, module, node, binaryen) {
     if (node.status === 'CHECKED') {
+        setActiveNodeList(compiler, module, node.childIdList);
+        node.status = '1';
+    } else if (node.status === '1') {
         let nameNode = getNodeById(compiler, module, node.childIdList[0]);
         let object = nameNode.object;
         let expressionObject = getExpressionById(compiler, module, node.object.id);
@@ -722,9 +744,16 @@ function translateName(compiler, module, node, binaryen) {
     }
 }
 
+function translateInstruction(compiler, module, node, binaryen) {
+    if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
+        node.status = 'TRANSLATED';
+    }
+}
+
 function translateCallByName(compiler, module, node, binaryen) {
     if (node.status === 'CHECKED') {
-        setActiveNodeList(compiler, module, [node.childIdList[1]]);
+        setActiveNodeList(compiler, module, node.childIdList);
         node.status = '1';
     } else if (node.status === '1') {
         let nameNode = getNodeById(compiler, module, node.childIdList[0]);
@@ -1371,10 +1400,13 @@ function translateCallByName(compiler, module, node, binaryen) {
         }
         unsetActiveNode(compiler, module);
         node.status = 'TRANSLATED';
+    }
+}
 
-        //console.log(node, expressionObject, functionObject, functionName, functionTypeObject, 'B');
-        //process.exit();
-
+function translateOperator(compiler, module, node, binaryen) {
+    if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
+        node.status = 'TRANSLATED';
     }
 }
 
@@ -1416,7 +1448,7 @@ function translateCallByExpression(compiler, module, node, binaryen) {
     }
 }
 
-function translateTargetStmt(compiler, module, node, binaryen) {
+function translateExprStmt(compiler, module, node, binaryen) {
     if (node.status === 'CHECKED') {
         setActiveNodeList(compiler, module, node.childIdList);
         node.status = '1';

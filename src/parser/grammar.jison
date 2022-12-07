@@ -198,7 +198,7 @@
         return yytext;
     }
 
-","|"|"|"["|"]"|"->"|":="|"="|"&"|"("|")"
+","|"|"|"["|"]"|"->"|":="|"="|"&"|"("|")"|"."
     {
 
         //console.log('SYMBOL', yytext.split());
@@ -1901,7 +1901,7 @@ moduleStmt
             yy.setMainNode(yy.compiler, yy.module, moduleStmtNode);
             $$ = [moduleStmtNode.id];
 
-            //console.log(yy.module.nodes.list.slice(-50), functionNodeListNode);
+            //console.log(JSON.stringify(yy.module.nodes.list, null, 2));
             //process.exit();
 
         }
@@ -1983,15 +1983,6 @@ eof
 importStmt
     : importHead nonEmptyLineList
         {
-            var externalObjectNodeListNode = yy.getNodeById(yy.compiler, yy.module, $1[0]);
-            var submoduleNode = yy.getNodeById(yy.compiler, yy.module, $1[1]);
-
-            for (var i = 0; i < externalObjectNodeListNode.childIdList.length; i++) {
-                var externalObjectNode = yy.getNodeById(yy.compiler, yy.module, externalObjectNodeListNode.childIdList[i]);
-
-                /* Every node 'externalObject' has an access to the node 'submodule' */
-                externalObjectNode.childIdList[2] = submoduleNode.id;
-            }
             $$ = [
                 yy.getNewNode(yy.compiler, yy.module, 'importStmt', @0, $1, '').id
             ];
@@ -2052,8 +2043,7 @@ externalObject
                                 yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
                             ], '').id
                         ].concat($3, $5), '').id
-                    ], '').id,
-                    -1
+                    ], '').id
                 ]), '').id
             ];
         }
@@ -2067,8 +2057,7 @@ externalObject
                                 yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
                             ], '').id
                         ].concat($3, [-1]), '').id
-                    ], '').id,
-                    -1
+                    ], '').id
                 ]), '').id
             ];
         }
@@ -2082,8 +2071,7 @@ externalObject
                                 yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
                             ], '').id
                         ].concat($1, $3), '').id
-                    ], '').id,
-                    -1
+                    ], '').id
                 ]), '').id
             ];
         }
@@ -2097,8 +2085,7 @@ externalObject
                                 yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
                             ], '').id
                         ].concat($1, [-1]), '').id
-                    ], '').id,
-                    -1
+                    ], '').id
                 ]), '').id
             ];
         }
@@ -2502,7 +2489,7 @@ nonEmptyNonBranchingStmtList
 nonBranchingStmt
     : initializationStmt
     | assignmentStmt
-    | targetStmt
+    | exprStmt
     | nothingStmt
     | ifElseStmt
     | whileStmt
@@ -2533,18 +2520,18 @@ assignmentHead
         }
     ;
 
-/* The target statement */
-targetStmt
-    : targetHead nonEmptyLineList
+/* The expression statement */
+exprStmt
+    : exprHead nonEmptyLineList
         {
             $$ = [
-                yy.getNewNode(yy.compiler, yy.module, 'targetStmt', @0, $1, '').id
+                yy.getNewNode(yy.compiler, yy.module, 'exprStmt', @0, $1, '').id
             ];
         }
     ;
 
-targetHead
-    : target
+exprHead
+    : expr
     ;
 
 /* The statement 'nothing' */
@@ -2721,7 +2708,8 @@ expr
     | arithmetic
     | comparison
     | logical
-    | target
+    | name
+    | call
     | grouping
     ;
 
@@ -2795,6 +2783,24 @@ reference
         {
             $$ = [
                 yy.getNewNode(yy.compiler, yy.module, 'reference', @0, $2, '').id
+            ];
+        }
+    | '&' externalIdentifier
+        {
+            $$ = [
+                yy.getNewNode(yy.compiler, yy.module, 'reference', @0, $2, '').id
+            ];
+        }
+    ;
+
+externalIdentifier
+    : identifier '.' identifier
+        {
+            var submoduleNameNode = yy.getNodeById(yy.compiler, yy.module, $1[0]);
+            var externalNameNode = yy.getNodeById(yy.compiler, yy.module, $3[0]);
+
+            $$ = [
+                yy.getNewNode(yy.compiler, yy.module, 'externalIdentifier', @0, $1.concat($3), submoduleNameNode.value + '.' + externalNameNode.value).id
             ];
         }
     ;
@@ -2946,12 +2952,7 @@ logical
         }
     ;
 
-/* The target expression */
-target
-    : name
-    | call
-    ;
-
+/* The name expression */
 name
     : identifier
         {
@@ -2960,6 +2961,12 @@ name
             ];
         }
     | instruction
+        {
+            $$ = [
+                yy.getNewNode(yy.compiler, yy.module, 'name', @0, $1, '').id
+            ];
+        }
+    | externalIdentifier
         {
             $$ = [
                 yy.getNewNode(yy.compiler, yy.module, 'name', @0, $1, '').id
@@ -2976,6 +2983,7 @@ instruction
         }
     ;
 
+/* The call expression */
 call
     : callByName
     | callByExpression
@@ -2991,6 +2999,14 @@ callByName
             ];
         }
     | instruction '[' argList ']'
+        {
+            $$ = [
+                yy.getNewNode(yy.compiler, yy.module, 'callByName', @0, $1.concat([
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, $3, '').id
+                ]), '').id
+            ];
+        }
+    | externalIdentifier '[' argList ']'
         {
             $$ = [
                 yy.getNewNode(yy.compiler, yy.module, 'callByName', @0, $1.concat([
