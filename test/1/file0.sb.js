@@ -6,7 +6,7 @@ let table = new WebAssembly.Table({
     initial: 7
 });
 
-/* file:///home/nerijus/Dropbox/Nerijus+SparkWave/silverbullet/sbc/test/1/file2.sb */
+/* file:///home/nerijus/Desktop/sbc/test/1/file2.sb */
 /*
 (module
  (type $i32_=>_none (func (param i32)))
@@ -88,7 +88,7 @@ let imports_2 = {
 let instance_2 = new WebAssembly.Instance(module_2, imports_2);
 let exports_2 = instance_2.exports;
 
-/* file:///home/nerijus/Dropbox/Nerijus+SparkWave/silverbullet/sbc/test/1/file1.sb */
+/* file:///home/nerijus/Desktop/sbc/test/1/file1.sb */
 /*
 (module
  (type $i32_=>_none (func (param i32)))
@@ -189,7 +189,7 @@ let imports_1 = {
 let instance_1 = new WebAssembly.Instance(module_1, imports_1);
 let exports_1 = instance_1.exports;
 
-/* file:///home/nerijus/Dropbox/Nerijus+SparkWave/silverbullet/sbc/test/1/file0.sb */
+/* file:///home/nerijus/Desktop/sbc/test/1/file0.sb */
 /*
 (module
  (type $i32_=>_none (func (param i32)))

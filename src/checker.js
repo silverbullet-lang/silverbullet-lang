@@ -1,4 +1,4 @@
-import { getNewModule, setActiveModule, getModuleByPath, setModuleChild, getNewNode, getNodeById, setActiveNodeList, getActiveNode, unsetActiveNode, getMainNode, setNodeObject, getNodeFromNode, getNewBlock, setActiveBlock, getActiveBlock, getBlockById, getBlockObjectByName, setBlockObject, unsetActiveBlock, getNewType, getTypeByName, getTypeById, getTypeName, getNewFunction, getFunctionById, getActiveFunction, getFunctionName, setMainFunction, getNewVariable, getVariableById, getNewExpression, getExpressionById, isExpressionInstanceOf, getExpressionTypeName, setExpressionTypeId, getExpressionType, setExpressionValueId, getNewReference, getReferenceByName, getNewSubmodule, setSubmodulePath, getSubmoduleById, setSubmoduleObject } from './module.js';
+import { getNewModule, setActiveModule, getModuleByPath, setModuleChild, getNewNode, getNodeById, setActiveNodeList, getActiveNode, unsetActiveNode, getMainNode, setNodeObject, getNodeFromNode, getNewBlock, setActiveBlock, getActiveBlock, getBlockById, getBlockObjectByName, setBlockObject, unsetActiveBlock, getNewType, getTypeByName, getTypeById, getTypeName, getNewFunction, getFunctionById, getActiveFunction, getFunctionName, getNewVariable, getVariableById, getNewExpression, getExpressionById, isExpressionInstanceOf, getExpressionTypeName, setExpressionTypeId, getExpressionType, setExpressionValueId, getNewReference, getReferenceByName, getNewSubmodule, setSubmodulePath, getSubmoduleById, setSubmoduleObject } from './module.js';
 
 function checkModule(compiler, module) {
     let node = getMainNode(compiler, module);
@@ -559,9 +559,7 @@ function checkFunction(compiler, module, node) {
         /* Check name */
         if (functionObject.name === 'start') {
             /* Check if the signature of the starting function is correct */
-            if ((typeObject.fromIdList.length === 0) && (typeObject.toId === getTypeByName(compiler, module, '$v').id)) {
-                setMainFunction(compiler, module, functionObject);
-            } else {
+            if ((typeObject.fromIdList.length > 0) || (typeObject.toId !== getTypeByName(compiler, module, '$v').id)) {
                 throw {
                     code: 'E_CHECK_FUNCTION_START_SIGNATURE',
                     message: `the signature of the starting function '${ functionObject.name }' is ${ getTypeName(compiler, module, typeObject) }; expected '[] -> []'`,

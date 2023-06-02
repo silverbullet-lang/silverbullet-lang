@@ -27,8 +27,7 @@ function getNewModule(compiler, path) {
         },
         functions: {
             id: 0,
-            list: [],
-            mainId: -1
+            list: []
         },
         variables: {
             id: 0,
@@ -348,10 +347,6 @@ function getFunctionName(compiler, module, $function) {
     return functionName;
 }
 
-function setMainFunction(compiler, module, $function) {
-    module.functions.mainId = $function.id;
-}
-
 /* Variables */
 function getNewVariable(compiler, module, nodeId, isConstant, isPrivate, name, typeId) {
     let variable = {
@@ -544,4 +539,4 @@ function setSubmoduleObject(compiler, module, submodule, type, id, internalId) {
     submodule.objectList.push(object);
 }
 
-export { getNewModule, setActiveModule, unsetActiveModule, getModuleById, getModuleByPath, getActiveModule, getMainModule, setModuleChild, getNewNode, getNodeById, setActiveNodeList, getActiveNode, unsetActiveNode, setNodeObject, getNodeFromNode, setMainNode, getMainNode, getNewBlock, setActiveBlock, getActiveBlock, getBlockObjectByName, getBlockById, setBlockObject, unsetActiveBlock, getNewType, getTypeByName, getTypeById, getTypeName, getNewFunction, getFunctionById, getActiveFunction, getFunctionName, setMainFunction, getNewVariable, getVariableById, getNewExpression, getExpressionById, isExpressionInstanceOf, getExpressionTypeName, setExpressionTypeId, getExpressionType, setExpressionValueId, getExpressionValueId, getNewReference, getReferenceByName, getReferenceById, getNewSubmodule, setSubmodulePath, getSubmoduleById, setSubmoduleObject };
+export { getNewModule, setActiveModule, unsetActiveModule, getModuleById, getModuleByPath, getActiveModule, getMainModule, setModuleChild, getNewNode, getNodeById, setActiveNodeList, getActiveNode, unsetActiveNode, setNodeObject, getNodeFromNode, setMainNode, getMainNode, getNewBlock, setActiveBlock, getActiveBlock, getBlockObjectByName, getBlockById, setBlockObject, unsetActiveBlock, getNewType, getTypeByName, getTypeById, getTypeName, getNewFunction, getFunctionById, getActiveFunction, getFunctionName, getNewVariable, getVariableById, getNewExpression, getExpressionById, isExpressionInstanceOf, getExpressionTypeName, setExpressionTypeId, getExpressionType, setExpressionValueId, getExpressionValueId, getNewReference, getReferenceByName, getReferenceById, getNewSubmodule, setSubmodulePath, getSubmoduleById, setSubmoduleObject };

@@ -170,17 +170,6 @@ function translateModuleStmt(compiler, module, node, binaryen) {
             )
         );
 
-        if (module.functions.mainId > -1) {
-            /* Set the starting function */
-            let functionObject = getFunctionById(compiler, module, module.functions.mainId);
-            let functionName = getFunctionName(compiler, module, functionObject);
-
-            module.ir.setStart(
-                module.ir.getFunction(
-                    functionName
-                )
-            );
-        }
         unsetActiveNode(compiler, module);
         node.status = 'TRANSLATED';
     }

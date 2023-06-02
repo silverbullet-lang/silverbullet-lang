@@ -1,0 +1,4 @@
+--( Check if starting function 'start' is not executed during the initialization )--
+
+let start
+	show[123456]
