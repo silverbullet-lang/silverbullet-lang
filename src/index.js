@@ -25,7 +25,7 @@ async function compile(options) {
                 checkModule(compiler, module);
             }
             if (module.status === 'CHECKED') {
-                translateModule(compiler, module);
+                await translateModule(compiler, module);
             }
             if (module.status === 'TRANSLATED') {
                 unsetActiveModule(compiler);

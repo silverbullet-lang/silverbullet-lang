@@ -6,7 +6,7 @@
         "test": "node ./test/index.js"
     },
     "devDependencies": {
-        "binaryen": "109",
+        "binaryen": "113",
         "jison": "^0.4.18"
     }
 }

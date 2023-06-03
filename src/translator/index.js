@@ -1,9 +1,9 @@
 import Binaryen from './binaryen.js';
 import { getModuleByPath, getNodeById, setActiveNodeList, getActiveNode, unsetActiveNode, getMainNode, getBlockById, getBlockObjectByName, getTypeByName, getTypeById, getFunctionById, getFunctionName, getVariableById, getExpressionById, getExpressionType, getExpressionValueId, getReferenceById, getSubmoduleById } from '../module.js';
 
-function translateModule(compiler, module) {
+async function translateModule(compiler, module) {
     let node = getMainNode(compiler, module);
-    let binaryen = Binaryen();
+    let binaryen = await Binaryen();
 
     module.status = 'TRANSLATING';
     setActiveNodeList(compiler, module, [node.id]);
@@ -111,7 +111,9 @@ function translateModuleStmt(compiler, module, node, binaryen) {
             -1,
             null,
             [],
-            false
+            false,
+            false,
+            '$memory'
         );
 
         /* Import table */
@@ -718,7 +720,9 @@ function translateName(compiler, module, node, binaryen) {
 
             /* Call an instruction */
             if (functionObject.name === '$getMemorySize') {
-                expressionObject.ir = module.ir.memory.size();
+                expressionObject.ir = module.ir.memory.size(
+                    '$memory'
+                );
             } else {
                 /* Call a custom function */
                 expressionObject.ir = module.ir.call(
@@ -1176,42 +1180,48 @@ function translateCallByName(compiler, module, node, binaryen) {
                         0,
                         0,
                         argumentIrList[0],
-                        argumentIrList[1]
+                        argumentIrList[1],
+                        '$memory'
                     );
                 } else if (functionTypeObject.name === '[$iu, $iu] -> []') {
                     expressionObject.ir = module.ir.i32.store(
                         0,
                         0,
                         argumentIrList[0],
-                        argumentIrList[1]
+                        argumentIrList[1],
+                        '$memory'
                     );
                 } else if (functionTypeObject.name === '[$iu, $id] -> []') {
                     expressionObject.ir = module.ir.i64.store(
                         0,
                         0,
                         argumentIrList[0],
-                        argumentIrList[1]
+                        argumentIrList[1],
+                        '$memory'
                     );
                 } else if (functionTypeObject.name === '[$iu, $f] -> []') {
                     expressionObject.ir = module.ir.f32.store(
                         0,
                         0,
                         argumentIrList[0],
-                        argumentIrList[1]
+                        argumentIrList[1],
+                        '$memory'
                     );
                 } else if (functionTypeObject.name === '[$iu, $fd] -> []') {
                     expressionObject.ir = module.ir.f64.store(
                         0,
                         0,
                         argumentIrList[0],
-                        argumentIrList[1]
+                        argumentIrList[1],
+                        '$memory'
                     );
                 } else if (functionTypeObject.name === '[$iu, $b] -> []') {
                     expressionObject.ir = module.ir.i32.store(
                         0,
                         0,
                         argumentIrList[0],
-                        argumentIrList[1]
+                        argumentIrList[1],
+                        '$memory'
                     );
                 }
             } else if (functionObject.name === '$store8') {
@@ -1220,14 +1230,16 @@ function translateCallByName(compiler, module, node, binaryen) {
                         0,
                         0,
                         argumentIrList[0],
-                        argumentIrList[1]
+                        argumentIrList[1],
+                        '$memory'
                     );
                 } else if (functionTypeObject.name === '[$iu, $iu] -> []') {
                     expressionObject.ir = module.ir.i32.store8(
                         0,
                         0,
                         argumentIrList[0],
-                        argumentIrList[1]
+                        argumentIrList[1],
+                        '$memory'
                     );
                 }
             } else if (functionObject.name === '$store16') {
@@ -1236,14 +1248,16 @@ function translateCallByName(compiler, module, node, binaryen) {
                         0,
                         0,
                         argumentIrList[0],
-                        argumentIrList[1]
+                        argumentIrList[1],
+                        '$memory'
                     );
                 } else if (functionTypeObject.name === '[$iu, $iu] -> []') {
                     expressionObject.ir = module.ir.i32.store16(
                         0,
                         0,
                         argumentIrList[0],
-                        argumentIrList[1]
+                        argumentIrList[1],
+                        '$memory'
                     );
                 }
             } else if (functionObject.name === '$load_$i') {
@@ -1251,7 +1265,8 @@ function translateCallByName(compiler, module, node, binaryen) {
                     expressionObject.ir = module.ir.i32.load(
                         0,
                         0,
-                        argumentIrList[0]
+                        argumentIrList[0],
+                        '$memory'
                     );
                 }
             } else if (functionObject.name === '$load_$iu') {
@@ -1259,7 +1274,8 @@ function translateCallByName(compiler, module, node, binaryen) {
                     expressionObject.ir = module.ir.i32.load(
                         0,
                         0,
-                        argumentIrList[0]
+                        argumentIrList[0],
+                        '$memory'
                     );
                 }
             } else if (functionObject.name === '$load_$id') {
@@ -1267,7 +1283,8 @@ function translateCallByName(compiler, module, node, binaryen) {
                     expressionObject.ir = module.ir.i64.load(
                         0,
                         0,
-                        argumentIrList[0]
+                        argumentIrList[0],
+                        '$memory'
                     );
                 }
             } else if (functionObject.name === '$load_$f') {
@@ -1275,7 +1292,8 @@ function translateCallByName(compiler, module, node, binaryen) {
                     expressionObject.ir = module.ir.f32.load(
                         0,
                         0,
-                        argumentIrList[0]
+                        argumentIrList[0],
+                        '$memory'
                     );
                 }
             } else if (functionObject.name === '$load_$fd') {
@@ -1283,7 +1301,8 @@ function translateCallByName(compiler, module, node, binaryen) {
                     expressionObject.ir = module.ir.f64.load(
                         0,
                         0,
-                        argumentIrList[0]
+                        argumentIrList[0],
+                        '$memory'
                     );
                 }
             } else if (functionObject.name === '$load_$b') {
@@ -1291,7 +1310,8 @@ function translateCallByName(compiler, module, node, binaryen) {
                     expressionObject.ir = module.ir.i32.load(
                         0,
                         0,
-                        argumentIrList[0]
+                        argumentIrList[0],
+                        '$memory'
                     );
                 }
             } else if (functionObject.name === '$load8_$i') {
@@ -1299,7 +1319,8 @@ function translateCallByName(compiler, module, node, binaryen) {
                     expressionObject.ir = module.ir.i32.load8_s(
                         0,
                         0,
-                        argumentIrList[0]
+                        argumentIrList[0],
+                        '$memory'
                     );
                 }
             } else if (functionObject.name === '$load8_$iu') {
@@ -1307,7 +1328,8 @@ function translateCallByName(compiler, module, node, binaryen) {
                     expressionObject.ir = module.ir.i32.load8_u(
                         0,
                         0,
-                        argumentIrList[0]
+                        argumentIrList[0],
+                        '$memory'
                     );
                 }
             } else if (functionObject.name === '$load16_$i') {
@@ -1315,7 +1337,8 @@ function translateCallByName(compiler, module, node, binaryen) {
                     expressionObject.ir = module.ir.i32.load16_s(
                         0,
                         0,
-                        argumentIrList[0]
+                        argumentIrList[0],
+                        '$memory'
                     );
                 }
             } else if (functionObject.name === '$load16_$iu') {
@@ -1323,18 +1346,22 @@ function translateCallByName(compiler, module, node, binaryen) {
                     expressionObject.ir = module.ir.i32.load16_u(
                         0,
                         0,
-                        argumentIrList[0]
+                        argumentIrList[0],
+                        '$memory'
                     );
                 }
             } else if (functionObject.name === '$growMemory') {
                 if (functionTypeObject.name === '[$iu] -> [$i]') {
                     expressionObject.ir = module.ir.memory.grow(
-                        argumentIrList[0]
+                        argumentIrList[0],
+                        '$memory'
                     );
                 }
             } else if (functionObject.name === '$getMemorySize') {
                 if (functionTypeObject.name === '[] -> [$iu]') {
-                    expressionObject.ir = module.ir.memory.size();
+                    expressionObject.ir = module.ir.memory.size(
+                        '$memory'
+                    );
                 }
             } else if (functionObject.name === '$shl') {
                 if (functionTypeObject.name === '[$i, $i] -> [$i]') {
@@ -1375,7 +1402,9 @@ function translateCallByName(compiler, module, node, binaryen) {
                     expressionObject.ir = module.ir.memory.copy(
                         argumentIrList[0],
                         argumentIrList[1],
-                        argumentIrList[2]
+                        argumentIrList[2],
+                        '$memory',
+                        '$memory'
                     );
                 }
             } else {

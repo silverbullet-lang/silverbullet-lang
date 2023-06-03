@@ -1,0 +1,38 @@
+let start
+	show[$getMemorySize]
+	show[$getMemorySize[]]
+
+	show[$growMemory[2u]]
+	show[$getMemorySize]
+
+	$copyMemory[0u, 4u, 4u]
+
+	$store[0u, 1]
+	show[$load_$i[0u]]
+
+	$store[4u, 2u]
+	show[$load_$iu[4u]]
+
+	$store[8u, true]
+	show[$load_$b[8u]]
+
+	$store8[12u, 4]
+	show[$load8_$i[12u]]
+
+	$store8[13u, 5u]
+	show[$load8_$iu[13u]]
+
+	$store16[14u, 6]
+	show[$load16_$i[14u]]
+
+	$store16[16u, 7u]
+	show[$load16_$iu[16u]]
+
+	$store[18u, 8d]
+	show[$load_$id[18u]]
+
+	$store[22u, 9.5]
+	show[$load_$f[22u]]
+
+	$store[26u, 10.5d]
+	show[$load_$fd[26u]]
