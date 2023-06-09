@@ -97,7 +97,6 @@ function translateModuleStmt(compiler, module, node, binaryen) {
         node.status = '1';
     } else if (node.status === '1') {
         let referenceNameList = [];
-        let object;
 
         /* Import memory */
         module.ir.addMemoryImport(
@@ -134,27 +133,60 @@ function translateModuleStmt(compiler, module, node, binaryen) {
         );
 
         /* Import function 'show' */
-        object = getBlockObjectByName(compiler, module, getBlockById(compiler, module, 0), 'show');
-        for (let i = 0; i < object.idList.length; i++) {
-            let functionObject = getFunctionById(compiler, module, object.idList[i]);
-            let functionName = getFunctionName(compiler, module, functionObject);
-            let functionTypeObject = getTypeById(compiler, module, functionObject.typeId);
-            let functionFromTypeIrList = [];
-            let functionToTypeIr = getTypeById(compiler, module, functionTypeObject.toId).ir;
-
-            for (let j = 0; j < functionTypeObject.fromIdList.length; j++) {
-                let functionFromTypeObject = getTypeById(compiler, module, functionTypeObject.fromIdList[j]);
-
-                functionFromTypeIrList.push(functionFromTypeObject.ir);
-            }
-            module.ir.addFunctionImport(
-                functionName,
-                '$submodule',
-                functionName,
-                binaryen.createType(functionFromTypeIrList),
-                functionToTypeIr
-            );
-        }
+        module.ir.addFunctionImport(
+            'show_[$i]->[]',
+            '$submodule',
+            'show_[$i]->[]',
+            binaryen.createType([
+                binaryen.i32
+            ]),
+            binaryen.none
+        );
+        module.ir.addFunctionImport(
+            'show_[$iu]->[]',
+            '$submodule',
+            'show_[$iu]->[]',
+            binaryen.createType([
+                binaryen.i32
+            ]),
+            binaryen.none
+        );
+        module.ir.addFunctionImport(
+            'show_[$id]->[]',
+            '$submodule',
+            'show_[$id]->[]',
+            binaryen.createType([
+                binaryen.i64
+            ]),
+            binaryen.none
+        );
+        module.ir.addFunctionImport(
+            'show_[$f]->[]',
+            '$submodule',
+            'show_[$f]->[]',
+            binaryen.createType([
+                binaryen.f32
+            ]),
+            binaryen.none
+        );
+        module.ir.addFunctionImport(
+            'show_[$fd]->[]',
+            '$submodule',
+            'show_[$fd]->[]',
+            binaryen.createType([
+                binaryen.f64
+            ]),
+            binaryen.none
+        );
+        module.ir.addFunctionImport(
+            'show_[$b]->[]',
+            '$submodule',
+            'show_[$b]->[]',
+            binaryen.createType([
+                binaryen.i32
+            ]),
+            binaryen.none
+        );
 
         /* Fill the table */
         for (let i = 0; i < module.references.list.length; i++) {

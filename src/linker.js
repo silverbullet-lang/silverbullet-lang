@@ -5,7 +5,6 @@ function link(compiler) {
     let footer = '';
     let body = '';
     let header = '';
-    let object;
 
     /* The number of references to functions */
     let tableOffset = 0;
@@ -34,59 +33,36 @@ let buffer_${ module.id } = (new Uint8Array([${ module.ir.emitBinary() }])).buff
 let module_${ module.id } = new WebAssembly.Module(buffer_${ module.id });
 let imports_${ module.id } = {`;
 
-            /* Default import */
+            /* Default imports */
             body += `
     '$submodule': {
         '$memory': memory,
         '$table': table,
         '$tableOffset': new WebAssembly.Global({
             value: 'i32'
-        }, ${ tableOffset })`;
-
-            /* Function 'show' */
-            object = getBlockObjectByName(compiler, module, getBlockById(compiler, module, 0), 'show');
-            for (let i = 0; i < object.idList.length; i++) {
-                let functionObject = getFunctionById(compiler, module, object.idList[i]);
-                let functionName = getFunctionName(compiler, module, functionObject);
-                let functionTypeObject = getTypeById(compiler, module, functionObject.typeId);
-
-                if (functionTypeObject.name === '[$i] -> []') {
-                    body += `,
-        '${ functionName }': function(value) {
+        }, ${ tableOffset }),
+        'show_[$i]->[]': function(value) {
             console.log((new Int32Array([value]))[0]);
-        }`;
-                } else if (functionTypeObject.name === '[$iu] -> []') {
-                    body += `,
-        '${ functionName }': function(value) {
+        },
+        'show_[$iu]->[]': function(value) {
             console.log((new Uint32Array([value]))[0]);
-        }`;
-                } else if (functionTypeObject.name === '[$id] -> []') {
-                    body += `,
-        '${ functionName }': function(value) {
+        },
+        'show_[$id]->[]': function(value) {
             console.log((new BigInt64Array([value]))[0]);
-        }`;
-                } else if (functionTypeObject.name === '[$f] -> []') {
-                    body += `,
-        '${ functionName }': function(value) {
+        },
+        'show_[$f]->[]': function(value) {
             console.log((new Float32Array([value]))[0]);
-        }`;
-                } else if (functionTypeObject.name === '[$fd] -> []') {
-                    body += `,
-        '${ functionName }': function(value) {
+        },
+        'show_[$fd]->[]': function(value) {
             console.log((new Float64Array([value]))[0]);
-        }`;
-                } else if (functionTypeObject.name === '[$b] -> []') {
-                    body += `,
-        '${ functionName }': function(value) {
+        },
+        'show_[$b]->[]': function(value) {
             if (value === 0) {
                 console.log(false);
             } else {
                 console.log(true);
             }
-        }`;
-                }
-            }
-            body += `
+        }
     }`;
 
             /* Custom import(s) */
