@@ -2,7 +2,7 @@ let start
 	show[$getMemorySize]
 	show[$getMemorySize[]]
 
-	show[$growMemory[2u]]
+	show[$growMemory[1u]]
 	show[$getMemorySize]
 
 	$copyMemory[0u, 4u, 4u]

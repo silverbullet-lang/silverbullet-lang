@@ -51,7 +51,11 @@ function getNewCompiler(options) {
     let compiler = {
         options: {
             input: '',
-            output: ''
+            output: '',
+
+            /* Minimum and maximum size of memory in WebAssembly (WA) pages (1 WA = 64 KB) */
+            minMemorySize: 0,
+            maxMemorySize: 1
         },
         modules: {
             id: 0,

@@ -109,7 +109,9 @@ let exports_${ module.id } = instance_${ module.id }.exports;`;
 
     /* Header */
     header += `let memory = new WebAssembly.Memory({
-    initial: 1
+    initial: ${ compiler.options.minMemorySize },
+    maximum: ${ compiler.options.maxMemorySize },
+    shared: false
 });
 let table = new WebAssembly.Table({
     element: 'anyfunc',

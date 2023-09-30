@@ -1,0 +1,11 @@
+let start
+	show[$getMemorySize == 10u]
+
+	show[$growMemory[20u] == 10]
+	show[$getMemorySize == 30u]
+
+	show[$growMemory[70u] == 30]
+	show[$getMemorySize == 100u]
+
+	show[$growMemory[1u] == -1]
+	show[$getMemorySize == 100u]

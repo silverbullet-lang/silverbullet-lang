@@ -98,21 +98,21 @@ function translateModuleStmt(compiler, module, node, binaryen) {
     } else if (node.status === '1') {
         let referenceNameList = [];
 
-        /* Import memory */
-        module.ir.addMemoryImport(
-            '$memory',
-            '$submodule',
-            '$memory',
-            false
-        );
+        /* Set and import memory */
         module.ir.setMemory(
-            1,
+            0,
             -1,
             null,
             [],
             false,
             false,
             '$memory'
+        );
+        module.ir.addMemoryImport(
+            '$memory',
+            '$submodule',
+            '$memory',
+            false
         );
 
         /* Import table */
