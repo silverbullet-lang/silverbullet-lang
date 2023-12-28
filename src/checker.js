@@ -1,4 +1,4 @@
-import { getNewModule, setActiveModule, getModuleByPath, setModuleChild, getNewNode, getNodeById, setActiveNodeList, getActiveNode, unsetActiveNode, getMainNode, setNodeObject, getNodeFromNode, getNewBlock, setActiveBlock, getActiveBlock, getBlockById, getBlockObjectByName, setBlockObject, unsetActiveBlock, getNewType, getTypeByName, getTypeById, getTypeName, getNewFunction, getFunctionById, getActiveFunction, getFunctionName, getNewVariable, getVariableById, getNewExpression, getExpressionById, isExpressionInstanceOf, getExpressionTypeName, setExpressionTypeId, getExpressionType, setExpressionValueId, getNewReference, getReferenceByName, getNewSubmodule, setSubmodulePath, getSubmoduleById, setSubmoduleObject } from './module.js';
+import { getNewModule, setActiveModule, getModuleByPath, setModuleChild, getNewNode, getNodeById, setActiveNodeList, getActiveNode, unsetActiveNode, getMainNode, setNodeObject, getNodeFromNode, getNewBlock, setActiveBlock, getActiveBlock, getBlockById, getBlockObjectByName, setBlockObject, unsetActiveBlock, getNewType, getTypeByName, getTypeById, getTypeName, getNewFunction, getFunctionById, getActiveFunction, getFunctionName, getNewVariable, getVariableById, getNewExpression, getExpressionById, isExpressionInstanceOf, getExpressionTypeName, setExpressionTypeId, getExpressionType, setExpressionValueId, getNewReference, getReferenceByName, getNewSubmodule, setSubmodulePath, getSubmoduleById, setSubmoduleObject, getNewString } from './module.js';
 
 function checkModule(compiler, module) {
     let node = getMainNode(compiler, module);
@@ -46,6 +46,10 @@ function checkModule(compiler, module) {
             checkFloatingPointDouble(compiler, module, node);
         } else if (node.name === 'boolean') {
             checkBoolean(compiler, module, node);
+        } else if (node.name === 'stringNonInterpolated') {
+            checkStringNonInterpolated(compiler, module, node);
+        } else if (node.name === 'string') {
+            checkString(compiler, module, node);
         } else if (node.name === 'functionStmt') {
             checkFunctionStmt(compiler, module, node);
         } else if (node.name === 'nonModuleBlock') {
@@ -799,6 +803,39 @@ function checkBoolean(compiler, module, node) {
         let expressionObject = getNewExpression(compiler, module, node.id, true, [getTypeByName(compiler, module, '$b').id], 0);
 
         setNodeObject(compiler, module, node, 'expression', expressionObject.id);
+        unsetActiveNode(compiler, module);
+        node.status = 'CHECKED';
+    }
+}
+
+function checkStringNonInterpolated(compiler, module, node) {
+    if (node.status === 'CREATED') {
+        setActiveNodeList(compiler, module, node.childIdList);
+        node.status = '1';
+    } else if (node.status === '1') {
+        let expressionObject = getNewExpression(compiler, module, node.id, true, [getTypeByName(compiler, module, '$s').id], 0);
+
+        setNodeObject(compiler, module, node, 'expression', expressionObject.id);
+        unsetActiveNode(compiler, module);
+        node.status = 'CHECKED';
+    }
+}
+
+function checkString(compiler, module, node) {
+    if (node.status === 'CREATED') {
+        let textEncoder = new TextEncoder();
+        let rightValue = textEncoder.encode(node.value);
+        let rightSize = rightValue.length;
+        let leftValue = new Uint8Array((new Uint32Array([rightSize])).buffer);
+        let leftSize = leftValue.length;
+        let size = leftSize + rightSize;
+        let value = new Uint8Array(size);
+        let stringObject;
+
+        value.set(leftValue, 0);
+        value.set(rightValue, leftSize);
+        stringObject = getNewString(compiler, module, node.id, size, value);
+        setNodeObject(compiler, module, node, 'string', stringObject.id);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
     }

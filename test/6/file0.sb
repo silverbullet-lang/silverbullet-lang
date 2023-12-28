@@ -1,0 +1,41 @@
+use s as big-s | $s from file1
+use file2 at '\.\/\u102\i\l\e\2\.\s\u98'
+use s as S from file3
+
+let start
+	ascii := '\0\u1\u2\u3\u4\u5\u6\u7\b\t\n\v\f\r\u14\u15\u16\u17\u18\u19\u20\u21\u22\u23\u24\u25\u26\u27\u28\u29\u30\u31 !\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\u127'
+	show[ascii]
+
+	-- Flags of the United Nations and Scotland
+	show["
+\u127482\u127475
+\u127988\u917607\u917602\u917619\u917603\u917620\u917631
+	"]
+
+	s-0 := getText[0]
+	show[getText[0, s-0, 'Text-1']]
+	show[getText[1, getText[1], getText[2]]]
+	show[getText[2, "Text-0", 'Text-1']]
+
+	show[big-s]
+
+	s-1 := getText[1] | $s
+	show[file2.getText["Text", s-1, getText[2]]]
+
+	show[S]
+
+private let getText[x | $i] | $s
+	if x == 0
+		return "Text-0"
+	else x == 1
+		return 'Text-1'
+	else
+		return '"\0"'
+
+private let getText[x | $i, s-0 | $s, s-1 | $s] | $s
+	if x == 0
+		return s-0
+	else x == 1
+		return s-1
+	else
+		return "'\u0'"

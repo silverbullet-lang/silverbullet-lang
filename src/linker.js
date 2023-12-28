@@ -5,8 +5,7 @@ function link(compiler) {
     let footer = '';
     let body = '';
     let header = '';
-
-    /* The number of references to functions */
+    let memoryOffset = 0;
     let tableOffset = 0;
 
     /* Footer */
@@ -26,7 +25,7 @@ export { exports_${ module.id } as '${ module.name }' };`;
 
 /* ${ module.path } */
 /*
-${ module.ir.emitText() }*/`;
+${ module.ir.emitText().replace(/\/\*/g, '\\\/\\\*').replace(/\*\//g, '\\\*\\\/') }*/`;
             body += `
 
 let buffer_${ module.id } = (new Uint8Array([${ module.ir.emitBinary() }])).buffer;
@@ -37,6 +36,9 @@ let imports_${ module.id } = {`;
             body += `
     '$submodule': {
         '$memory': memory,
+        '$memoryOffset': new WebAssembly.Global({
+            value: 'i32'
+        }, ${ memoryOffset }),
         '$table': table,
         '$tableOffset': new WebAssembly.Global({
             value: 'i32'
@@ -62,6 +64,15 @@ let imports_${ module.id } = {`;
             } else {
                 console.log(true);
             }
+        },
+        'show_[$s]->[]': function(pointer) {
+            let sizeBuffer = memory.buffer.slice(pointer, pointer + 4);
+            let size = (new Uint32Array(sizeBuffer))[0];
+            let textDecoder = new TextDecoder();
+            let valueView = new Uint8Array(memory.buffer, pointer + 4, size);
+            let value = textDecoder.decode(valueView);
+
+            console.log(value);
         }
     }`;
 
@@ -98,7 +109,10 @@ let imports_${ module.id } = {`;
 };
 let instance_${ module.id } = new WebAssembly.Instance(module_${ module.id }, imports_${ module.id });
 let exports_${ module.id } = instance_${ module.id }.exports;`;
+
             tableOffset += module.references.list.length;
+            memoryOffset += module.strings.pointer;
+
             unsetActiveModule(compiler);
             module.status = 'LINKED';
         } else if (module.status === 'LINKED') {
@@ -110,8 +124,7 @@ let exports_${ module.id } = instance_${ module.id }.exports;`;
     /* Header */
     header += `let memory = new WebAssembly.Memory({
     initial: ${ compiler.options.minMemorySize },
-    maximum: ${ compiler.options.maxMemorySize },
-    shared: false
+    maximum: ${ compiler.options.maxMemorySize }
 });
 let table = new WebAssembly.Table({
     element: 'anyfunc',

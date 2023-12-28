@@ -1,5 +1,5 @@
 import Binaryen from './binaryen.js';
-import { getModuleByPath, getNodeById, setActiveNodeList, getActiveNode, unsetActiveNode, getMainNode, getBlockById, getBlockObjectByName, getTypeByName, getTypeById, getFunctionById, getFunctionName, getVariableById, getExpressionById, getExpressionType, getExpressionValueId, getReferenceById, getSubmoduleById } from '../module.js';
+import { getModuleByPath, getNodeById, setActiveNodeList, getActiveNode, unsetActiveNode, getMainNode, getBlockById, getBlockObjectByName, getTypeByName, getTypeById, getFunctionById, getFunctionName, getVariableById, getExpressionById, getExpressionType, getExpressionValueId, getReferenceById, getSubmoduleById, getStringById } from '../module.js';
 
 async function translateModule(compiler, module) {
     let node = getMainNode(compiler, module);
@@ -13,7 +13,9 @@ async function translateModule(compiler, module) {
     module.ir.setFeatures(
         binaryen.Features.MutableGlobals |
         /* For the instruction '$copyMemory' */
-        binaryen.Features.BulkMemory
+        binaryen.Features.BulkMemory |
+        /* This feature allows us to store non-interpolated strings in global variables */
+        binaryen.Features.ExtendedConst
     );
     while (node) {
         if (node.name === 'moduleStmt') {
@@ -50,6 +52,10 @@ async function translateModule(compiler, module) {
             translateFloatingPointDouble(compiler, module, node, binaryen);
         } else if (node.name === 'boolean') {
             translateBoolean(compiler, module, node, binaryen);
+        } else if (node.name === 'stringNonInterpolated') {
+            translateStringNonInterpolated(compiler, module, node, binaryen);
+        } else if (node.name === 'string') {
+            translateString(compiler, module, node, binaryen);
         } else if (node.name === 'functionStmt') {
             translateFunctionStmt(compiler, module, node, binaryen);
         } else if (node.name === 'nonModuleBlock') {
@@ -96,22 +102,61 @@ function translateModuleStmt(compiler, module, node, binaryen) {
         setActiveNodeList(compiler, module, node.childIdList);
         node.status = '1';
     } else if (node.status === '1') {
+        let segment = {
+            passive: false,
+            offset: module.ir.global.get(
+                '$memoryOffset',
+                binaryen.i32
+            ),
+            data: new Uint8Array(module.strings.pointer)
+        };
+        let segmentList = [segment];
         let referenceNameList = [];
 
-        /* Set and import memory */
+        /* Import a global variable that stores a pointer to the memory */
+        /* This pointer points to the start of static data of this module */
+        /* Linker calculates the exact value of this variable for every module individually */
+        module.ir.addGlobalImport(
+            '$memoryOffset',
+            '$submodule',
+            '$memoryOffset',
+            binaryen.i32,
+            false
+        );
+
+        /* Set memory */
+        for (let i = 0; i < module.strings.list.length; i++) {
+            let stringObject = module.strings.list[i];
+
+            segment.data.set(stringObject.value, stringObject.pointer);
+        }
         module.ir.setMemory(
             0,
             -1,
             null,
-            [],
+            segmentList,
             false,
             false,
             '$memory'
         );
+
+        /* Import memory */
         module.ir.addMemoryImport(
             '$memory',
             '$submodule',
             '$memory',
+            false
+        );
+
+        /* Import a global variable that stores a pointer to the table */
+        /* This pointer points to the first reference of this module */
+        /* Note that, a reference is an expression defined by &function-name */
+        /* Linker calculates the exact value of this variable for every module individually */
+        module.ir.addGlobalImport(
+            '$tableOffset',
+            '$submodule',
+            '$tableOffset',
+            binaryen.i32,
             false
         );
 
@@ -120,16 +165,6 @@ function translateModuleStmt(compiler, module, node, binaryen) {
             '$table',
             '$submodule',
             '$table'
-        );
-
-        /* Import a global variable that determines where to store references to functions in the table */
-        /* Linker is responsible for the exact value of this variable */
-        module.ir.addGlobalImport(
-            '$tableOffset',
-            '$submodule',
-            '$tableOffset',
-            binaryen.i32,
-            false
         );
 
         /* Import function 'show' */
@@ -182,6 +217,15 @@ function translateModuleStmt(compiler, module, node, binaryen) {
             'show_[$b]->[]',
             '$submodule',
             'show_[$b]->[]',
+            binaryen.createType([
+                binaryen.i32
+            ]),
+            binaryen.none
+        );
+        module.ir.addFunctionImport(
+            'show_[$s]->[]',
+            '$submodule',
+            'show_[$s]->[]',
             binaryen.createType([
                 binaryen.i32
             ]),
@@ -333,6 +377,8 @@ function translateBasicType(compiler, module, node, binaryen) {
             typeObject.ir = binaryen.f64;
         } else if (typeObject.name === '$b') {
             typeObject.ir = binaryen.i32;
+        } else if (typeObject.name === '$s') {
+            typeObject.ir = binaryen.i32;
         }
         unsetActiveNode(compiler, module);
         node.status = 'TRANSLATED';
@@ -464,6 +510,34 @@ function translateBoolean(compiler, module, node, binaryen) {
         } else if (node.value === 'true') {
             expressionObject.ir = module.ir.i32.const(1);
         }
+        unsetActiveNode(compiler, module);
+        node.status = 'TRANSLATED';
+    }
+}
+
+function translateStringNonInterpolated(compiler, module, node, binaryen) {
+    if (node.status === 'CHECKED') {
+        setActiveNodeList(compiler, module, node.childIdList);
+        node.status = '1';
+    } else if (node.status === '1') {
+        let stringNode = getNodeById(compiler, module, node.childIdList[0]);
+        let stringObject = getStringById(compiler, module, stringNode.object.id);
+        let expressionObject = getExpressionById(compiler, module, node.object.id);
+
+        expressionObject.ir = module.ir.i32.add(
+            module.ir.global.get(
+                '$memoryOffset',
+                binaryen.i32
+            ),
+            module.ir.i32.const(stringObject.pointer)
+        );
+        unsetActiveNode(compiler, module);
+        node.status = 'TRANSLATED';
+    }
+}
+
+function translateString(compiler, module, node, binaryen) {
+    if (node.status === 'CHECKED') {
         unsetActiveNode(compiler, module);
         node.status = 'TRANSLATED';
     }

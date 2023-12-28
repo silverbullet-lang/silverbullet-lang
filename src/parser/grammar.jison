@@ -7,7 +7,7 @@
 
 /* States */
 %x INLINE_COMMENT MULTILINE_COMMENT
-%x TEXT
+%x INLINE_TEXT MULTILINE_TEXT
 
 %%
 
@@ -172,26 +172,109 @@
 
 "'"
     {
-        //console.log('TEXT (start)', yytext.split());
 
-        this.pushState('TEXT');
+        //console.log('INLINE_TEXT (start)', yytext.split());
+
+        this.pushState('INLINE_TEXT');
         yy.parser.yy.location = yylloc;
         return yytext;
     }
 
-<TEXT>([^\'\n\\]|\\.)+
+<INLINE_TEXT>[^\'\\\n]+
     {
 
-        //console.log('TEXT', yytext.split());
+        //console.log('INLINE_TEXT', yytext.split());
 
         yy.parser.yy.location = yylloc;
-        return 'TEXT';
+        return 'INLINE_TEXT';
     }
 
-<TEXT>"'"
+<INLINE_TEXT,MULTILINE_TEXT>[\\].
     {
 
-        //console.log('TEXT (end)', yytext.split());
+        //console.log(yy.lexer.conditionStack[yy.lexer.conditionStack.length - 1], yytext.split());
+
+        var conditionStack = yy.lexer.conditionStack;
+        var token = conditionStack[conditionStack.length - 1];
+
+        if (yytext === '\\0') {
+            yytext = String.fromCodePoint(0);
+        } else if (yytext === '\\\'') {
+            yytext = String.fromCodePoint(39);
+        } else if (yytext === '\\\"') {
+            yytext = String.fromCodePoint(34);
+        } else if (yytext === '\\\\') {
+            yytext = String.fromCodePoint(92);
+        } else if (yytext === '\\n') {
+            yytext = String.fromCodePoint(10);
+        } else if (yytext === '\\r') {
+            yytext = String.fromCodePoint(13);
+        } else if (yytext === '\\v') {
+            yytext = String.fromCodePoint(11);
+        } else if (yytext === '\\t') {
+            yytext = String.fromCodePoint(9);
+        } else if (yytext === '\\b') {
+            yytext = String.fromCodePoint(8);
+        } else if (yytext === '\\f') {
+            yytext = String.fromCodePoint(12);
+        } else {
+            yytext = yytext.slice(1);
+        }
+        yy.parser.yy.location = yylloc;
+        return token;
+    }
+
+<INLINE_TEXT,MULTILINE_TEXT>[\\]"u"[0-9]+
+    {
+
+        //console.log(yy.lexer.conditionStack[yy.lexer.conditionStack.length - 1], yytext.split());
+
+        var conditionStack = yy.lexer.conditionStack;
+        var token = conditionStack[conditionStack.length - 1];
+        var value = parseInt(yytext.slice(2), 10);
+
+        if (value <= 1114111) {
+            yytext = String.fromCodePoint(value);
+        } else {
+            token = 'UNICODE_CODE_POINT_INVALID';
+        }
+        yy.parser.yy.location = yylloc;
+        return token;
+    }
+
+<INLINE_TEXT>"'"
+    {
+
+        //console.log('INLINE_TEXT (end)', yytext.split());
+
+        this.popState();
+        yy.parser.yy.location = yylloc;
+        return yytext;
+    }
+
+"\""
+    {
+
+        //console.log('MULTILINE_TEXT (start)', yytext.split());
+
+        this.pushState('MULTILINE_TEXT');
+        yy.parser.yy.location = yylloc;
+        return yytext;
+    }
+
+<MULTILINE_TEXT>[^\"\\]+
+    {
+
+        //console.log('MULTILINE_TEXT', yytext.split());
+
+        yy.parser.yy.location = yylloc;
+        return 'MULTILINE_TEXT';
+    }
+
+<MULTILINE_TEXT>"\""
+    {
+
+        //console.log('MULTILINE_TEXT (end)', yytext.split());
 
         this.popState();
         yy.parser.yy.location = yylloc;
@@ -234,7 +317,7 @@
         return yytext;
     }
 
-"$id"|"$iu"|"$i"|"$fd"|"$f"|"$b"
+"$id"|"$iu"|"$i"|"$fd"|"$f"|"$b"|"$s"
     {
 
         //console.log('BASIC_TYPE', yytext.split());
@@ -341,7 +424,8 @@ moduleStmt
                 yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$id').id,
                 yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$f').id,
                 yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$fd').id,
-                yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$b').id
+                yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$b').id,
+                yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$s').id
             ], '');
 
             /* Instructions and built-in functions */
@@ -1892,18 +1976,27 @@ moduleStmt
                         ], '').id,
                         yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$v').id
                     ], '').id
-                ], '').id
+                ], '').id,
 
+                /* show | [$s] -> [] */
+                yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                    ], '').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], 'show').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                            yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$s').id
+                        ], '').id,
+                        yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$v').id
+                    ], '').id
+                ], '').id
             ], '');
 
             var moduleStmtNode = yy.getNewNode(yy.compiler, yy.module, 'moduleStmt', @0, [typeNodeListNode.id, functionNodeListNode.id].concat($2), '');
 
             yy.setMainNode(yy.compiler, yy.module, moduleStmtNode);
             $$ = [moduleStmtNode.id];
-
-            //console.log(JSON.stringify(yy.module.nodes.list, null, 2));
-            //process.exit();
-
         }
     ;
 
@@ -2264,12 +2357,20 @@ referenceTypeTo
     ;
 
 path
-    : "'" TEXT "'"
+    : "'" inlineText "'"
         {
             $$ = [
                 yy.getNewNode(yy.compiler, yy.module, 'path', @0, [], $2.trim()).id
             ];
         }
+    ;
+
+inlineText
+    : inlineText INLINE_TEXT
+        {
+            $$ = $1 + $2;
+        }
+    | INLINE_TEXT
     ;
 
 /* The initialization statement */
@@ -2721,6 +2822,7 @@ value
     | floatingPointSingle
     | floatingPointDouble
     | boolean
+    | stringNonInterpolated
     ;
 
 integerSingleSigned
@@ -2775,6 +2877,53 @@ boolean
                 yy.getNewNode(yy.compiler, yy.module, 'boolean', @0, [], $1).id
             ];
         }
+    ;
+
+stringNonInterpolated
+    : string
+        {
+            /* Based on empirical experiments using node v18.18.0 and npm v9.8.1, a non-interpolated string may contain at most 3355429 characters of the English alphabet */
+            /* If there are more characters, the parser throws the error 'Maximum call stack size exceeded' */
+
+            $$ = [
+                yy.getNewNode(yy.compiler, yy.module, 'stringNonInterpolated', @0, $1, '').id
+            ];
+        }
+    ;
+
+string
+    : "'" inlineText "'"
+        {
+            $$ = [
+                yy.getNewNode(yy.compiler, yy.module, 'string', @0, [], $2).id
+            ];
+        }
+    | "'" "'"
+        {
+            $$ = [
+                yy.getNewNode(yy.compiler, yy.module, 'string', @0, [], '').id
+            ];
+        }
+    | '"' multilineText '"'
+        {
+            $$ = [
+                yy.getNewNode(yy.compiler, yy.module, 'string', @0, [], $2).id
+            ];
+        }
+    | '"' '"'
+        {
+            $$ = [
+                yy.getNewNode(yy.compiler, yy.module, 'string', @0, [], '').id
+            ];
+        }
+    ;
+
+multilineText
+    : multilineText MULTILINE_TEXT
+        {
+            $$ = $1 + $2;
+        }
+    | MULTILINE_TEXT
     ;
 
 /* The reference expression */
@@ -3077,7 +3226,9 @@ parser.parseError = function(str, hash) {
             tokenText = 'outdentation';
         } else if (token === 'BASIC_TYPE') {
             tokenText = 'type';
-        } else if (token === 'TEXT') {
+        } else if (token === 'INLINE_TEXT') {
+            tokenText = 'text';
+        } else if (token === 'MULTILINE_TEXT') {
             tokenText = 'text';
         } else if (token === 'MODIFIER') {
             tokenText = 'modifier';
@@ -3099,6 +3250,8 @@ parser.parseError = function(str, hash) {
             tokenText = 'boolean value';
         } else if (token === 'SUBTRACTION') {
             tokenText = 'subtraction operator \'-\'';
+        } else if (token === 'UNICODE_CODE_POINT_INVALID') {
+            tokenText = 'Unicode code point is out of bounds';
         }
         return tokenText;
     };
@@ -3117,7 +3270,7 @@ parser.parseError = function(str, hash) {
     var getMessage = function(hash) {
         var message = '';
 
-        if ((hash.token === 'INDENTATION_SPACE_CHARACTER') || (hash.token === 'INDENTATION_TOO_LONG')) {
+        if ((hash.token === 'INDENTATION_SPACE_CHARACTER') || (hash.token === 'INDENTATION_TOO_LONG') || (hash.token === 'UNICODE_CODE_POINT_INVALID')) {
             message = getTokenText(hash.token);
         } else {
             var tokenTextList = getTokenTextList(hash);
@@ -3152,6 +3305,9 @@ parser.parseError = function(str, hash) {
     var getNote = function(token) {
         var note = undefined;
 
+        if (token === 'UNICODE_CODE_POINT_INVALID') {
+            note = 'Unicode code point must be an integer between 0 and 1114111';
+        }
         return note;
     };
 

@@ -1,0 +1,10 @@
+let getText[s-0 | $s, s-1 | $s, s-2 | $s] | $s
+	text := "
+\t\e\x\t
+"
+
+	show[s-0]
+	show[s-1]
+	show[s-2]
+
+	return text
