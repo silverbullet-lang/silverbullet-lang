@@ -8,11 +8,13 @@ import { write } from './writer.js';
 
 /* Point of entry */
 async function compile(options) {
-    let compiler = getNewCompiler(options);
+    let compiler = getNewCompiler();
 
     try {
-        let module = getNewModule(compiler, compiler.options.input);
+        let module;
 
+        setCompilerOptions(compiler, options);
+        module = getNewModule(compiler, compiler.options.input);
         setActiveModule(compiler, [module.id]);
         while (module) {
             if (module.status === 'CREATED') {
@@ -46,10 +48,10 @@ async function compile(options) {
     }
 }
 
-/* Compiler object */
-function getNewCompiler(options) {
+function getNewCompiler() {
     let compiler = {
         options: {
+            /* Value of the expression (new URL(...)).href */
             input: '',
             output: '',
 
@@ -67,19 +69,34 @@ function getNewCompiler(options) {
         executable: ''
     };
 
-    /* Set compiler options */
-    for (let name in compiler.options) {
-        if (name in options) {
-            compiler.options[name] = options[name];
-        }
-    }
-    if (compiler.options.output === '') {
-        compiler.options.output = `${ compiler.options.input }.js`;
-    }
     return compiler;
 }
 
-/* Generator of error messages */
+function setCompilerOptions(compiler, options) {
+    for (let option in compiler.options) {
+        if (option in options) {
+            compiler.options[option] = options[option];
+        }
+    }
+
+    if (compiler.options.input.length === 0) {
+        throw {
+            code: 'E_INIT_COMPILER_OPTION',
+            message: 'value of the compiler option \'input\' is an empty string'
+        };
+    }
+    if (compiler.options.output.length === 0) {
+        compiler.options.output = `${ compiler.options.input }.js`;
+    }
+    if ((0 > compiler.options.minMemorySize) || (compiler.options.minMemorySize > compiler.options.maxMemorySize) || (compiler.options.maxMemorySize > 65536)) {
+        throw {
+            code: 'E_INIT_COMPILER_OPTION',
+            message: `values of the compiler options 'minMemorySize' (${ compiler.options.minMemorySize } WAP) and 'maxMemorySize' (${ compiler.options.maxMemorySize } WAP) do not satisfy the following condition: 0 <= minMemorySize <= maxMemorySize <= 65536`,
+            note: '1 WAP (WebAssembly page) is equal to 64 KB'
+        };
+    }
+}
+
 function getErrorMessage(compiler, err) {
     let errorMessage = `Error: ${ err.message }`;
 

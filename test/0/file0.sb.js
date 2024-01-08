@@ -7,7 +7,7 @@ let table = new WebAssembly.Table({
     initial: 0
 });
 
-/* file:///home/nerijus/Desktop/sbc/test/0/folder1/folder0/file1.sb */
+/* file:///home/nerijus/Dropbox/Nerijus+SparkWave/silverbullet/sbc/test/0/folder1/folder0/file1.sb */
 /*
 (module
  (type $0 (func (param i32)))
@@ -125,7 +125,7 @@ let imports_3 = {
 let instance_3 = new WebAssembly.Instance(module_3, imports_3);
 let exports_3 = instance_3.exports;
 
-/* file:///home/nerijus/Desktop/sbc/test/0/folder1/folder0/file0.sb */
+/* file:///home/nerijus/Dropbox/Nerijus+SparkWave/silverbullet/sbc/test/0/folder1/folder0/file0.sb */
 /*
 (module
  (type $0 (func (param i32)))
@@ -253,7 +253,7 @@ let imports_5 = {
 let instance_5 = new WebAssembly.Instance(module_5, imports_5);
 let exports_5 = instance_5.exports;
 
-/* file:///home/nerijus/Desktop/sbc/test/0/folder2/file0.sb */
+/* file:///home/nerijus/Dropbox/Nerijus+SparkWave/silverbullet/sbc/test/0/folder2/file0.sb */
 /*
 (module
  (type $0 (func (param i32)))
@@ -388,7 +388,7 @@ let imports_4 = {
 let instance_4 = new WebAssembly.Instance(module_4, imports_4);
 let exports_4 = instance_4.exports;
 
-/* file:///home/nerijus/Desktop/sbc/test/0/file2.sb */
+/* file:///home/nerijus/Dropbox/Nerijus+SparkWave/silverbullet/sbc/test/0/file2.sb */
 /*
 (module
  (type $0 (func (param i32)))
@@ -523,7 +523,7 @@ let imports_2 = {
 let instance_2 = new WebAssembly.Instance(module_2, imports_2);
 let exports_2 = instance_2.exports;
 
-/* file:///home/nerijus/Desktop/sbc/test/0/folder1/file0.sb */
+/* file:///home/nerijus/Dropbox/Nerijus+SparkWave/silverbullet/sbc/test/0/folder1/file0.sb */
 /*
 (module
  (type $0 (func (param i32)))
@@ -669,7 +669,7 @@ let imports_6 = {
 let instance_6 = new WebAssembly.Instance(module_6, imports_6);
 let exports_6 = instance_6.exports;
 
-/* file:///home/nerijus/Desktop/sbc/test/0/file1.sb */
+/* file:///home/nerijus/Dropbox/Nerijus+SparkWave/silverbullet/sbc/test/0/file1.sb */
 /*
 (module
  (type $0 (func (param i32)))
@@ -796,7 +796,7 @@ let imports_1 = {
 let instance_1 = new WebAssembly.Instance(module_1, imports_1);
 let exports_1 = instance_1.exports;
 
-/* file:///home/nerijus/Desktop/sbc/test/0/folder0/file0.sb */
+/* file:///home/nerijus/Dropbox/Nerijus+SparkWave/silverbullet/sbc/test/0/folder0/file0.sb */
 /*
 (module
  (type $0 (func (param i32)))
@@ -928,7 +928,7 @@ let imports_7 = {
 let instance_7 = new WebAssembly.Instance(module_7, imports_7);
 let exports_7 = instance_7.exports;
 
-/* file:///home/nerijus/Desktop/sbc/test/0/file0.sb */
+/* file:///home/nerijus/Dropbox/Nerijus+SparkWave/silverbullet/sbc/test/0/file0.sb */
 /*
 (module
  (type $0 (func (param i32)))

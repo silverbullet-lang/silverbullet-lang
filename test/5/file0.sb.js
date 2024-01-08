@@ -7,7 +7,7 @@ let table = new WebAssembly.Table({
     initial: 0
 });
 
-/* file:///home/nerijus/Desktop/sbc/test/5/file0.sb */
+/* file:///home/nerijus/Dropbox/Nerijus+SparkWave/silverbullet/sbc/test/5/file0.sb */
 /*
 (module
  (type $0 (func (param i32)))

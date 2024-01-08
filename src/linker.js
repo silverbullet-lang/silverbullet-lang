@@ -7,6 +7,7 @@ function link(compiler) {
     let header = '';
     let memoryOffset = 0;
     let tableOffset = 0;
+    let minMemorySize = 0;
 
     /* Footer */
     footer += `
@@ -119,6 +120,16 @@ let exports_${ module.id } = instance_${ module.id }.exports;`;
             unsetActiveModule(compiler);
         }
         module = getActiveModule(compiler);
+    }
+
+    /* Check if the necessary size of memory is less than or equal to the requested size of memory */
+    minMemorySize = Math.ceil(memoryOffset / 65536);
+    if (compiler.options.minMemorySize < minMemorySize) {
+        throw {
+            code: 'E_LINK_OUT_OF_MEMORY',
+            message: `initial size of memory (${ compiler.options.minMemorySize } WAP) requested through the compiler option 'minMemorySize' is less than the necessary size of memory (${ minMemorySize } WAP)`,
+            note: '1 WAP (WebAssembly page) is equal to 64 KB'
+        };
     }
 
     /* Header */
