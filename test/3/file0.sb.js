@@ -19,29 +19,29 @@ let table = new WebAssembly.Table({
  (import "$submodule" "$table" (table $$table 0 funcref))
  (import "$submodule" "$memoryOffset" (global $$memoryOffset i32))
  (import "$submodule" "$tableOffset" (global $$tableOffset i32))
- (import "$submodule" "show_[$i]->[]" (func $show_[$i]->[] (param i32)))
- (import "$submodule" "show_[$iu]->[]" (func $show_[$iu]->[] (param i32)))
- (import "$submodule" "show_[$id]->[]" (func $show_[$id]->[] (param i64)))
- (import "$submodule" "show_[$f]->[]" (func $show_[$f]->[] (param f32)))
- (import "$submodule" "show_[$fd]->[]" (func $show_[$fd]->[] (param f64)))
- (import "$submodule" "show_[$b]->[]" (func $show_[$b]->[] (param i32)))
- (import "$submodule" "show_[$s]->[]" (func $show_[$s]->[] (param i32)))
+ (import "$submodule" "show_[$i]->[]" (func $"show_[$i]->[]" (param i32)))
+ (import "$submodule" "show_[$iu]->[]" (func $"show_[$iu]->[]" (param i32)))
+ (import "$submodule" "show_[$id]->[]" (func $"show_[$id]->[]" (param i64)))
+ (import "$submodule" "show_[$f]->[]" (func $"show_[$f]->[]" (param f32)))
+ (import "$submodule" "show_[$fd]->[]" (func $"show_[$fd]->[]" (param f64)))
+ (import "$submodule" "show_[$b]->[]" (func $"show_[$b]->[]" (param i32)))
+ (import "$submodule" "show_[$s]->[]" (func $"show_[$s]->[]" (param i32)))
  (data $0 (global.get $$memoryOffset) "")
  (elem $$functions (global.get $$tableOffset))
  (export "start" (func $start))
  (func $start
-  (call $show_[$iu]->[]
+  (call $"show_[$iu]->[]"
    (memory.size)
   )
-  (call $show_[$iu]->[]
+  (call $"show_[$iu]->[]"
    (memory.size)
   )
-  (call $show_[$i]->[]
+  (call $"show_[$i]->[]"
    (memory.grow
     (i32.const 1)
    )
   )
-  (call $show_[$iu]->[]
+  (call $"show_[$iu]->[]"
    (memory.size)
   )
   (memory.copy
@@ -53,7 +53,7 @@ let table = new WebAssembly.Table({
    (i32.const 0)
    (i32.const 1)
   )
-  (call $show_[$i]->[]
+  (call $"show_[$i]->[]"
    (i32.load
     (i32.const 0)
    )
@@ -62,7 +62,7 @@ let table = new WebAssembly.Table({
    (i32.const 4)
    (i32.const 2)
   )
-  (call $show_[$iu]->[]
+  (call $"show_[$iu]->[]"
    (i32.load
     (i32.const 4)
    )
@@ -71,7 +71,7 @@ let table = new WebAssembly.Table({
    (i32.const 8)
    (i32.const 1)
   )
-  (call $show_[$b]->[]
+  (call $"show_[$b]->[]"
    (i32.load
     (i32.const 8)
    )
@@ -80,7 +80,7 @@ let table = new WebAssembly.Table({
    (i32.const 12)
    (i32.const 4)
   )
-  (call $show_[$i]->[]
+  (call $"show_[$i]->[]"
    (i32.load8_s
     (i32.const 12)
    )
@@ -89,7 +89,7 @@ let table = new WebAssembly.Table({
    (i32.const 13)
    (i32.const 5)
   )
-  (call $show_[$iu]->[]
+  (call $"show_[$iu]->[]"
    (i32.load8_u
     (i32.const 13)
    )
@@ -98,7 +98,7 @@ let table = new WebAssembly.Table({
    (i32.const 14)
    (i32.const 6)
   )
-  (call $show_[$i]->[]
+  (call $"show_[$i]->[]"
    (i32.load16_s
     (i32.const 14)
    )
@@ -107,7 +107,7 @@ let table = new WebAssembly.Table({
    (i32.const 16)
    (i32.const 7)
   )
-  (call $show_[$iu]->[]
+  (call $"show_[$iu]->[]"
    (i32.load16_u
     (i32.const 16)
    )
@@ -116,7 +116,7 @@ let table = new WebAssembly.Table({
    (i32.const 18)
    (i64.const 8)
   )
-  (call $show_[$id]->[]
+  (call $"show_[$id]->[]"
    (i64.load
     (i32.const 18)
    )
@@ -125,7 +125,7 @@ let table = new WebAssembly.Table({
    (i32.const 22)
    (f32.const 9.5)
   )
-  (call $show_[$f]->[]
+  (call $"show_[$f]->[]"
    (f32.load
     (i32.const 22)
    )
@@ -134,7 +134,7 @@ let table = new WebAssembly.Table({
    (i32.const 26)
    (f64.const 10.5)
   )
-  (call $show_[$fd]->[]
+  (call $"show_[$fd]->[]"
    (f64.load
     (i32.const 26)
    )

@@ -18,13 +18,13 @@ let table = new WebAssembly.Table({
  (import "$submodule" "$table" (table $$table 0 funcref))
  (import "$submodule" "$memoryOffset" (global $$memoryOffset i32))
  (import "$submodule" "$tableOffset" (global $$tableOffset i32))
- (import "$submodule" "show_[$i]->[]" (func $show_[$i]->[] (param i32)))
- (import "$submodule" "show_[$iu]->[]" (func $show_[$iu]->[] (param i32)))
- (import "$submodule" "show_[$id]->[]" (func $show_[$id]->[] (param i64)))
- (import "$submodule" "show_[$f]->[]" (func $show_[$f]->[] (param f32)))
- (import "$submodule" "show_[$fd]->[]" (func $show_[$fd]->[] (param f64)))
- (import "$submodule" "show_[$b]->[]" (func $show_[$b]->[] (param i32)))
- (import "$submodule" "show_[$s]->[]" (func $show_[$s]->[] (param i32)))
+ (import "$submodule" "show_[$i]->[]" (func $"show_[$i]->[]" (param i32)))
+ (import "$submodule" "show_[$iu]->[]" (func $"show_[$iu]->[]" (param i32)))
+ (import "$submodule" "show_[$id]->[]" (func $"show_[$id]->[]" (param i64)))
+ (import "$submodule" "show_[$f]->[]" (func $"show_[$f]->[]" (param f32)))
+ (import "$submodule" "show_[$fd]->[]" (func $"show_[$fd]->[]" (param f64)))
+ (import "$submodule" "show_[$b]->[]" (func $"show_[$b]->[]" (param i32)))
+ (import "$submodule" "show_[$s]->[]" (func $"show_[$s]->[]" (param i32)))
  (global $s (mut i32) (i32.add
   (global.get $$memoryOffset)
   (i32.const 0)
@@ -95,13 +95,13 @@ let exports_1 = instance_1.exports;
  (import "$submodule" "$table" (table $$table 0 funcref))
  (import "$submodule" "$memoryOffset" (global $$memoryOffset i32))
  (import "$submodule" "$tableOffset" (global $$tableOffset i32))
- (import "$submodule" "show_[$i]->[]" (func $show_[$i]->[] (param i32)))
- (import "$submodule" "show_[$iu]->[]" (func $show_[$iu]->[] (param i32)))
- (import "$submodule" "show_[$id]->[]" (func $show_[$id]->[] (param i64)))
- (import "$submodule" "show_[$f]->[]" (func $show_[$f]->[] (param f32)))
- (import "$submodule" "show_[$fd]->[]" (func $show_[$fd]->[] (param f64)))
- (import "$submodule" "show_[$b]->[]" (func $show_[$b]->[] (param i32)))
- (import "$submodule" "show_[$s]->[]" (func $show_[$s]->[] (param i32)))
+ (import "$submodule" "show_[$i]->[]" (func $"show_[$i]->[]" (param i32)))
+ (import "$submodule" "show_[$iu]->[]" (func $"show_[$iu]->[]" (param i32)))
+ (import "$submodule" "show_[$id]->[]" (func $"show_[$id]->[]" (param i64)))
+ (import "$submodule" "show_[$f]->[]" (func $"show_[$f]->[]" (param f32)))
+ (import "$submodule" "show_[$fd]->[]" (func $"show_[$fd]->[]" (param f64)))
+ (import "$submodule" "show_[$b]->[]" (func $"show_[$b]->[]" (param i32)))
+ (import "$submodule" "show_[$s]->[]" (func $"show_[$s]->[]" (param i32)))
  (data $0 (global.get $$memoryOffset) "\06\00\00\00\n\tex\t\n")
  (elem $$functions (global.get $$tableOffset))
  (export "getText" (func $getText))
@@ -113,13 +113,13 @@ let exports_1 = instance_1.exports;
     (i32.const 0)
    )
   )
-  (call $show_[$s]->[]
+  (call $"show_[$s]->[]"
    (local.get $0)
   )
-  (call $show_[$s]->[]
+  (call $"show_[$s]->[]"
    (local.get $1)
   )
-  (call $show_[$s]->[]
+  (call $"show_[$s]->[]"
    (local.get $2)
   )
   (return
@@ -188,13 +188,13 @@ let exports_2 = instance_2.exports;
  (import "$submodule" "$table" (table $$table 0 funcref))
  (import "$submodule" "$memoryOffset" (global $$memoryOffset i32))
  (import "$submodule" "$tableOffset" (global $$tableOffset i32))
- (import "$submodule" "show_[$i]->[]" (func $show_[$i]->[] (param i32)))
- (import "$submodule" "show_[$iu]->[]" (func $show_[$iu]->[] (param i32)))
- (import "$submodule" "show_[$id]->[]" (func $show_[$id]->[] (param i64)))
- (import "$submodule" "show_[$f]->[]" (func $show_[$f]->[] (param f32)))
- (import "$submodule" "show_[$fd]->[]" (func $show_[$fd]->[] (param f64)))
- (import "$submodule" "show_[$b]->[]" (func $show_[$b]->[] (param i32)))
- (import "$submodule" "show_[$s]->[]" (func $show_[$s]->[] (param i32)))
+ (import "$submodule" "show_[$i]->[]" (func $"show_[$i]->[]" (param i32)))
+ (import "$submodule" "show_[$iu]->[]" (func $"show_[$iu]->[]" (param i32)))
+ (import "$submodule" "show_[$id]->[]" (func $"show_[$id]->[]" (param i64)))
+ (import "$submodule" "show_[$f]->[]" (func $"show_[$f]->[]" (param f32)))
+ (import "$submodule" "show_[$fd]->[]" (func $"show_[$fd]->[]" (param f64)))
+ (import "$submodule" "show_[$b]->[]" (func $"show_[$b]->[]" (param i32)))
+ (import "$submodule" "show_[$s]->[]" (func $"show_[$s]->[]" (param i32)))
  (global $s (mut i32) (i32.add
   (global.get $$memoryOffset)
   (i32.const 0)
@@ -270,13 +270,13 @@ let exports_3 = instance_3.exports;
  (import "$submodule" "$memoryOffset" (global $$memoryOffset i32))
  (import "$submodule" "$tableOffset" (global $$tableOffset i32))
  (import "file2" "getText" (func $file2.getText (param i32 i32 i32) (result i32)))
- (import "$submodule" "show_[$i]->[]" (func $show_[$i]->[] (param i32)))
- (import "$submodule" "show_[$iu]->[]" (func $show_[$iu]->[] (param i32)))
- (import "$submodule" "show_[$id]->[]" (func $show_[$id]->[] (param i64)))
- (import "$submodule" "show_[$f]->[]" (func $show_[$f]->[] (param f32)))
- (import "$submodule" "show_[$fd]->[]" (func $show_[$fd]->[] (param f64)))
- (import "$submodule" "show_[$b]->[]" (func $show_[$b]->[] (param i32)))
- (import "$submodule" "show_[$s]->[]" (func $show_[$s]->[] (param i32)))
+ (import "$submodule" "show_[$i]->[]" (func $"show_[$i]->[]" (param i32)))
+ (import "$submodule" "show_[$iu]->[]" (func $"show_[$iu]->[]" (param i32)))
+ (import "$submodule" "show_[$id]->[]" (func $"show_[$id]->[]" (param i64)))
+ (import "$submodule" "show_[$f]->[]" (func $"show_[$f]->[]" (param f32)))
+ (import "$submodule" "show_[$fd]->[]" (func $"show_[$fd]->[]" (param f64)))
+ (import "$submodule" "show_[$b]->[]" (func $"show_[$b]->[]" (param i32)))
+ (import "$submodule" "show_[$s]->[]" (func $"show_[$s]->[]" (param i32)))
  (data $0 (global.get $$memoryOffset) "\80\00\00\00\00\01\02\03\04\05\06\07\08\t\n\0b\0c\r\0e\0f\10\11\12\13\14\15\16\17\18\19\1a\1b\1c\1d\1e\1f !\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\7f(\00\00\00\n\f0\9f\87\ba\f0\9f\87\b3\n\f0\9f\8f\b4\f3\a0\81\a7\f3\a0\81\a2\f3\a0\81\b3\f3\a0\81\a3\f3\a0\81\b4\f3\a0\81\bf\n\t\06\00\00\00Text-1\06\00\00\00Text-0\06\00\00\00Text-1\04\00\00\00Text\06\00\00\00Text-0\06\00\00\00Text-1\03\00\00\00\"\00\"\03\00\00\00\'\00\'")
  (elem $$functions (global.get $$tableOffset))
  (export "start" (func $start))
@@ -290,22 +290,22 @@ let exports_3 = instance_3.exports;
     (i32.const 0)
    )
   )
-  (call $show_[$s]->[]
+  (call $"show_[$s]->[]"
    (local.get $0)
   )
-  (call $show_[$s]->[]
+  (call $"show_[$s]->[]"
    (i32.add
     (global.get $$memoryOffset)
     (i32.const 132)
    )
   )
   (local.set $1
-   (call $getText_[$i]->[$s]
+   (call $"getText_[$i]->[$s]"
     (i32.const 0)
    )
   )
-  (call $show_[$s]->[]
-   (call $getText_[$i,$s,$s]->[$s]
+  (call $"show_[$s]->[]"
+   (call $"getText_[$i,$s,$s]->[$s]"
     (i32.const 0)
     (local.get $1)
     (i32.add
@@ -314,19 +314,19 @@ let exports_3 = instance_3.exports;
     )
    )
   )
-  (call $show_[$s]->[]
-   (call $getText_[$i,$s,$s]->[$s]
+  (call $"show_[$s]->[]"
+   (call $"getText_[$i,$s,$s]->[$s]"
     (i32.const 1)
-    (call $getText_[$i]->[$s]
+    (call $"getText_[$i]->[$s]"
      (i32.const 1)
     )
-    (call $getText_[$i]->[$s]
+    (call $"getText_[$i]->[$s]"
      (i32.const 2)
     )
    )
   )
-  (call $show_[$s]->[]
-   (call $getText_[$i,$s,$s]->[$s]
+  (call $"show_[$s]->[]"
+   (call $"getText_[$i,$s,$s]->[$s]"
     (i32.const 2)
     (i32.add
      (global.get $$memoryOffset)
@@ -338,83 +338,99 @@ let exports_3 = instance_3.exports;
     )
    )
   )
-  (call $show_[$s]->[]
+  (call $"show_[$s]->[]"
    (global.get $big-s)
   )
   (local.set $2
-   (call $getText_[$i]->[$s]
+   (call $"getText_[$i]->[$s]"
     (i32.const 1)
    )
   )
-  (call $show_[$s]->[]
+  (call $"show_[$s]->[]"
    (call $file2.getText
     (i32.add
      (global.get $$memoryOffset)
      (i32.const 206)
     )
     (local.get $2)
-    (call $getText_[$i]->[$s]
+    (call $"getText_[$i]->[$s]"
      (i32.const 2)
     )
    )
   )
-  (call $show_[$s]->[]
+  (call $"show_[$s]->[]"
    (global.get $S)
   )
  )
- (func $getText_[$i]->[$s] (param $0 i32) (result i32)
+ (func $"getText_[$i]->[$s]" (param $0 i32) (result i32)
   (if
    (i32.eq
     (local.get $0)
     (i32.const 0)
    )
-   (return
-    (i32.add
-     (global.get $$memoryOffset)
-     (i32.const 214)
-    )
-   )
-   (if
-    (i32.eq
-     (local.get $0)
-     (i32.const 1)
-    )
+   (then
     (return
      (i32.add
       (global.get $$memoryOffset)
-      (i32.const 224)
+      (i32.const 214)
      )
     )
-    (return
-     (i32.add
-      (global.get $$memoryOffset)
-      (i32.const 234)
+   )
+   (else
+    (if
+     (i32.eq
+      (local.get $0)
+      (i32.const 1)
+     )
+     (then
+      (return
+       (i32.add
+        (global.get $$memoryOffset)
+        (i32.const 224)
+       )
+      )
+     )
+     (else
+      (return
+       (i32.add
+        (global.get $$memoryOffset)
+        (i32.const 234)
+       )
+      )
      )
     )
    )
   )
  )
- (func $getText_[$i,$s,$s]->[$s] (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $"getText_[$i,$s,$s]->[$s]" (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (if
    (i32.eq
     (local.get $0)
     (i32.const 0)
    )
-   (return
-    (local.get $1)
+   (then
+    (return
+     (local.get $1)
+    )
    )
-   (if
-    (i32.eq
-     (local.get $0)
-     (i32.const 1)
-    )
-    (return
-     (local.get $2)
-    )
-    (return
-     (i32.add
-      (global.get $$memoryOffset)
-      (i32.const 241)
+   (else
+    (if
+     (i32.eq
+      (local.get $0)
+      (i32.const 1)
+     )
+     (then
+      (return
+       (local.get $2)
+      )
+     )
+     (else
+      (return
+       (i32.add
+        (global.get $$memoryOffset)
+        (i32.const 241)
+       )
+      )
      )
     )
    )

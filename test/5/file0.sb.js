@@ -19,24 +19,24 @@ let table = new WebAssembly.Table({
  (import "$submodule" "$table" (table $$table 0 funcref))
  (import "$submodule" "$memoryOffset" (global $$memoryOffset i32))
  (import "$submodule" "$tableOffset" (global $$tableOffset i32))
- (import "$submodule" "show_[$i]->[]" (func $show_[$i]->[] (param i32)))
- (import "$submodule" "show_[$iu]->[]" (func $show_[$iu]->[] (param i32)))
- (import "$submodule" "show_[$id]->[]" (func $show_[$id]->[] (param i64)))
- (import "$submodule" "show_[$f]->[]" (func $show_[$f]->[] (param f32)))
- (import "$submodule" "show_[$fd]->[]" (func $show_[$fd]->[] (param f64)))
- (import "$submodule" "show_[$b]->[]" (func $show_[$b]->[] (param i32)))
- (import "$submodule" "show_[$s]->[]" (func $show_[$s]->[] (param i32)))
+ (import "$submodule" "show_[$i]->[]" (func $"show_[$i]->[]" (param i32)))
+ (import "$submodule" "show_[$iu]->[]" (func $"show_[$iu]->[]" (param i32)))
+ (import "$submodule" "show_[$id]->[]" (func $"show_[$id]->[]" (param i64)))
+ (import "$submodule" "show_[$f]->[]" (func $"show_[$f]->[]" (param f32)))
+ (import "$submodule" "show_[$fd]->[]" (func $"show_[$fd]->[]" (param f64)))
+ (import "$submodule" "show_[$b]->[]" (func $"show_[$b]->[]" (param i32)))
+ (import "$submodule" "show_[$s]->[]" (func $"show_[$s]->[]" (param i32)))
  (data $0 (global.get $$memoryOffset) "")
  (elem $$functions (global.get $$tableOffset))
  (export "start" (func $start))
  (func $start
-  (call $show_[$b]->[]
+  (call $"show_[$b]->[]"
    (i32.eq
     (memory.size)
     (i32.const 10)
    )
   )
-  (call $show_[$b]->[]
+  (call $"show_[$b]->[]"
    (i32.eq
     (memory.grow
      (i32.const 20)
@@ -44,13 +44,13 @@ let table = new WebAssembly.Table({
     (i32.const 10)
    )
   )
-  (call $show_[$b]->[]
+  (call $"show_[$b]->[]"
    (i32.eq
     (memory.size)
     (i32.const 30)
    )
   )
-  (call $show_[$b]->[]
+  (call $"show_[$b]->[]"
    (i32.eq
     (memory.grow
      (i32.const 70)
@@ -58,13 +58,13 @@ let table = new WebAssembly.Table({
     (i32.const 30)
    )
   )
-  (call $show_[$b]->[]
+  (call $"show_[$b]->[]"
    (i32.eq
     (memory.size)
     (i32.const 100)
    )
   )
-  (call $show_[$b]->[]
+  (call $"show_[$b]->[]"
    (i32.eq
     (memory.grow
      (i32.const 1)
@@ -75,7 +75,7 @@ let table = new WebAssembly.Table({
     )
    )
   )
-  (call $show_[$b]->[]
+  (call $"show_[$b]->[]"
    (i32.eq
     (memory.size)
     (i32.const 100)

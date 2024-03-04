@@ -19,61 +19,61 @@ let table = new WebAssembly.Table({
  (import "$submodule" "$table" (table $$table 0 funcref))
  (import "$submodule" "$memoryOffset" (global $$memoryOffset i32))
  (import "$submodule" "$tableOffset" (global $$tableOffset i32))
- (import "$submodule" "show_[$i]->[]" (func $show_[$i]->[] (param i32)))
- (import "$submodule" "show_[$iu]->[]" (func $show_[$iu]->[] (param i32)))
- (import "$submodule" "show_[$id]->[]" (func $show_[$id]->[] (param i64)))
- (import "$submodule" "show_[$f]->[]" (func $show_[$f]->[] (param f32)))
- (import "$submodule" "show_[$fd]->[]" (func $show_[$fd]->[] (param f64)))
- (import "$submodule" "show_[$b]->[]" (func $show_[$b]->[] (param i32)))
- (import "$submodule" "show_[$s]->[]" (func $show_[$s]->[] (param i32)))
+ (import "$submodule" "show_[$i]->[]" (func $"show_[$i]->[]" (param i32)))
+ (import "$submodule" "show_[$iu]->[]" (func $"show_[$iu]->[]" (param i32)))
+ (import "$submodule" "show_[$id]->[]" (func $"show_[$id]->[]" (param i64)))
+ (import "$submodule" "show_[$f]->[]" (func $"show_[$f]->[]" (param f32)))
+ (import "$submodule" "show_[$fd]->[]" (func $"show_[$fd]->[]" (param f64)))
+ (import "$submodule" "show_[$b]->[]" (func $"show_[$b]->[]" (param i32)))
+ (import "$submodule" "show_[$s]->[]" (func $"show_[$s]->[]" (param i32)))
  (data $0 (global.get $$memoryOffset) "")
  (elem $$functions (global.get $$tableOffset))
  (export "start" (func $start))
  (func $start
-  (call $show_[$i]->[]
+  (call $"show_[$i]->[]"
    (i32.const -1)
   )
-  (call $show_[$iu]->[]
+  (call $"show_[$iu]->[]"
    (i32.const -1)
   )
-  (call $show_[$iu]->[]
+  (call $"show_[$iu]->[]"
    (i32.add
     (i32.const -1)
     (i32.const 1)
    )
   )
-  (call $show_[$id]->[]
+  (call $"show_[$id]->[]"
    (i64.const 9223372036854775807)
   )
-  (call $show_[$id]->[]
+  (call $"show_[$id]->[]"
    (i64.add
     (i64.const 9223372036854775807)
     (i64.const 1)
    )
   )
-  (call $show_[$f]->[]
+  (call $"show_[$f]->[]"
    (f32.const 12587.365234375)
   )
-  (call $show_[$f]->[]
+  (call $"show_[$f]->[]"
    (f32.neg
     (f32.const 5.869999949936755e-05)
    )
   )
-  (call $show_[$fd]->[]
+  (call $"show_[$fd]->[]"
    (f64.neg
     (f64.const 158796555424.25476)
    )
   )
-  (call $show_[$fd]->[]
+  (call $"show_[$fd]->[]"
    (f64.const 5.37e-311)
   )
-  (call $show_[$b]->[]
+  (call $"show_[$b]->[]"
    (i32.const 1)
   )
-  (call $show_[$b]->[]
+  (call $"show_[$b]->[]"
    (i32.const 0)
   )
-  (call $show_[$b]->[]
+  (call $"show_[$b]->[]"
    (i32.lt_s
     (i32.const 4)
     (i32.sub
