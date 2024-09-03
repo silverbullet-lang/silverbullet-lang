@@ -13,7 +13,8 @@ function getNewModule(compiler, path) {
             id: 0,
             list: [],
             stack: [-1],
-            mainId: -1
+            mainId: -1,
+            stringIdList: []
         },
         blocks: {
             id: 0,
@@ -46,11 +47,6 @@ function getNewModule(compiler, path) {
         submodules: {
             id: 0,
             list: []
-        },
-        strings: {
-            id: 0,
-            list: [],
-            pointer: 0
         },
         status: 'CREATED',
 
@@ -199,6 +195,10 @@ function setMainNode(compiler, module, node) {
 
 function getMainNode(compiler, module) {
     return getNodeById(compiler, module, module.nodes.mainId);
+}
+
+function setStringNode(compiler, module, node) {
+    module.nodes.stringIdList.push(node.id);
 }
 
 /* Blocks */
@@ -544,23 +544,4 @@ function setSubmoduleObject(compiler, module, submodule, type, id, internalId) {
     submodule.objectList.push(object);
 }
 
-/* Strings */
-function getNewString(compiler, module, nodeId, size, value) {
-    let string = {
-        id: module.strings.id,
-        nodeId: nodeId,
-        pointer: module.strings.pointer,
-        value: value
-    };
-
-    module.strings.id++;
-    module.strings.list.push(string);
-    module.strings.pointer += size;
-    return string;
-}
-
-function getStringById(compiler, module, id) {
-    return module.strings.list[id];
-}
-
-export { getNewModule, setActiveModule, unsetActiveModule, getModuleById, getModuleByPath, getActiveModule, getMainModule, setModuleChild, getNewNode, getNodeById, setActiveNodeList, getActiveNode, unsetActiveNode, setNodeObject, getNodeFromNode, setMainNode, getMainNode, getNewBlock, setActiveBlock, getActiveBlock, getBlockObjectByName, getBlockById, setBlockObject, unsetActiveBlock, getNewType, getTypeByName, getTypeById, getTypeName, getNewFunction, getFunctionById, getActiveFunction, getFunctionName, getNewVariable, getVariableById, getNewExpression, getExpressionById, isExpressionInstanceOf, getExpressionTypeName, setExpressionTypeId, getExpressionType, setExpressionValueId, getExpressionValueId, getNewReference, getReferenceByName, getReferenceById, getNewSubmodule, setSubmodulePath, getSubmoduleById, setSubmoduleObject, getNewString, getStringById };
+export { getNewModule, setActiveModule, unsetActiveModule, getModuleById, getModuleByPath, getActiveModule, getMainModule, setModuleChild, getNewNode, getNodeById, setActiveNodeList, getActiveNode, unsetActiveNode, setNodeObject, getNodeFromNode, setMainNode, getMainNode, getNewBlock, setActiveBlock, getActiveBlock, getBlockObjectByName, getBlockById, setBlockObject, unsetActiveBlock, getNewType, getTypeByName, getTypeById, getTypeName, getNewFunction, getFunctionById, getActiveFunction, getFunctionName, getNewVariable, getVariableById, getNewExpression, getExpressionById, isExpressionInstanceOf, getExpressionTypeName, setExpressionTypeId, getExpressionType, setExpressionValueId, getExpressionValueId, getNewReference, getReferenceByName, getReferenceById, getNewSubmodule, setSubmodulePath, getSubmoduleById, setSubmoduleObject, setStringNode };

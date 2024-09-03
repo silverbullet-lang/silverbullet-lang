@@ -3,7 +3,7 @@
     "scripts": {
         "build:parser": "node ./src/parser/build.js",
         "build": "npm run build:parser",
-        "test": "node ./test/index.js"
+        "test": "node --experimental-wasm-imported-strings ./test/index.js"
     },
     "devDependencies": {
         "jison": "^0.4.18",

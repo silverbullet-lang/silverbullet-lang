@@ -1,13 +1,11 @@
-import { getMainModule, setActiveModule, unsetActiveModule, getActiveModule, getModuleByPath, getBlockById, getBlockObjectByName, getTypeById, getVariableById, getFunctionById, getFunctionName } from './module.js';
+import { getMainModule, setActiveModule, unsetActiveModule, getActiveModule, getModuleByPath, getNodeById, getBlockById, getBlockObjectByName, getTypeById, getVariableById, getFunctionById, getFunctionName } from './module.js';
 
 function link(compiler) {
     let module = getMainModule(compiler);
     let footer = '';
     let body = '';
     let header = '';
-    let memoryOffset = 0;
     let tableOffset = 0;
-    let minMemorySize = 0;
 
     /* Footer */
     footer += `
@@ -30,52 +28,33 @@ ${ module.ir.emitText().replace(/\/\*/g, '\\\/\\\*').replace(/\*\//g, '\\\*\\\/'
             body += `
 
 let buffer_${ module.id } = (new Uint8Array([${ module.ir.emitBinary() }])).buffer;
-let module_${ module.id } = new WebAssembly.Module(buffer_${ module.id });
+let module_${ module.id } = new WebAssembly.Module(buffer_${ module.id }, {
+    builtins: ['js-string']
+});
 let imports_${ module.id } = {`;
 
             /* Default imports */
             body += `
-    '$submodule': {
-        '$memory': memory,
-        '$memoryOffset': new WebAssembly.Global({
-            value: 'i32'
-        }, ${ memoryOffset }),
-        '$table': table,
+    '$globalObjects': globalObjects,
+    '$localObjects': {
         '$tableOffset': new WebAssembly.Global({
             value: 'i32'
-        }, ${ tableOffset }),
-        'show_[$i]->[]': function(value) {
-            console.log((new Int32Array([value]))[0]);
-        },
-        'show_[$iu]->[]': function(value) {
-            console.log((new Uint32Array([value]))[0]);
-        },
-        'show_[$id]->[]': function(value) {
-            console.log((new BigInt64Array([value]))[0]);
-        },
-        'show_[$f]->[]': function(value) {
-            console.log((new Float32Array([value]))[0]);
-        },
-        'show_[$fd]->[]': function(value) {
-            console.log((new Float64Array([value]))[0]);
-        },
-        'show_[$b]->[]': function(value) {
-            if (value === 0) {
-                console.log(false);
-            } else {
-                console.log(true);
-            }
-        },
-        'show_[$s]->[]': function(pointer) {
-            let sizeBuffer = memory.buffer.slice(pointer, pointer + 4);
-            let size = (new Uint32Array(sizeBuffer))[0];
-            let textDecoder = new TextDecoder();
-            let valueView = new Uint8Array(memory.buffer, pointer + 4, size);
-            let value = textDecoder.decode(valueView);
+        }, ${ tableOffset })
+    },
+    '$globalStrings': globalStrings,
+    '$localStrings': {`;
+            for (let i = 0; i < module.nodes.stringIdList.length; i++) {
+                let stringNode = getNodeById(compiler, module, module.nodes.stringIdList[i]);
 
-            console.log(value);
-        }
-    }`;
+                if (0 < i) {
+                    body += ',';
+                }
+                body += `
+        '$string_${ stringNode.id }': ${ JSON.stringify(stringNode.value) }`;
+            }
+            body += `
+    },
+    '$globalFunctions': globalFunctions`;
 
             /* Custom import(s) */
             for (let i = 0; i < module.submodules.list.length; i++) {
@@ -97,7 +76,7 @@ let imports_${ module.id } = {`;
 
                         externalObjectName = getFunctionName(compiler, submodule, externalFunctionObject);
                     }
-                    if (j > 0) {
+                    if (0 < j) {
                         body += ',';
                     }
                     body += `
@@ -112,7 +91,6 @@ let instance_${ module.id } = new WebAssembly.Instance(module_${ module.id }, im
 let exports_${ module.id } = instance_${ module.id }.exports;`;
 
             tableOffset += module.references.list.length;
-            memoryOffset += module.strings.pointer;
 
             unsetActiveModule(compiler);
             module.status = 'LINKED';
@@ -122,25 +100,50 @@ let exports_${ module.id } = instance_${ module.id }.exports;`;
         module = getActiveModule(compiler);
     }
 
-    /* Check if the necessary size of memory is less than or equal to the requested size of memory */
-    minMemorySize = Math.ceil(memoryOffset / 65536);
-    if (compiler.options.minMemorySize < minMemorySize) {
-        throw {
-            code: 'E_LINK_OUT_OF_MEMORY',
-            message: `initial size of memory (${ compiler.options.minMemorySize } WAP) requested through the compiler option 'minMemorySize' is less than the necessary size of memory (${ minMemorySize } WAP)`,
-            note: '1 WAP (WebAssembly page) is equal to 64 KB'
-        };
-    }
-
     /* Header */
-    header += `let memory = new WebAssembly.Memory({
-    initial: ${ compiler.options.minMemorySize },
-    maximum: ${ compiler.options.maxMemorySize }
-});
-let table = new WebAssembly.Table({
-    element: 'anyfunc',
-    initial: ${ tableOffset }
-});`;
+    header += `let globalObjects = {
+    '$memory': new WebAssembly.Memory({
+        initial: ${ compiler.options.minMemorySize },
+        maximum: ${ compiler.options.maxMemorySize }
+    }),
+    '$table': new WebAssembly.Table({
+        element: 'anyfunc',
+        initial: ${ tableOffset }
+    })
+};
+let globalStrings = {
+    '$string_empty': ${ JSON.stringify('') }
+};
+let globalFunctions = {
+    '$getString_[$i]->[$s]': function(value) {
+        return (new Int32Array([value])[0]).toString();
+    },
+    '$getString_[$iu]->[$s]': function(value) {
+        return ((new Uint32Array([value]))[0]).toString();
+    },
+    '$getString_[$id]->[$s]': function(value) {
+        return ((new BigInt64Array([value]))[0]).toString();
+    },
+    '$getString_[$f]->[$s]': function(value) {
+        return ((new Float32Array([value]))[0]).toString();
+    },
+    '$getString_[$fd]->[$s]': function(value) {
+        return ((new Float64Array([value]))[0]).toString();
+    },
+    '$getString_[$b]->[$s]': function(value) {
+        if (value === 0) {
+            return 'false';
+        } else {
+            return 'true';
+        }
+    },
+    '$getString_[$s]->[$s]': function(value) {
+        return value;
+    },
+    '$show': function(value) {
+        console.log(value);
+    }
+};`;
 
     /* The final output */
     compiler.executable = `${ header }${ body }${ footer }`;

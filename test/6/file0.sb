@@ -7,10 +7,7 @@ let start
 	show[ascii]
 
 	-- Flags of the United Nations and Scotland
-	show["
-\u127482\u127475
-\u127988\u917607\u917602\u917619\u917603\u917620\u917631
-	"]
+	show["\n\u127482\u127475\n\u127988\u917607\u917602\u917619\u917603\u917620\u917631\n\t"]
 
 	s-0 := getText[0]
 	show[getText[0, s-0, 'Text-1']]

@@ -1,0 +1,20 @@
+import { compile } from '../../src/index.js';
+
+async function main() {
+    try {
+        let module;
+
+        await compile({
+            input: (new URL('./file0.sb', import.meta.url)).href,
+            minMemorySize: 1
+        });
+        module = await import('./file0.sb.js');
+        console.log(module['file0']);
+        module['file0'].start();
+    } catch (err) {
+        console.log(err.message);
+        console.log(err);
+    }
+}
+
+main();

@@ -7,7 +7,8 @@
 
 /* States */
 %x INLINE_COMMENT MULTILINE_COMMENT
-%x INLINE_TEXT MULTILINE_TEXT
+%x SINGLE_SINGLE_QUOTED_STRING TRIPLE_SINGLE_QUOTED_STRING SINGLE_DOUBLE_QUOTED_STRING TRIPLE_DOUBLE_QUOTED_STRING
+%s INTERPOLATED_STRING
 
 %%
 
@@ -173,79 +174,61 @@
 "'"
     {
 
-        //console.log('INLINE_TEXT (start)', yytext.split());
+        //console.log('SINGLE_SINGLE_QUOTED_STRING (start)', yytext.split());
 
-        this.pushState('INLINE_TEXT');
+        this.pushState('SINGLE_SINGLE_QUOTED_STRING');
         yy.parser.yy.location = yylloc;
         return yytext;
     }
 
-<INLINE_TEXT>[^\'\\\n]+
+<SINGLE_SINGLE_QUOTED_STRING>([\\].|[^\\\'\n])+
     {
 
-        //console.log('INLINE_TEXT', yytext.split());
+        //console.log('SINGLE_SINGLE_QUOTED_STRING', yytext.split());
 
-        yy.parser.yy.location = yylloc;
-        return 'INLINE_TEXT';
+        var textToken = $getTextToken(yytext, yylloc);
+
+        yytext = textToken.value;
+        yy.parser.yy.location = textToken.location;
+        return textToken.name;
     }
 
-<INLINE_TEXT,MULTILINE_TEXT>[\\].
+<SINGLE_SINGLE_QUOTED_STRING>"'"
     {
 
-        //console.log(yy.lexer.conditionStack[yy.lexer.conditionStack.length - 1], yytext.split());
+        //console.log('SINGLE_SINGLE_QUOTED_STRING (end)', yytext.split());
 
-        var conditionStack = yy.lexer.conditionStack;
-        var token = conditionStack[conditionStack.length - 1];
-
-        if (yytext === '\\0') {
-            yytext = String.fromCodePoint(0);
-        } else if (yytext === '\\\'') {
-            yytext = String.fromCodePoint(39);
-        } else if (yytext === '\\\"') {
-            yytext = String.fromCodePoint(34);
-        } else if (yytext === '\\\\') {
-            yytext = String.fromCodePoint(92);
-        } else if (yytext === '\\n') {
-            yytext = String.fromCodePoint(10);
-        } else if (yytext === '\\r') {
-            yytext = String.fromCodePoint(13);
-        } else if (yytext === '\\v') {
-            yytext = String.fromCodePoint(11);
-        } else if (yytext === '\\t') {
-            yytext = String.fromCodePoint(9);
-        } else if (yytext === '\\b') {
-            yytext = String.fromCodePoint(8);
-        } else if (yytext === '\\f') {
-            yytext = String.fromCodePoint(12);
-        } else {
-            yytext = yytext.slice(1);
-        }
+        this.popState();
         yy.parser.yy.location = yylloc;
-        return token;
+        return yytext;
     }
 
-<INLINE_TEXT,MULTILINE_TEXT>[\\]"u"[0-9]+
+"'''"
     {
 
-        //console.log(yy.lexer.conditionStack[yy.lexer.conditionStack.length - 1], yytext.split());
+        //console.log('TRIPLE_SINGLE_QUOTED_STRING (start)', yytext.split());
 
-        var conditionStack = yy.lexer.conditionStack;
-        var token = conditionStack[conditionStack.length - 1];
-        var value = parseInt(yytext.slice(2), 10);
-
-        if (value <= 1114111) {
-            yytext = String.fromCodePoint(value);
-        } else {
-            token = 'UNICODE_CODE_POINT_INVALID';
-        }
+        this.pushState('TRIPLE_SINGLE_QUOTED_STRING');
         yy.parser.yy.location = yylloc;
-        return token;
+        return yytext;
     }
 
-<INLINE_TEXT>"'"
+<TRIPLE_SINGLE_QUOTED_STRING>([\\].|[^\\\'])+
     {
 
-        //console.log('INLINE_TEXT (end)', yytext.split());
+        //console.log('TRIPLE_SINGLE_QUOTED_STRING', yytext.split());
+
+        var textToken = $getTextToken(yytext, yylloc);
+
+        yytext = textToken.value;
+        yy.parser.yy.location = textToken.location;
+        return textToken.name;
+    }
+
+<TRIPLE_SINGLE_QUOTED_STRING>"'''"
+    {
+
+        //console.log('TRIPLE_SINGLE_QUOTED_STRING (end)', yytext.split());
 
         this.popState();
         yy.parser.yy.location = yylloc;
@@ -255,26 +238,91 @@
 "\""
     {
 
-        //console.log('MULTILINE_TEXT (start)', yytext.split());
+        //console.log('SINGLE_DOUBLE_QUOTED_STRING (start)', yytext.split());
 
-        this.pushState('MULTILINE_TEXT');
+        this.pushState('SINGLE_DOUBLE_QUOTED_STRING');
         yy.parser.yy.location = yylloc;
         return yytext;
     }
 
-<MULTILINE_TEXT>[^\"\\]+
+<SINGLE_DOUBLE_QUOTED_STRING>([\\].|[^\\\"\{\n])+
     {
 
-        //console.log('MULTILINE_TEXT', yytext.split());
+        //console.log('SINGLE_DOUBLE_QUOTED_STRING', yytext.split());
 
-        yy.parser.yy.location = yylloc;
-        return 'MULTILINE_TEXT';
+        var textToken = $getTextToken(yytext, yylloc);
+
+        yytext = textToken.value;
+        yy.parser.yy.location = textToken.location;
+        return textToken.name;
     }
 
-<MULTILINE_TEXT>"\""
+<SINGLE_DOUBLE_QUOTED_STRING>"{"
     {
 
-        //console.log('MULTILINE_TEXT (end)', yytext.split());
+        //console.log('INTERPOLATED_STRING (start)', yytext.split());
+
+        this.pushState('INTERPOLATED_STRING');
+        yy.parser.yy.location = yylloc;
+        return yytext;
+    }
+
+<INTERPOLATED_STRING>"}"
+    {
+
+        //console.log('INTERPOLATED_STRING (end)', yytext.split());
+
+        this.popState();
+        yy.parser.yy.location = yylloc;
+        return yytext;
+    }
+
+<SINGLE_DOUBLE_QUOTED_STRING>"\""
+    {
+
+        //console.log('SINGLE_DOUBLE_QUOTED_STRING (end)', yytext.split());
+
+        this.popState();
+        yy.parser.yy.location = yylloc;
+        return yytext;
+    }
+
+"\"\"\""
+    {
+
+        //console.log('TRIPLE_DOUBLE_QUOTED_STRING (start)', yytext.split());
+
+        this.pushState('TRIPLE_DOUBLE_QUOTED_STRING');
+        yy.parser.yy.location = yylloc;
+        return yytext;
+    }
+
+<TRIPLE_DOUBLE_QUOTED_STRING>([\\].|[^\\\"\{])+
+    {
+
+        //console.log('TRIPLE_DOUBLE_QUOTED_STRING', yytext.split());
+
+        var textToken = $getTextToken(yytext, yylloc);
+
+        yytext = textToken.value;
+        yy.parser.yy.location = textToken.location;
+        return textToken.name;
+    }
+
+<TRIPLE_DOUBLE_QUOTED_STRING>"{"
+    {
+
+        //console.log('INTERPOLATED_STRING (start)', yytext.split());
+
+        this.pushState('INTERPOLATED_STRING');
+        yy.parser.yy.location = yylloc;
+        return yytext;
+    }
+
+<TRIPLE_DOUBLE_QUOTED_STRING>"\"\"\""
+    {
+
+        //console.log('TRIPLE_DOUBLE_QUOTED_STRING (end)', yytext.split());
 
         this.popState();
         yy.parser.yy.location = yylloc;
@@ -391,6 +439,85 @@
 /* Here, a 'tail' is a synonym for either an indentation or outdentation */
 var $tailLengthList = [0];
 
+/* Finds and replaces Unicode code point escapes (\u[0-9]+) and escape sequences (\.) with the corresponding values in a string */
+var $getTextToken = function(value, location) {
+    var textToken = {
+        name: 'TEXT',
+        value: '',
+        location: location
+    };
+    var match = [''];
+    var index = 0;
+    var string = '';
+    var last_line = textToken.location.first_line;
+    var last_column = textToken.location.first_column;
+
+    while (match !== null) {
+        var length = match[0].length;
+
+        index += length;
+        string = value.slice(index);
+        last_column += length;
+        match = string.match(/^[^\\\n]+/);
+        if (match !== null) {
+            textToken.value += match[0];
+        } else {
+            match = string.match(/^[\\]u[0-9]+/);
+            if (match !== null) {
+                var integer = parseInt(match[0].slice(2), 10);
+
+                if (integer <= 1114111) {
+                    textToken.value += String.fromCodePoint(integer);
+                } else {
+                    textToken.name = 'UNICODE_CODE_POINT_OUT_OF_BOUNDS';
+                    textToken.value = match[0];
+                    textToken.location.first_line = last_line;
+                    textToken.location.last_line = last_line;
+                    textToken.location.first_column = last_column;
+                    textToken.location.last_column = last_column + match[0].length;
+                    match = null;
+                }
+            } else {
+                match = string.match(/^[\\]./);
+                if (match !== null) {
+                    /* https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Lexical_grammar#escape_sequences */
+                    if (match[0] === '\\0') {
+                        textToken.value += String.fromCodePoint(0x00);
+                    } else if (match[0] === '\\\'') {
+                        textToken.value += String.fromCodePoint(0x27);
+                    } else if (match[0] === '\\\"') {
+                        textToken.value += String.fromCodePoint(0x22);
+                    } else if (match[0] === '\\\\') {
+                        textToken.value += String.fromCodePoint(0x5C);
+                    } else if (match[0] === '\\n') {
+                        textToken.value += String.fromCodePoint(0x0A);
+                    } else if (match[0] === '\\r') {
+                        textToken.value += String.fromCodePoint(0x0D);
+                    } else if (match[0] === '\\v') {
+                        textToken.value += String.fromCodePoint(0x0B);
+                    } else if (match[0] === '\\t') {
+                        textToken.value += String.fromCodePoint(0x09);
+                    } else if (match[0] === '\\b') {
+                        textToken.value += String.fromCodePoint(0x08);
+                    } else if (match[0] === '\\f') {
+                        textToken.value += String.fromCodePoint(0x0C);
+                    } else {
+                        textToken.value += match[0][1];
+                    }
+                } else {
+                    match = string.match(/^[\n]/);
+                    if (match !== null) {
+                        last_line++;
+                        last_column = -1;
+                        textToken.value += match[0];
+                    }
+                }
+            }
+        }
+    }
+    return textToken;
+};
+
 /lex
 
 /* Associativity and precedence (low to high) */
@@ -398,7 +525,7 @@ var $tailLengthList = [0];
 %left 'and'
 %left '==' '!='
 %left '<' '>' '<=' '>='
-%left SUBTRACTION '+'
+%left SUBTRACTION '+' '&'
 %left '*' '/' '%'
 %right UNARY_NEGATION LOGICAL_NEGATION
 %nonassoc '(' ')'
@@ -921,6 +1048,21 @@ moduleStmt
                     ], '').id
                 ], '').id,
 
+                /* $eq | [$s, $s] -> [$b] */
+                yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                    ], '').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$eq').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                            yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$s').id,
+                            yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$s').id
+                        ], '').id,
+                        yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$b').id
+                    ], '').id
+                ], '').id,
+
                 /* $ne | [$i, $i] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
@@ -991,6 +1133,21 @@ moduleStmt
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$fd').id,
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$fd').id
+                        ], '').id,
+                        yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$b').id
+                    ], '').id
+                ], '').id,
+
+                /* $ne | [$s, $s] -> [$b] */
+                yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                    ], '').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$ne').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                            yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$s').id,
+                            yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$s').id
                         ], '').id,
                         yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$b').id
                     ], '').id
@@ -1894,6 +2051,104 @@ moduleStmt
                     ], '').id
                 ], '').id,
 
+                /* $getString | [$i] -> [$s] */
+                yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                    ], '').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$getString').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                            yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$i').id
+                        ], '').id,
+                        yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$s').id
+                    ], '').id
+                ], '').id,
+
+                /* $getString | [$iu] -> [$s] */
+                yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                    ], '').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$getString').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                            yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id
+                        ], '').id,
+                        yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$s').id
+                    ], '').id
+                ], '').id,
+
+                /* $getString | [$id] -> [$s] */
+                yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                    ], '').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$getString').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                            yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$id').id
+                        ], '').id,
+                        yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$s').id
+                    ], '').id
+                ], '').id,
+
+                /* $getString | [$f] -> [$s] */
+                yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                    ], '').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$getString').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                            yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$f').id
+                        ], '').id,
+                        yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$s').id
+                    ], '').id
+                ], '').id,
+
+                /* $getString | [$fd] -> [$s] */
+                yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                    ], '').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$getString').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                            yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$fd').id
+                        ], '').id,
+                        yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$s').id
+                    ], '').id
+                ], '').id,
+
+                /* $getString | [$b] -> [$s] */
+                yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                    ], '').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$getString').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                            yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$b').id
+                        ], '').id,
+                        yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$s').id
+                    ], '').id
+                ], '').id,
+
+                /* $getString | [$s] -> [$s] */
+                yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                    ], '').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$getString').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                            yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$s').id
+                        ], '').id,
+                        yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$s').id
+                    ], '').id
+                ], '').id,
+
                 /* show | [$i] -> []  */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
@@ -1989,6 +2244,51 @@ moduleStmt
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$s').id
                         ], '').id,
                         yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$v').id
+                    ], '').id
+                ], '').id,
+
+                /* $size | [$s] -> [$i] */
+                yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                    ], '').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$size').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                            yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$s').id
+                        ], '').id,
+                        yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$i').id
+                    ], '').id
+                ], '').id,
+
+                /* $join | [$s, $s] -> [$s] */
+                yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                    ], '').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$join').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                            yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$s').id,
+                            yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$s').id
+                        ], '').id,
+                        yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$s').id
+                    ], '').id
+                ], '').id,
+
+                /* $slice | [$s, $i, $i] -> [$s] */
+                yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                    ], '').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$slice').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                            yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$s').id,
+                            yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$i').id,
+                            yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$i').id
+                        ], '').id,
+                        yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$s').id
                     ], '').id
                 ], '').id
             ], '');
@@ -2289,6 +2589,12 @@ operator
                 yy.getNewNode(yy.compiler, yy.module, 'operator', @0, [], 'or').id
             ];
         }
+    | '&'
+        {
+            $$ = [
+                yy.getNewNode(yy.compiler, yy.module, 'operator', @0, [], '&').id
+            ];
+        }
     ;
 
 type
@@ -2357,7 +2663,7 @@ referenceTypeTo
     ;
 
 path
-    : "'" inlineText "'"
+    : "'" text "'"
         {
             $$ = [
                 yy.getNewNode(yy.compiler, yy.module, 'path', @0, [], $2.trim()).id
@@ -2365,12 +2671,8 @@ path
         }
     ;
 
-inlineText
-    : inlineText INLINE_TEXT
-        {
-            $$ = $1 + $2;
-        }
-    | INLINE_TEXT
+text
+    : TEXT
     ;
 
 /* The initialization statement */
@@ -2812,6 +3114,8 @@ expr
     | name
     | call
     | grouping
+    | string
+    | join
     ;
 
 /* Literal values */
@@ -2822,7 +3126,6 @@ value
     | floatingPointSingle
     | floatingPointDouble
     | boolean
-    | stringNonInterpolated
     ;
 
 integerSingleSigned
@@ -2877,53 +3180,6 @@ boolean
                 yy.getNewNode(yy.compiler, yy.module, 'boolean', @0, [], $1).id
             ];
         }
-    ;
-
-stringNonInterpolated
-    : string
-        {
-            /* Based on empirical experiments using node v18.18.0 and npm v9.8.1, a non-interpolated string may contain at most 3355429 characters of the English alphabet */
-            /* If there are more characters, the parser throws the error 'Maximum call stack size exceeded' */
-
-            $$ = [
-                yy.getNewNode(yy.compiler, yy.module, 'stringNonInterpolated', @0, $1, '').id
-            ];
-        }
-    ;
-
-string
-    : "'" inlineText "'"
-        {
-            $$ = [
-                yy.getNewNode(yy.compiler, yy.module, 'string', @0, [], $2).id
-            ];
-        }
-    | "'" "'"
-        {
-            $$ = [
-                yy.getNewNode(yy.compiler, yy.module, 'string', @0, [], '').id
-            ];
-        }
-    | '"' multilineText '"'
-        {
-            $$ = [
-                yy.getNewNode(yy.compiler, yy.module, 'string', @0, [], $2).id
-            ];
-        }
-    | '"' '"'
-        {
-            $$ = [
-                yy.getNewNode(yy.compiler, yy.module, 'string', @0, [], '').id
-            ];
-        }
-    ;
-
-multilineText
-    : multilineText MULTILINE_TEXT
-        {
-            $$ = $1 + $2;
-        }
-    | MULTILINE_TEXT
     ;
 
 /* The reference expression */
@@ -3204,6 +3460,139 @@ grouping
         }
     ;
 
+/* The string expression */
+string
+    /*
+        If a non-interpolated string constant contains Unicode code points from U+0020 to U+007E (inclusive) and the size of that string is bigger than 3 MB, then the lexer may throw the error 'Maximum call stack size exceeded'.
+        The cause of this error resides in the usage of JavaScript built-in function String.match.
+    */
+    : nonInterpolatedString
+    | interpolatedString
+    ;
+
+nonInterpolatedString
+    : "'" text "'"
+        {
+            $$ = [
+                yy.getNewNode(yy.compiler, yy.module, 'string', @0, [], $2).id
+            ];
+        }
+    | "'" "'"
+        {
+            $$ = [
+                yy.getNewNode(yy.compiler, yy.module, 'string', @0, [], '').id
+            ];
+        }
+    | "'''" text "'''"
+        {
+            $$ = [
+                yy.getNewNode(yy.compiler, yy.module, 'string', @0, [], $2).id
+            ];
+        }
+    | "'''" "'''"
+        {
+            $$ = [
+                yy.getNewNode(yy.compiler, yy.module, 'string', @0, [], '').id
+            ];
+        }
+    ;
+
+interpolatedString
+    : '"' text interpolatedExprTextList '"'
+        {
+            $$ = [
+                yy.getNewNode(yy.compiler, yy.module, 'callByName', @0, [
+                    yy.getNewNode(yy.compiler, yy.module, 'operator', @0, [], '&').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'string', @0, [], $2).id
+                    ].concat($3), '').id
+                ], '').id
+            ];
+        }
+    | '"' interpolatedExprTextList '"'
+        {
+            $$ = $2;
+        }
+    | '"""' text interpolatedExprTextList '"""'
+        {
+            $$ = [
+                yy.getNewNode(yy.compiler, yy.module, 'callByName', @0, [
+                    yy.getNewNode(yy.compiler, yy.module, 'operator', @0, [], '&').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'string', @0, [], $2).id
+                    ].concat($3), '').id
+                ], '').id
+            ];
+        }
+    | '"""' interpolatedExprTextList '"""'
+        {
+            $$ = $2;
+        }
+    ;
+
+interpolatedExprTextList
+    : nonEmptyInterpolatedExprTextList
+    |
+        {
+            $$ = [
+                yy.getNewNode(yy.compiler, yy.module, 'string', @0, [], '').id
+            ];
+        }
+    ;
+
+nonEmptyInterpolatedExprTextList
+    : nonEmptyInterpolatedExprTextList interpolatedExprText
+        {
+            $$ = [
+                yy.getNewNode(yy.compiler, yy.module, 'callByName', @0, [
+                    yy.getNewNode(yy.compiler, yy.module, 'operator', @0, [], '&').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, $1.concat($2), '').id
+                ], '').id
+            ];
+        }
+    | interpolatedExprText
+    ;
+
+interpolatedExprText
+    : interpolatedExpr text
+        {
+            $$ = [
+                yy.getNewNode(yy.compiler, yy.module, 'callByName', @0, [
+                    yy.getNewNode(yy.compiler, yy.module, 'operator', @0, [], '&').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, $1.concat([
+                        yy.getNewNode(yy.compiler, yy.module, 'string', @0, [], $2).id
+                    ]), '').id
+                ], '').id
+            ];
+        }
+    | interpolatedExpr
+    ;
+
+interpolatedExpr
+    : '{' expr '}'
+        {
+            $$ = [
+                yy.getNewNode(yy.compiler, yy.module, 'callByName', @0, [
+                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$getString').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, $2, '').id
+                ], '').id
+            ];
+        }
+    ;
+
+/* The expression '&' (join) */
+join
+    : expr '&' expr
+        {
+            $$ = [
+                yy.getNewNode(yy.compiler, yy.module, 'callByName', @0, [
+                    yy.getNewNode(yy.compiler, yy.module, 'operator', @0, [], '&').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, $1.concat($3), '').id
+                ], '').id
+            ];
+        }
+    ;
+
 %%
 
 /* We rewrite the function 'parseError' in order to provide our own error messages */
@@ -3226,10 +3615,11 @@ parser.parseError = function(str, hash) {
             tokenText = 'outdentation';
         } else if (token === 'BASIC_TYPE') {
             tokenText = 'type';
-        } else if (token === 'INLINE_TEXT') {
+        } else if (token === 'TEXT') {
             tokenText = 'text';
-        } else if (token === 'MULTILINE_TEXT') {
-            tokenText = 'text';
+        } else if (token === 'UNICODE_CODE_POINT_OUT_OF_BOUNDS') {
+            tokenText = 'Unicode code point is out of bounds;'
+                + ' a Unicode code point must be an integer between 0 and 1114111 (inclusive)';
         } else if (token === 'MODIFIER') {
             tokenText = 'modifier';
         } else if (token === 'IDENTIFIER') {
@@ -3250,8 +3640,10 @@ parser.parseError = function(str, hash) {
             tokenText = 'boolean value';
         } else if (token === 'SUBTRACTION') {
             tokenText = 'subtraction operator \'-\'';
-        } else if (token === 'UNICODE_CODE_POINT_INVALID') {
-            tokenText = 'Unicode code point is out of bounds';
+        } else if (token === '\'') {
+            tokenText = '\"' + token + '\"';
+        } else if (token === '\'\'\'') {
+            tokenText = '\"' + token + '\"';
         }
         return tokenText;
     };
@@ -3270,7 +3662,7 @@ parser.parseError = function(str, hash) {
     var getMessage = function(hash) {
         var message = '';
 
-        if ((hash.token === 'INDENTATION_SPACE_CHARACTER') || (hash.token === 'INDENTATION_TOO_LONG') || (hash.token === 'UNICODE_CODE_POINT_INVALID')) {
+        if ((hash.token === 'INDENTATION_SPACE_CHARACTER') || (hash.token === 'INDENTATION_TOO_LONG') || (hash.token === 'UNICODE_CODE_POINT_OUT_OF_BOUNDS')) {
             message = getTokenText(hash.token);
         } else {
             var tokenTextList = getTokenTextList(hash);
@@ -3305,9 +3697,6 @@ parser.parseError = function(str, hash) {
     var getNote = function(token) {
         var note = undefined;
 
-        if (token === 'UNICODE_CODE_POINT_INVALID') {
-            note = 'Unicode code point must be an integer between 0 and 1114111';
-        }
         return note;
     };
 

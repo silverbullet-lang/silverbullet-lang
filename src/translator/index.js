@@ -1,5 +1,6 @@
 import Binaryen from './binaryen.js';
-import { getModuleByPath, getNodeById, setActiveNodeList, getActiveNode, unsetActiveNode, getMainNode, getBlockById, getBlockObjectByName, getTypeByName, getTypeById, getFunctionById, getFunctionName, getVariableById, getExpressionById, getExpressionType, getExpressionValueId, getReferenceById, getSubmoduleById, getStringById } from '../module.js';
+import { getModuleByPath, getNodeById, setActiveNodeList, getActiveNode, unsetActiveNode, getMainNode, getBlockById, getBlockObjectByName, getTypeByName, getTypeById, getFunctionById, getFunctionName, getVariableById, getExpressionById, getExpressionType, getExpressionValueId, getReferenceById, getSubmoduleById } from '../module.js';
+import { getBinaryenStringType } from './library.js';
 
 async function translateModule(compiler, module) {
     let node = getMainNode(compiler, module);
@@ -14,8 +15,9 @@ async function translateModule(compiler, module) {
         binaryen.Features.MutableGlobals |
         /* For the instruction '$copyMemory' */
         binaryen.Features.BulkMemory |
-        /* This feature allows us to store non-interpolated strings in global variables */
-        binaryen.Features.ExtendedConst
+        /* For strings and other external objects */
+        binaryen.Features.ReferenceTypes |
+        binaryen.Features.GC
     );
     while (node) {
         if (node.name === 'moduleStmt') {
@@ -52,10 +54,6 @@ async function translateModule(compiler, module) {
             translateFloatingPointDouble(compiler, module, node, binaryen);
         } else if (node.name === 'boolean') {
             translateBoolean(compiler, module, node, binaryen);
-        } else if (node.name === 'stringNonInterpolated') {
-            translateStringNonInterpolated(compiler, module, node, binaryen);
-        } else if (node.name === 'string') {
-            translateString(compiler, module, node, binaryen);
         } else if (node.name === 'functionStmt') {
             translateFunctionStmt(compiler, module, node, binaryen);
         } else if (node.name === 'nonModuleBlock') {
@@ -90,6 +88,8 @@ async function translateModule(compiler, module) {
             translateCallByExpression(compiler, module, node, binaryen);
         } else if (node.name === 'exprStmt') {
             translateExprStmt(compiler, module, node, binaryen);
+        } else if (node.name === 'string') {
+            translateString(compiler, module, node, binaryen);
         }
         node = getActiveNode(compiler, module);
     }
@@ -102,39 +102,34 @@ function translateModuleStmt(compiler, module, node, binaryen) {
         setActiveNodeList(compiler, module, node.childIdList);
         node.status = '1';
     } else if (node.status === '1') {
-        let segment = {
-            passive: false,
-            offset: module.ir.global.get(
-                '$memoryOffset',
-                binaryen.i32
-            ),
-            data: new Uint8Array(module.strings.pointer)
-        };
-        let segmentList = [segment];
         let referenceNameList = [];
 
-        /* Import a global variable that stores a pointer to the memory */
-        /* This pointer points to the start of static data of this module */
-        /* Linker calculates the exact value of this variable for every module individually */
+        /* Import strings */
         module.ir.addGlobalImport(
-            '$memoryOffset',
-            '$submodule',
-            '$memoryOffset',
-            binaryen.i32,
+            '$string_empty',
+            '$globalStrings',
+            '$string_empty',
+            getBinaryenStringType(binaryen),
             false
         );
+        for (let i = 0; i < module.nodes.stringIdList.length; i++) {
+            let stringNode = getNodeById(compiler, module, module.nodes.stringIdList[i]);
+
+            module.ir.addGlobalImport(
+                `$string_${ stringNode.id }`,
+                '$localStrings',
+                `$string_${ stringNode.id }`,
+                getBinaryenStringType(binaryen),
+                false
+            );
+        }
 
         /* Set memory */
-        for (let i = 0; i < module.strings.list.length; i++) {
-            let stringObject = module.strings.list[i];
-
-            segment.data.set(stringObject.value, stringObject.pointer);
-        }
         module.ir.setMemory(
             0,
             -1,
             null,
-            segmentList,
+            [],
             false,
             false,
             '$memory'
@@ -143,7 +138,7 @@ function translateModuleStmt(compiler, module, node, binaryen) {
         /* Import memory */
         module.ir.addMemoryImport(
             '$memory',
-            '$submodule',
+            '$globalObjects',
             '$memory',
             false
         );
@@ -154,7 +149,7 @@ function translateModuleStmt(compiler, module, node, binaryen) {
         /* Linker calculates the exact value of this variable for every module individually */
         module.ir.addGlobalImport(
             '$tableOffset',
-            '$submodule',
+            '$localObjects',
             '$tableOffset',
             binaryen.i32,
             false
@@ -163,73 +158,126 @@ function translateModuleStmt(compiler, module, node, binaryen) {
         /* Import table */
         module.ir.addTableImport(
             '$table',
-            '$submodule',
+            '$globalObjects',
             '$table'
         );
 
-        /* Import function 'show' */
+        /* Import functions '$getString' */
         module.ir.addFunctionImport(
-            'show_[$i]->[]',
-            '$submodule',
-            'show_[$i]->[]',
+            '$getString_[$i]->[$s]',
+            '$globalFunctions',
+            '$getString_[$i]->[$s]',
             binaryen.createType([
                 binaryen.i32
             ]),
-            binaryen.none
+            getBinaryenStringType(binaryen)
         );
         module.ir.addFunctionImport(
-            'show_[$iu]->[]',
-            '$submodule',
-            'show_[$iu]->[]',
+            '$getString_[$iu]->[$s]',
+            '$globalFunctions',
+            '$getString_[$iu]->[$s]',
             binaryen.createType([
                 binaryen.i32
             ]),
-            binaryen.none
+            getBinaryenStringType(binaryen)
         );
         module.ir.addFunctionImport(
-            'show_[$id]->[]',
-            '$submodule',
-            'show_[$id]->[]',
+            '$getString_[$id]->[$s]',
+            '$globalFunctions',
+            '$getString_[$id]->[$s]',
             binaryen.createType([
                 binaryen.i64
             ]),
-            binaryen.none
+            getBinaryenStringType(binaryen)
         );
         module.ir.addFunctionImport(
-            'show_[$f]->[]',
-            '$submodule',
-            'show_[$f]->[]',
+            '$getString_[$f]->[$s]',
+            '$globalFunctions',
+            '$getString_[$f]->[$s]',
             binaryen.createType([
                 binaryen.f32
             ]),
-            binaryen.none
+            getBinaryenStringType(binaryen)
         );
         module.ir.addFunctionImport(
-            'show_[$fd]->[]',
-            '$submodule',
-            'show_[$fd]->[]',
+            '$getString_[$fd]->[$s]',
+            '$globalFunctions',
+            '$getString_[$fd]->[$s]',
             binaryen.createType([
                 binaryen.f64
             ]),
-            binaryen.none
+            getBinaryenStringType(binaryen)
         );
         module.ir.addFunctionImport(
-            'show_[$b]->[]',
-            '$submodule',
-            'show_[$b]->[]',
+            '$getString_[$b]->[$s]',
+            '$globalFunctions',
+            '$getString_[$b]->[$s]',
             binaryen.createType([
                 binaryen.i32
             ]),
-            binaryen.none
+            getBinaryenStringType(binaryen)
         );
         module.ir.addFunctionImport(
-            'show_[$s]->[]',
-            '$submodule',
-            'show_[$s]->[]',
+            '$getString_[$s]->[$s]',
+            '$globalFunctions',
+            '$getString_[$s]->[$s]',
             binaryen.createType([
-                binaryen.i32
+                getBinaryenStringType(binaryen)
+            ]),
+            getBinaryenStringType(binaryen)
+        );
+
+        /* Import function '$show' */
+        module.ir.addFunctionImport(
+            '$show',
+            '$globalFunctions',
+            '$show',
+            binaryen.createType([
+                getBinaryenStringType(binaryen)
             ]),
             binaryen.none
+        );
+
+        /* Import functions for string manipulations */
+        module.ir.addFunctionImport(
+            '$wasm:js-string_length',
+            'wasm:js-string',
+            'length',
+            binaryen.createType([
+                binaryen.externref
+            ]),
+            binaryen.i32
+        );
+        module.ir.addFunctionImport(
+            '$wasm:js-string_concat',
+            'wasm:js-string',
+            'concat',
+            binaryen.createType([
+                binaryen.externref,
+                binaryen.externref
+            ]),
+            getBinaryenStringType(binaryen)
+        );
+        module.ir.addFunctionImport(
+            '$wasm:js-string_substring',
+            'wasm:js-string',
+            'substring',
+            binaryen.createType([
+                binaryen.externref,
+                binaryen.i32,
+                binaryen.i32
+            ]),
+            getBinaryenStringType(binaryen)
+        );
+        module.ir.addFunctionImport(
+            '$wasm:js-string_equals',
+            'wasm:js-string',
+            'equals',
+            binaryen.createType([
+                binaryen.externref,
+                binaryen.externref
+            ]),
+            binaryen.i32
         );
 
         /* Fill the table */
@@ -378,7 +426,7 @@ function translateBasicType(compiler, module, node, binaryen) {
         } else if (typeObject.name === '$b') {
             typeObject.ir = binaryen.i32;
         } else if (typeObject.name === '$s') {
-            typeObject.ir = binaryen.i32;
+            typeObject.ir = getBinaryenStringType(binaryen);
         }
         unsetActiveNode(compiler, module);
         node.status = 'TRANSLATED';
@@ -510,34 +558,6 @@ function translateBoolean(compiler, module, node, binaryen) {
         } else if (node.value === 'true') {
             expressionObject.ir = module.ir.i32.const(1);
         }
-        unsetActiveNode(compiler, module);
-        node.status = 'TRANSLATED';
-    }
-}
-
-function translateStringNonInterpolated(compiler, module, node, binaryen) {
-    if (node.status === 'CHECKED') {
-        setActiveNodeList(compiler, module, node.childIdList);
-        node.status = '1';
-    } else if (node.status === '1') {
-        let stringNode = getNodeById(compiler, module, node.childIdList[0]);
-        let stringObject = getStringById(compiler, module, stringNode.object.id);
-        let expressionObject = getExpressionById(compiler, module, node.object.id);
-
-        expressionObject.ir = module.ir.i32.add(
-            module.ir.global.get(
-                '$memoryOffset',
-                binaryen.i32
-            ),
-            module.ir.i32.const(stringObject.pointer)
-        );
-        unsetActiveNode(compiler, module);
-        node.status = 'TRANSLATED';
-    }
-}
-
-function translateString(compiler, module, node, binaryen) {
-    if (node.status === 'CHECKED') {
         unsetActiveNode(compiler, module);
         node.status = 'TRANSLATED';
     }
@@ -1078,6 +1098,14 @@ function translateCallByName(compiler, module, node, binaryen) {
                         argumentIrList[0],
                         argumentIrList[1]
                     );
+                } else if (functionTypeObject.name === '[$s, $s] -> [$b]') {
+                    expressionObject.ir = module.ir.call(
+                        '$wasm:js-string_equals', [
+                            argumentIrList[0],
+                            argumentIrList[1]
+                        ],
+                        functionToTypeIr
+                    );
                 }
             } else if (functionObject.name === '$ne') {
                 if (functionTypeObject.name === '[$i, $i] -> [$b]') {
@@ -1104,6 +1132,17 @@ function translateCallByName(compiler, module, node, binaryen) {
                     expressionObject.ir = module.ir.f64.ne(
                         argumentIrList[0],
                         argumentIrList[1]
+                    );
+                } else if (functionTypeObject.name === '[$s, $s] -> [$b]') {
+                    expressionObject.ir = module.ir.i32.xor(
+                        module.ir.call(
+                            '$wasm:js-string_equals', [
+                                argumentIrList[0],
+                                argumentIrList[1]
+                            ],
+                            binaryen.i32
+                        ),
+                        module.ir.i32.const(1)
                     );
                 }
             } else if (functionObject.name === '$lt') {
@@ -1513,6 +1552,122 @@ function translateCallByName(compiler, module, node, binaryen) {
                         '$memory'
                     );
                 }
+            } else if (functionObject.name === 'show') {
+                if (functionTypeObject.name === '[$i] -> []') {
+                    expressionObject.ir = module.ir.call(
+                        '$show', [
+                            module.ir.call(
+                                '$getString_[$i]->[$s]', [
+                                    argumentIrList[0]
+                                ],
+                                getBinaryenStringType(binaryen)
+                            )
+                        ],
+                        functionToTypeIr
+                    );
+                } else if (functionTypeObject.name === '[$iu] -> []') {
+                    expressionObject.ir = module.ir.call(
+                        '$show', [
+                            module.ir.call(
+                                '$getString_[$iu]->[$s]', [
+                                    argumentIrList[0]
+                                ],
+                                getBinaryenStringType(binaryen)
+                            )
+                        ],
+                        functionToTypeIr
+                    );
+                } else if (functionTypeObject.name === '[$id] -> []') {
+                    expressionObject.ir = module.ir.call(
+                        '$show', [
+                            module.ir.call(
+                                '$getString_[$id]->[$s]', [
+                                    argumentIrList[0]
+                                ],
+                                getBinaryenStringType(binaryen)
+                            )
+                        ],
+                        functionToTypeIr
+                    );
+                } else if (functionTypeObject.name === '[$f] -> []') {
+                    expressionObject.ir = module.ir.call(
+                        '$show', [
+                            module.ir.call(
+                                '$getString_[$f]->[$s]', [
+                                    argumentIrList[0]
+                                ],
+                                getBinaryenStringType(binaryen)
+                            )
+                        ],
+                        functionToTypeIr
+                    );
+                } else if (functionTypeObject.name === '[$fd] -> []') {
+                    expressionObject.ir = module.ir.call(
+                        '$show', [
+                            module.ir.call(
+                                '$getString_[$fd]->[$s]', [
+                                    argumentIrList[0]
+                                ],
+                                getBinaryenStringType(binaryen)
+                            )
+                        ],
+                        functionToTypeIr
+                    );
+                } else if (functionTypeObject.name === '[$b] -> []') {
+                    expressionObject.ir = module.ir.call(
+                        '$show', [
+                            module.ir.call(
+                                '$getString_[$b]->[$s]', [
+                                    argumentIrList[0]
+                                ],
+                                getBinaryenStringType(binaryen)
+                            )
+                        ],
+                        functionToTypeIr
+                    );
+                } else if (functionTypeObject.name === '[$s] -> []') {
+                    expressionObject.ir = module.ir.call(
+                        '$show', [
+                            module.ir.call(
+                                '$getString_[$s]->[$s]', [
+                                    argumentIrList[0]
+                                ],
+                                getBinaryenStringType(binaryen)
+                            )
+                        ],
+                        functionToTypeIr
+                    );
+                }
+            } else if (functionObject.name === '$size') {
+                if (functionTypeObject.name === '[$s] -> [$i]') {
+                    expressionObject.ir = module.ir.call(
+                        '$wasm:js-string_length', [
+                            argumentIrList[0]
+                        ],
+                        functionToTypeIr
+                    );
+                }
+            } else if (functionObject.name === '$join') {
+                if (functionTypeObject.name === '[$s, $s] -> [$s]') {
+                    expressionObject.ir = module.ir.call(
+                        '$wasm:js-string_concat', [
+                            argumentIrList[0],
+                            argumentIrList[1]
+                        ],
+                        functionToTypeIr
+                    );
+                }
+            } else if (functionObject.name === '$slice') {
+                if (functionTypeObject.name === '[$s, $i, $i] -> [$s]') {
+                    expressionObject.ir = module.ir.call(
+                        '$wasm:js-string_substring', [
+                            argumentIrList[0],
+                            argumentIrList[1],
+                            argumentIrList[2]
+                        ],
+                        functionToTypeIr
+                    );
+                }
             } else {
                 /* Call a custom function */
                 expressionObject.ir = module.ir.call(
@@ -1581,6 +1736,26 @@ function translateExprStmt(compiler, module, node, binaryen) {
         let expressionObject = getExpressionById(compiler, module, expressionNode.object.id);
 
         node.ir = expressionObject.ir;
+        unsetActiveNode(compiler, module);
+        node.status = 'TRANSLATED';
+    }
+}
+
+function translateString(compiler, module, node, binaryen) {
+    if (node.status === 'CHECKED') {
+        let expressionObject = getExpressionById(compiler, module, node.object.id);
+
+        if (0 < node.value.length) {
+            expressionObject.ir = module.ir.global.get(
+                `$string_${ node.id }`,
+                getBinaryenStringType(binaryen)
+            );
+        } else {
+            expressionObject.ir = module.ir.global.get(
+                '$string_empty',
+                getBinaryenStringType(binaryen)
+            );
+        }
         unsetActiveNode(compiler, module);
         node.status = 'TRANSLATED';
     }

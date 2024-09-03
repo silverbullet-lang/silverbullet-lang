@@ -1,84 +1,153 @@
-let memory = new WebAssembly.Memory({
-    initial: 0,
-    maximum: 1
-});
-let table = new WebAssembly.Table({
-    element: 'anyfunc',
-    initial: 0
-});
+let globalObjects = {
+    '$memory': new WebAssembly.Memory({
+        initial: 0,
+        maximum: 1
+    }),
+    '$table': new WebAssembly.Table({
+        element: 'anyfunc',
+        initial: 0
+    })
+};
+let globalStrings = {
+    '$string_empty': ""
+};
+let globalFunctions = {
+    '$getString_[$i]->[$s]': function(value) {
+        return (new Int32Array([value])[0]).toString();
+    },
+    '$getString_[$iu]->[$s]': function(value) {
+        return ((new Uint32Array([value]))[0]).toString();
+    },
+    '$getString_[$id]->[$s]': function(value) {
+        return ((new BigInt64Array([value]))[0]).toString();
+    },
+    '$getString_[$f]->[$s]': function(value) {
+        return ((new Float32Array([value]))[0]).toString();
+    },
+    '$getString_[$fd]->[$s]': function(value) {
+        return ((new Float64Array([value]))[0]).toString();
+    },
+    '$getString_[$b]->[$s]': function(value) {
+        if (value === 0) {
+            return 'false';
+        } else {
+            return 'true';
+        }
+    },
+    '$getString_[$s]->[$s]': function(value) {
+        return value;
+    },
+    '$show': function(value) {
+        console.log(value);
+    }
+};
 
-/* file:///home/nerijus/Apps/sbc/test/4/file0.sb */
+/* file:///home/nerijus/Dropbox/Nerijus+SparkWave/silverbullet/sbc/test/4/file0.sb */
 /*
 (module
- (type $0 (func (param i32)))
+ (type $0 (func (param i32) (result (ref extern))))
  (type $1 (func))
- (type $2 (func (param i64)))
- (type $3 (func (param f32)))
- (type $4 (func (param f64)))
- (import "$submodule" "$memory" (memory $$memory 0))
- (import "$submodule" "$table" (table $$table 0 funcref))
- (import "$submodule" "$memoryOffset" (global $$memoryOffset i32))
- (import "$submodule" "$tableOffset" (global $$tableOffset i32))
- (import "$submodule" "show_[$i]->[]" (func $"show_[$i]->[]" (param i32)))
- (import "$submodule" "show_[$iu]->[]" (func $"show_[$iu]->[]" (param i32)))
- (import "$submodule" "show_[$id]->[]" (func $"show_[$id]->[]" (param i64)))
- (import "$submodule" "show_[$f]->[]" (func $"show_[$f]->[]" (param f32)))
- (import "$submodule" "show_[$fd]->[]" (func $"show_[$fd]->[]" (param f64)))
- (import "$submodule" "show_[$b]->[]" (func $"show_[$b]->[]" (param i32)))
- (import "$submodule" "show_[$s]->[]" (func $"show_[$s]->[]" (param i32)))
- (data $0 (global.get $$memoryOffset) "")
+ (type $2 (func (param i64) (result (ref extern))))
+ (type $3 (func (param f32) (result (ref extern))))
+ (type $4 (func (param f64) (result (ref extern))))
+ (type $5 (func (param (ref extern)) (result (ref extern))))
+ (type $6 (func (param (ref extern))))
+ (type $7 (func (param externref) (result i32)))
+ (type $8 (func (param externref externref) (result (ref extern))))
+ (type $9 (func (param externref i32 i32) (result (ref extern))))
+ (type $10 (func (param externref externref) (result i32)))
+ (import "$globalObjects" "$memory" (memory $$memory 0))
+ (import "$globalObjects" "$table" (table $$table 0 funcref))
+ (import "$globalStrings" "$string_empty" (global $$string_empty (ref extern)))
+ (import "$localObjects" "$tableOffset" (global $$tableOffset i32))
+ (import "$globalFunctions" "$getString_[$i]->[$s]" (func $"$getString_[$i]->[$s]" (type $0) (param i32) (result (ref extern))))
+ (import "$globalFunctions" "$getString_[$iu]->[$s]" (func $"$getString_[$iu]->[$s]" (type $0) (param i32) (result (ref extern))))
+ (import "$globalFunctions" "$getString_[$id]->[$s]" (func $"$getString_[$id]->[$s]" (type $2) (param i64) (result (ref extern))))
+ (import "$globalFunctions" "$getString_[$f]->[$s]" (func $"$getString_[$f]->[$s]" (type $3) (param f32) (result (ref extern))))
+ (import "$globalFunctions" "$getString_[$fd]->[$s]" (func $"$getString_[$fd]->[$s]" (type $4) (param f64) (result (ref extern))))
+ (import "$globalFunctions" "$getString_[$b]->[$s]" (func $"$getString_[$b]->[$s]" (type $0) (param i32) (result (ref extern))))
+ (import "$globalFunctions" "$getString_[$s]->[$s]" (func $"$getString_[$s]->[$s]" (type $5) (param (ref extern)) (result (ref extern))))
+ (import "$globalFunctions" "$show" (func $$show (type $6) (param (ref extern))))
+ (import "wasm:js-string" "length" (func $$wasm:js-string_length (type $7) (param externref) (result i32)))
+ (import "wasm:js-string" "concat" (func $$wasm:js-string_concat (type $8) (param externref externref) (result (ref extern))))
+ (import "wasm:js-string" "substring" (func $$wasm:js-string_substring (type $9) (param externref i32 i32) (result (ref extern))))
+ (import "wasm:js-string" "equals" (func $$wasm:js-string_equals (type $10) (param externref externref) (result i32)))
  (elem $$functions (global.get $$tableOffset))
  (export "start" (func $start))
- (func $start
-  (call $"show_[$i]->[]"
-   (i32.const -1)
-  )
-  (call $"show_[$iu]->[]"
-   (i32.const -1)
-  )
-  (call $"show_[$iu]->[]"
-   (i32.add
+ (func $start (type $1)
+  (call $$show
+   (call $"$getString_[$i]->[$s]"
     (i32.const -1)
+   )
+  )
+  (call $$show
+   (call $"$getString_[$iu]->[$s]"
+    (i32.const -1)
+   )
+  )
+  (call $$show
+   (call $"$getString_[$iu]->[$s]"
+    (i32.add
+     (i32.const -1)
+     (i32.const 1)
+    )
+   )
+  )
+  (call $$show
+   (call $"$getString_[$id]->[$s]"
+    (i64.const 9223372036854775807)
+   )
+  )
+  (call $$show
+   (call $"$getString_[$id]->[$s]"
+    (i64.add
+     (i64.const 9223372036854775807)
+     (i64.const 1)
+    )
+   )
+  )
+  (call $$show
+   (call $"$getString_[$f]->[$s]"
+    (f32.const 12587.365234375)
+   )
+  )
+  (call $$show
+   (call $"$getString_[$f]->[$s]"
+    (f32.neg
+     (f32.const 5.869999949936755e-05)
+    )
+   )
+  )
+  (call $$show
+   (call $"$getString_[$fd]->[$s]"
+    (f64.neg
+     (f64.const 158796555424.25476)
+    )
+   )
+  )
+  (call $$show
+   (call $"$getString_[$fd]->[$s]"
+    (f64.const 5.37e-311)
+   )
+  )
+  (call $$show
+   (call $"$getString_[$b]->[$s]"
     (i32.const 1)
    )
   )
-  (call $"show_[$id]->[]"
-   (i64.const 9223372036854775807)
-  )
-  (call $"show_[$id]->[]"
-   (i64.add
-    (i64.const 9223372036854775807)
-    (i64.const 1)
+  (call $$show
+   (call $"$getString_[$b]->[$s]"
+    (i32.const 0)
    )
   )
-  (call $"show_[$f]->[]"
-   (f32.const 12587.365234375)
-  )
-  (call $"show_[$f]->[]"
-   (f32.neg
-    (f32.const 5.869999949936755e-05)
-   )
-  )
-  (call $"show_[$fd]->[]"
-   (f64.neg
-    (f64.const 158796555424.25476)
-   )
-  )
-  (call $"show_[$fd]->[]"
-   (f64.const 5.37e-311)
-  )
-  (call $"show_[$b]->[]"
-   (i32.const 1)
-  )
-  (call $"show_[$b]->[]"
-   (i32.const 0)
-  )
-  (call $"show_[$b]->[]"
-   (i32.lt_s
-    (i32.const 4)
-    (i32.sub
-     (i32.const 0)
-     (i32.const 8)
+  (call $$show
+   (call $"$getString_[$b]->[$s]"
+    (i32.lt_s
+     (i32.const 4)
+     (i32.sub
+      (i32.const 0)
+      (i32.const 8)
+     )
     )
    )
   )
@@ -86,50 +155,21 @@ let table = new WebAssembly.Table({
 )
 */
 
-let buffer_0 = (new Uint8Array([0,97,115,109,1,0,0,0,1,20,5,96,1,127,0,96,0,0,96,1,126,0,96,1,125,0,96,1,124,0,2,164,2,11,10,36,115,117,98,109,111,100,117,108,101,13,115,104,111,119,95,91,36,105,93,45,62,91,93,0,0,10,36,115,117,98,109,111,100,117,108,101,14,115,104,111,119,95,91,36,105,117,93,45,62,91,93,0,0,10,36,115,117,98,109,111,100,117,108,101,14,115,104,111,119,95,91,36,105,100,93,45,62,91,93,0,2,10,36,115,117,98,109,111,100,117,108,101,13,115,104,111,119,95,91,36,102,93,45,62,91,93,0,3,10,36,115,117,98,109,111,100,117,108,101,14,115,104,111,119,95,91,36,102,100,93,45,62,91,93,0,4,10,36,115,117,98,109,111,100,117,108,101,13,115,104,111,119,95,91,36,98,93,45,62,91,93,0,0,10,36,115,117,98,109,111,100,117,108,101,13,115,104,111,119,95,91,36,115,93,45,62,91,93,0,0,10,36,115,117,98,109,111,100,117,108,101,13,36,109,101,109,111,114,121,79,102,102,115,101,116,3,127,0,10,36,115,117,98,109,111,100,117,108,101,12,36,116,97,98,108,101,79,102,102,115,101,116,3,127,0,10,36,115,117,98,109,111,100,117,108,101,7,36,109,101,109,111,114,121,2,0,0,10,36,115,117,98,109,111,100,117,108,101,6,36,116,97,98,108,101,1,112,0,0,3,2,1,1,7,9,1,5,115,116,97,114,116,0,7,9,6,1,0,35,1,11,0,12,1,1,10,104,1,102,0,65,127,16,0,65,127,16,1,65,127,65,1,106,16,1,66,255,255,255,255,255,255,255,255,255,0,16,2,66,255,255,255,255,255,255,255,255,255,0,66,1,124,16,2,67,118,173,68,70,16,3,67,165,52,118,56,140,16,3,68,156,32,80,146,129,124,66,66,154,16,4,68,107,158,241,162,226,9,0,0,16,4,65,1,16,5,65,0,16,5,65,4,65,0,65,8,107,72,16,5,11,11,6,1,0,35,0,11,0])).buffer;
-let module_0 = new WebAssembly.Module(buffer_0);
+let buffer_0 = (new Uint8Array([0,97,115,109,1,0,0,0,1,66,11,96,1,127,1,100,111,96,0,0,96,1,126,1,100,111,96,1,125,1,100,111,96,1,124,1,100,111,96,1,100,111,1,100,111,96,1,100,111,0,96,1,111,1,127,96,2,111,111,1,100,111,96,3,111,127,127,1,100,111,96,2,111,111,1,127,2,146,4,16,16,36,103,108,111,98,97,108,70,117,110,99,116,105,111,110,115,21,36,103,101,116,83,116,114,105,110,103,95,91,36,105,93,45,62,91,36,115,93,0,0,16,36,103,108,111,98,97,108,70,117,110,99,116,105,111,110,115,22,36,103,101,116,83,116,114,105,110,103,95,91,36,105,117,93,45,62,91,36,115,93,0,0,16,36,103,108,111,98,97,108,70,117,110,99,116,105,111,110,115,22,36,103,101,116,83,116,114,105,110,103,95,91,36,105,100,93,45,62,91,36,115,93,0,2,16,36,103,108,111,98,97,108,70,117,110,99,116,105,111,110,115,21,36,103,101,116,83,116,114,105,110,103,95,91,36,102,93,45,62,91,36,115,93,0,3,16,36,103,108,111,98,97,108,70,117,110,99,116,105,111,110,115,22,36,103,101,116,83,116,114,105,110,103,95,91,36,102,100,93,45,62,91,36,115,93,0,4,16,36,103,108,111,98,97,108,70,117,110,99,116,105,111,110,115,21,36,103,101,116,83,116,114,105,110,103,95,91,36,98,93,45,62,91,36,115,93,0,0,16,36,103,108,111,98,97,108,70,117,110,99,116,105,111,110,115,21,36,103,101,116,83,116,114,105,110,103,95,91,36,115,93,45,62,91,36,115,93,0,5,16,36,103,108,111,98,97,108,70,117,110,99,116,105,111,110,115,5,36,115,104,111,119,0,6,14,119,97,115,109,58,106,115,45,115,116,114,105,110,103,6,108,101,110,103,116,104,0,7,14,119,97,115,109,58,106,115,45,115,116,114,105,110,103,6,99,111,110,99,97,116,0,8,14,119,97,115,109,58,106,115,45,115,116,114,105,110,103,9,115,117,98,115,116,114,105,110,103,0,9,14,119,97,115,109,58,106,115,45,115,116,114,105,110,103,6,101,113,117,97,108,115,0,10,14,36,103,108,111,98,97,108,83,116,114,105,110,103,115,13,36,115,116,114,105,110,103,95,101,109,112,116,121,3,100,111,0,13,36,108,111,99,97,108,79,98,106,101,99,116,115,12,36,116,97,98,108,101,79,102,102,115,101,116,3,127,0,14,36,103,108,111,98,97,108,79,98,106,101,99,116,115,7,36,109,101,109,111,114,121,2,0,0,14,36,103,108,111,98,97,108,79,98,106,101,99,116,115,6,36,116,97,98,108,101,1,112,0,0,3,2,1,1,7,9,1,5,115,116,97,114,116,0,12,9,6,1,0,35,1,11,0,10,128,1,1,126,0,65,127,16,0,16,7,65,127,16,1,16,7,65,127,65,1,106,16,1,16,7,66,255,255,255,255,255,255,255,255,255,0,16,2,16,7,66,255,255,255,255,255,255,255,255,255,0,66,1,124,16,2,16,7,67,118,173,68,70,16,3,16,7,67,165,52,118,56,140,16,3,16,7,68,156,32,80,146,129,124,66,66,154,16,4,16,7,68,107,158,241,162,226,9,0,0,16,4,16,7,65,1,16,5,16,7,65,0,16,5,16,7,65,4,65,0,65,8,107,72,16,5,16,7,11])).buffer;
+let module_0 = new WebAssembly.Module(buffer_0, {
+    builtins: ['js-string']
+});
 let imports_0 = {
-    '$submodule': {
-        '$memory': memory,
-        '$memoryOffset': new WebAssembly.Global({
-            value: 'i32'
-        }, 0),
-        '$table': table,
+    '$globalObjects': globalObjects,
+    '$localObjects': {
         '$tableOffset': new WebAssembly.Global({
             value: 'i32'
-        }, 0),
-        'show_[$i]->[]': function(value) {
-            console.log((new Int32Array([value]))[0]);
-        },
-        'show_[$iu]->[]': function(value) {
-            console.log((new Uint32Array([value]))[0]);
-        },
-        'show_[$id]->[]': function(value) {
-            console.log((new BigInt64Array([value]))[0]);
-        },
-        'show_[$f]->[]': function(value) {
-            console.log((new Float32Array([value]))[0]);
-        },
-        'show_[$fd]->[]': function(value) {
-            console.log((new Float64Array([value]))[0]);
-        },
-        'show_[$b]->[]': function(value) {
-            if (value === 0) {
-                console.log(false);
-            } else {
-                console.log(true);
-            }
-        },
-        'show_[$s]->[]': function(pointer) {
-            let sizeBuffer = memory.buffer.slice(pointer, pointer + 4);
-            let size = (new Uint32Array(sizeBuffer))[0];
-            let textDecoder = new TextDecoder();
-            let valueView = new Uint8Array(memory.buffer, pointer + 4, size);
-            let value = textDecoder.decode(valueView);
-
-            console.log(value);
-        }
-    }
+        }, 0)
+    },
+    '$globalStrings': globalStrings,
+    '$localStrings': {
+    },
+    '$globalFunctions': globalFunctions
 };
 let instance_0 = new WebAssembly.Instance(module_0, imports_0);
 let exports_0 = instance_0.exports;
