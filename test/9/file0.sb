@@ -1,0 +1,45 @@
+let start
+	array-0 := {} | {$i}
+
+	array-1 := {0, 1, 2, 3}
+
+	array-2 := {array-0, array-1, {}, {2}} | {{$i}}
+
+	array-3 := array-2
+
+	f[{}]
+
+	x := 1.0
+	y := 1.5
+	array-4 := {0.0 * x + y, 1.0 * x + y, 2.0 * x + y}
+	f[array-4]
+
+	array-5 := {&h} -- | {[{$f}] -> []}
+	array-5 = {&f}
+	array-5 = {&g}
+	array-5 = {}
+
+	array-6 := {&f, &g, &h} -- | {[{$f}] -> []}
+
+	array-7 := {{{&f}}, {}, {}, {{&g}, {}, {&g, &f}}} | {{{[$s] -> []}}}
+
+let f[x | $s]
+	nothing
+
+let f[x | {$f}]
+	nothing
+
+let g[x | {$i}, y | {{$id}}]
+	nothing
+
+let g[x | {$f}]
+	nothing
+
+let g[x | [$i, {$fd}] -> [{$s}], y | $s]
+	nothing
+
+let g[x | $s]
+	nothing
+
+let h[x | {$f}]
+	nothing

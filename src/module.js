@@ -294,8 +294,19 @@ function getTypeName(compiler, module, type) {
 
     if (type.id === getTypeByName(compiler, module, '$v').id) {
         typeName = '\'void\'';
+    } else if (type.id === getTypeByName(compiler, module, '{$v}').id) {
+        typeName = '\'{void}\'';
     }
     return typeName;
+}
+
+function isTypeVoid(compiler, module, type) {
+    let is = false;
+
+    if ((type.id === getTypeByName(compiler, module, '$v').id) || (type.id === getTypeByName(compiler, module, '{$v}').id)) {
+        is = true;
+    }
+    return is;
 }
 
 /* Functions */
@@ -417,28 +428,60 @@ function getExpressionById(compiler, module, id) {
     return module.expressions.list[id];
 }
 
-function isExpressionInstanceOf(compiler, module, expression, type) {
-    let answer = false;
+function isExpressionInstanceOf(compiler, module, expression, type, isTypeSettingAllowed) {
+    let is = true;
+    let stack0 = [expression.id];
+    let stack1 = [type.id];
 
-    if (expression.typeId.index === -1) {
-        /* This is a reference expression */
-        /* The type of the expression is unknown, because it refers to a polymorphic function (a function with the same name, but different types of parameters)  */
-        /* Let's find the final type of the expression and the polymorphic function we need to call */
+    while (is && (0 < stack0.length) && (0 < stack1.length)) {
+        let expressionObject = getExpressionById(compiler, module, stack0.pop());
+        let typeObject = getTypeById(compiler, module, stack1.pop());
 
-        let i = 0;
+        is = false;
+        if (expressionObject.typeId.index === -1) {
+            let i = 0;
+            let next = true;
 
-        while ((i < expression.typeId.list.length) && (expression.typeId.index === -1)) {
-            if (expression.typeId.list[i] === type.id) {
-                expression.typeId.index = i;
-                expression.valueId.index = i;
-                answer = true;
+            while ((i < expressionObject.typeId.list.length) && next) {
+                if (expressionObject.typeId.list[i] === typeObject.id) {
+                    is = true;
+                    next = false;
+                    if (isTypeSettingAllowed) {
+                        let expressionNode = getNodeById(compiler, module, expressionObject.nodeId);
+
+                        expressionObject.typeId.index = i;
+                        if (expressionNode.name === 'reference') {
+                            expressionObject.valueId.index = i;
+                        } else if (expressionNode.name === 'array') {
+                            let elementNodeListNode = getNodeById(compiler, module, expressionNode.childIdList[0]);
+
+                            for (let j = elementNodeListNode.childIdList.length - 1; -1 < j; j--) {
+                                let elementNode = getNodeById(compiler, module, elementNodeListNode.childIdList[j]);
+                                let elementObject = getExpressionById(compiler, module, elementNode.object.id);
+
+                                stack0.push(elementObject.id);
+                                stack1.push(typeObject.toId);
+                            }
+                        }
+                    }
+                }
+                i++;
             }
-            i++;
+        } else {
+            let expressionTypeObject = getTypeById(compiler, module, expressionObject.typeId.list[expressionObject.typeId.index]);
+
+            if (expressionTypeObject.id === typeObject.id) {
+                is = true;
+            } else if ((expressionTypeObject.id === getTypeByName(compiler, module, '{$v}').id) && (typeObject.kind === 'array')) {
+                is = true;
+                if (isTypeSettingAllowed) {
+                    /* Empty array is an instance of any array */
+                    expressionObject.typeId.list[expressionObject.typeId.index] = typeObject.id;
+                }
+            }
         }
-    } else {
-        answer = getExpressionType(compiler, module, expression).id === type.id;
     }
-    return answer;
+    return is;
 }
 
 function getExpressionTypeName(compiler, module, expression) {
@@ -475,6 +518,17 @@ function getExpressionType(compiler, module, expression) {
         expressionType = getTypeById(compiler, module, expression.typeId.list[expression.typeId.index]);
     }
     return expressionType;
+}
+
+function getExpressionTypeList(compiler, module, expression) {
+    let expressionTypeList = [];
+
+    for (let i = 0; i < expression.typeId.list.length; i++) {
+        let expressionType = getTypeById(compiler, module, expression.typeId.list[i]);
+
+        expressionTypeList.push(expressionType);
+    }
+    return expressionTypeList;
 }
 
 function setExpressionValueId(compiler, module, expression, valueId, valueIndex) {
@@ -544,4 +598,4 @@ function setSubmoduleObject(compiler, module, submodule, type, id, internalId) {
     submodule.objectList.push(object);
 }
 
-export { getNewModule, setActiveModule, unsetActiveModule, getModuleById, getModuleByPath, getActiveModule, getMainModule, setModuleChild, getNewNode, getNodeById, setActiveNodeList, getActiveNode, unsetActiveNode, setNodeObject, getNodeFromNode, setMainNode, getMainNode, getNewBlock, setActiveBlock, getActiveBlock, getBlockObjectByName, getBlockById, setBlockObject, unsetActiveBlock, getNewType, getTypeByName, getTypeById, getTypeName, getNewFunction, getFunctionById, getActiveFunction, getFunctionName, getNewVariable, getVariableById, getNewExpression, getExpressionById, isExpressionInstanceOf, getExpressionTypeName, setExpressionTypeId, getExpressionType, setExpressionValueId, getExpressionValueId, getNewReference, getReferenceByName, getReferenceById, getNewSubmodule, setSubmodulePath, getSubmoduleById, setSubmoduleObject, setStringNode };
+export { getNewModule, setActiveModule, unsetActiveModule, getModuleById, getModuleByPath, getActiveModule, getMainModule, setModuleChild, getNewNode, getNodeById, setActiveNodeList, getActiveNode, unsetActiveNode, setNodeObject, getNodeFromNode, setMainNode, getMainNode, getNewBlock, setActiveBlock, getActiveBlock, getBlockObjectByName, getBlockById, setBlockObject, unsetActiveBlock, getNewType, getTypeByName, getTypeById, getTypeName, isTypeVoid, getNewFunction, getFunctionById, getActiveFunction, getFunctionName, getNewVariable, getVariableById, getNewExpression, getExpressionById, isExpressionInstanceOf, getExpressionTypeName, setExpressionTypeId, getExpressionType, getExpressionTypeList, setExpressionValueId, getExpressionValueId, getNewReference, getReferenceByName, getReferenceById, getNewSubmodule, setSubmodulePath, getSubmoduleById, setSubmoduleObject, setStringNode };

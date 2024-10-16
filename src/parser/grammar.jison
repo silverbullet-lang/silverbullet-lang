@@ -9,6 +9,7 @@
 %x INLINE_COMMENT MULTILINE_COMMENT
 %x SINGLE_SINGLE_QUOTED_STRING TRIPLE_SINGLE_QUOTED_STRING SINGLE_DOUBLE_QUOTED_STRING TRIPLE_DOUBLE_QUOTED_STRING
 %s INTERPOLATED_STRING
+%s SINGLE_CURLY_BRACKETS
 
 %%
 
@@ -329,6 +330,26 @@
         return yytext;
     }
 
+"{"
+    {
+
+        //console.log('SINGLE_CURLY_BRACKETS (start)', yytext.split());
+
+        this.pushState('SINGLE_CURLY_BRACKETS');
+        yy.parser.yy.location = yylloc;
+        return yytext;
+    }
+
+<SINGLE_CURLY_BRACKETS>"}"
+    {
+
+        //console.log('SINGLE_CURLY_BRACKETS (end)', yytext.split());
+
+        this.popState();
+        yy.parser.yy.location = yylloc;
+        return yytext;
+    }
+
 ","|"|"|"["|"]"|"->"|":="|"="|"&"|"("|")"|"."
     {
 
@@ -552,7 +573,10 @@ moduleStmt
                 yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$f').id,
                 yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$fd').id,
                 yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$b').id,
-                yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$s').id
+                yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$s').id,
+                yy.getNewNode(yy.compiler, yy.module, 'arrayType', @0, [
+                    yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$v').id
+                ], '').id
             ], '');
 
             /* Instructions and built-in functions */
@@ -2598,12 +2622,9 @@ operator
     ;
 
 type
-    : nonReferenceType
-    | referenceType
-    ;
-
-nonReferenceType
     : basicType
+    | referenceType
+    | arrayType
     ;
 
 basicType
@@ -2658,6 +2679,15 @@ referenceTypeTo
         {
             $$ = [
                 yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$v').id
+            ];
+        }
+    ;
+
+arrayType
+    : '{' type '}'
+        {
+            $$ = [
+                yy.getNewNode(yy.compiler, yy.module, 'arrayType', @0, $2, '').id
             ];
         }
     ;
@@ -3116,6 +3146,7 @@ expr
     | grouping
     | string
     | join
+    | array
     ;
 
 /* Literal values */
@@ -3591,6 +3622,42 @@ join
                 ], '').id
             ];
         }
+    ;
+
+/* The array expression */
+array
+    : '{' arrayElemList '}'
+        {
+            $$ = [
+                yy.getNewNode(yy.compiler, yy.module, 'array', @0, [
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, $2, '').id,
+
+                    /* This list is devoted to store nodes of types of the array */
+                    /* Nodes of the types are created by the checker */
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, [], '').id
+                ], '').id
+            ];
+        }
+    ;
+
+arrayElemList
+    : nonEmptyArrayElemList
+    |
+        {
+            $$ = [];
+        }
+    ;
+
+nonEmptyArrayElemList
+    : nonEmptyArrayElemList ',' arrayElem
+        {
+            $$ = $1.concat($3);
+        }
+    | arrayElem
+    ;
+
+arrayElem
+    : expr
     ;
 
 %%

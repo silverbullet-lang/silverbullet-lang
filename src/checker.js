@@ -1,4 +1,4 @@
-import { getNewModule, setActiveModule, getModuleByPath, setModuleChild, getNewNode, getNodeById, setActiveNodeList, getActiveNode, unsetActiveNode, getMainNode, setNodeObject, getNodeFromNode, getNewBlock, setActiveBlock, getActiveBlock, getBlockById, getBlockObjectByName, setBlockObject, unsetActiveBlock, getNewType, getTypeByName, getTypeById, getTypeName, getNewFunction, getFunctionById, getActiveFunction, getFunctionName, getNewVariable, getVariableById, getNewExpression, getExpressionById, isExpressionInstanceOf, getExpressionTypeName, setExpressionTypeId, getExpressionType, setExpressionValueId, getNewReference, getReferenceByName, getNewSubmodule, setSubmodulePath, getSubmoduleById, setSubmoduleObject, setStringNode } from './module.js';
+import { getNewModule, setActiveModule, getModuleByPath, setModuleChild, getNewNode, getNodeById, setActiveNodeList, getActiveNode, unsetActiveNode, getMainNode, setNodeObject, getNodeFromNode, getNewBlock, setActiveBlock, getActiveBlock, getBlockById, getBlockObjectByName, setBlockObject, unsetActiveBlock, getNewType, getTypeByName, getTypeById, getTypeName, isTypeVoid, getNewFunction, getFunctionById, getActiveFunction, getFunctionName, getNewVariable, getVariableById, getNewExpression, getExpressionById, isExpressionInstanceOf, getExpressionTypeName, setExpressionTypeId, getExpressionType, getExpressionTypeList, setExpressionValueId, getNewReference, getReferenceByName, getNewSubmodule, setSubmodulePath, getSubmoduleById, setSubmoduleObject, setStringNode } from './module.js';
 
 function checkModule(compiler, module) {
     let node = getMainNode(compiler, module);
@@ -82,6 +82,10 @@ function checkModule(compiler, module) {
             checkExprStmt(compiler, module, node);
         } else if (node.name === 'string') {
             checkString(compiler, module, node);
+        } else if (node.name === 'array') {
+            checkArray(compiler, module, node);
+        } else if (node.name === 'arrayType') {
+            checkArrayType(compiler, module, node);
         }
         node = getActiveNode(compiler, module);
     }
@@ -512,7 +516,7 @@ function checkBasicType(compiler, module, node) {
         if (!typeObject) {
             /* There is no type with the given name */
             /* Let's create a new one */
-            typeObject = getNewType(compiler, module, node.id, '', name, fromTypeIdList, toTypeId);
+            typeObject = getNewType(compiler, module, node.id, 'basic', name, fromTypeIdList, toTypeId);
         }
         setNodeObject(compiler, module, node, 'type', typeObject.id);
         unsetActiveNode(compiler, module);
@@ -712,19 +716,19 @@ function checkInitializationStmt(compiler, module, node) {
                 /* Let's try to infer it */
                 let expressionTypeObject = getExpressionType(compiler, module, expressionObject);
 
-                if (expressionTypeObject && (expressionTypeObject.id !== getTypeByName(compiler, module, '$v').id)) {
+                if (expressionTypeObject && !isTypeVoid(compiler, module, expressionTypeObject)) {
                     /* The type of expression is unique and is not equal to 'void' */
                     /* The type of variable is now equal to the type of the expression */
                     variableObject.typeId = expressionTypeObject.id;
                 } else {
                     throw {
                         code: 'E_CHECK_INITIALIZATION_EXPRESSION_TYPE_IS_INVALID',
-                        message: `the type of variable '${ variableObject.name }' cannot be inferred, because the type of expression is ${ getExpressionTypeName(compiler, module, expressionObject) }`,
+                        message: `type of variable '${ variableObject.name }' cannot be inferred, because type of expression is ${ getExpressionTypeName(compiler, module, expressionObject) }`,
                         location: expressionNode.location
                     };
                 }
             } else {
-                if (!isExpressionInstanceOf(compiler, module, expressionObject, variableTypeObject)) {
+                if (!isExpressionInstanceOf(compiler, module, expressionObject, variableTypeObject, true)) {
                     throw {
                         code: 'E_CHECK_INITIALIZATION_TYPE_MISMATCH',
                         message: `the type of the expression is ${ getExpressionTypeName(compiler, module, expressionObject) }; expected ${ getTypeName(compiler, module, variableTypeObject) }`,
@@ -889,7 +893,7 @@ function checkAssignmentStmt(compiler, module, node) {
 
             setNodeObject(compiler, module, nameNode, 'variable', variableObject.id);
             if (!variableObject.isConstant) {
-                if (!isExpressionInstanceOf(compiler, module, expressionObject, variableTypeObject)) {
+                if (!isExpressionInstanceOf(compiler, module, expressionObject, variableTypeObject, true)) {
                     throw {
                         code: 'E_CHECK_ASSIGNMENT_TYPE_MISMATCH',
                         message: `the type of the expression is ${ getExpressionTypeName(compiler, module, expressionObject) }; expected ${ getTypeName(compiler, module, variableTypeObject) }`,
@@ -943,7 +947,7 @@ function checkIfElseStmt(compiler, module, node) {
         let expressionObject = getExpressionById(compiler, module, expressionNode.object.id);
         let expectedExpressionTypeObject = getTypeByName(compiler, module, '$b');
 
-        if (!isExpressionInstanceOf(compiler, module, expressionObject, expectedExpressionTypeObject)) {
+        if (!isExpressionInstanceOf(compiler, module, expressionObject, expectedExpressionTypeObject, true)) {
             throw {
                 code: 'E_CHECK_IF_ELSE_TYPE_MISMATCH',
                 message: `the type of the 'if-else' expression is ${ getExpressionTypeName(compiler, module, expressionObject) }; expected ${ getTypeName(compiler, module, expectedExpressionTypeObject) }`,
@@ -964,7 +968,7 @@ function checkWhileStmt(compiler, module, node) {
         let expressionObject = getExpressionById(compiler, module, expressionNode.object.id);
         let expectedExpressionTypeObject = getTypeByName(compiler, module, '$b');
 
-        if (!isExpressionInstanceOf(compiler, module, expressionObject, expectedExpressionTypeObject)) {
+        if (!isExpressionInstanceOf(compiler, module, expressionObject, expectedExpressionTypeObject, true)) {
             throw {
                 code: 'E_CHECK_WHILE_TYPE_MISMATCH',
                 message: `the type of the 'while' expression is ${ getExpressionTypeName(compiler, module, expressionObject) }; expected ${ getTypeName(compiler, module, expectedExpressionTypeObject) }`,
@@ -987,7 +991,7 @@ function checkReturnStmt(compiler, module, node) {
         let functionTypeObject = getTypeById(compiler, module, functionObject.typeId);
         let functionToTypeObject = getTypeById(compiler, module, functionTypeObject.toId);
 
-        if (!isExpressionInstanceOf(compiler, module, expressionObject, functionToTypeObject)) {
+        if (!isExpressionInstanceOf(compiler, module, expressionObject, functionToTypeObject, true)) {
             throw {
                 code: 'E_CHECK_RETURN_TYPE_MISMATCH',
                 message: `the type of the returned expression is ${ getExpressionTypeName(compiler, module, expressionObject) }; expected ${ getTypeName(compiler, module, functionToTypeObject) }`,
@@ -1231,7 +1235,7 @@ function checkCallByName(compiler, module, node) {
             } else if (nameNode.value === '%') {
                 idList = getBlockObjectByName(compiler, module, getActiveBlock(compiler, module), '$rem').idList;
             } else if (nameNode.value === '==') {
-                idList = getBlockObjectByName(compiler, module, getActiveBlock(compiler, module), '$eq').idList
+                idList = getBlockObjectByName(compiler, module, getActiveBlock(compiler, module), '$eq').idList;
             } else if (nameNode.value === '!=') {
                 idList = getBlockObjectByName(compiler, module, getActiveBlock(compiler, module), '$ne').idList;
             } else if (nameNode.value === '<') {
@@ -1268,7 +1272,7 @@ function checkCallByName(compiler, module, node) {
                         let argumentObject = getExpressionById(compiler, module, argumentNode.object.id);
                         let expectedArgumentTypeObject = getTypeById(compiler, module, variableTypeObject.fromIdList[i]);
 
-                        if (!isExpressionInstanceOf(compiler, module, argumentObject, expectedArgumentTypeObject)) {
+                        if (!isExpressionInstanceOf(compiler, module, argumentObject, expectedArgumentTypeObject, true)) {
                             throw {
                                 code: 'E_CHECK_CALL_BY_NAME_TYPE_MISMATCH',
                                 message: `the type of the argument number ${ i + 1 } is ${ getExpressionTypeName(compiler, module, argumentObject) }; expected ${ getTypeName(compiler, module, expectedArgumentTypeObject) }`,
@@ -1309,7 +1313,7 @@ function checkCallByName(compiler, module, node) {
                         let argumentObject = getExpressionById(compiler, module, argumentNode.object.id);
                         let expectedArgumentTypeObject = getTypeById(compiler, module, functionTypeObject.fromIdList[j]);
 
-                        if (!isExpressionInstanceOf(compiler, module, argumentObject, expectedArgumentTypeObject)) {
+                        if (!isExpressionInstanceOf(compiler, module, argumentObject, expectedArgumentTypeObject, true)) {
                             isMatch = false;
                         }
                         j++;
@@ -1384,7 +1388,7 @@ function checkCallByExpression(compiler, module, node) {
                     let argumentObject = getExpressionById(compiler, module, argumentNode.object.id);
                     let expectedArgumentTypeObject = getTypeById(compiler, module, $expressionTypeObject.fromIdList[i]);
 
-                    if (!isExpressionInstanceOf(compiler, module, argumentObject, expectedArgumentTypeObject)) {
+                    if (!isExpressionInstanceOf(compiler, module, argumentObject, expectedArgumentTypeObject, true)) {
                         throw {
                             code: 'E_CHECK_CALL_BY_EXPRESSION_TYPE_MISMATCH',
                             message: `the type of the argument number ${ i + 1 } is ${ getExpressionTypeName(compiler, module, argumentObject) }; expected ${ getTypeName(compiler, module, expectedArgumentTypeObject) }`,
@@ -1421,7 +1425,7 @@ function checkExprStmt(compiler, module, node) {
         let expressionObject = getExpressionById(compiler, module, expressionNode.object.id);
         let expectedExpressionTypeObject = getTypeByName(compiler, module, '$v');
 
-        if (!isExpressionInstanceOf(compiler, module, expressionObject, expectedExpressionTypeObject)) {
+        if (!isExpressionInstanceOf(compiler, module, expressionObject, expectedExpressionTypeObject, true)) {
             throw {
                 code: 'E_CHECK_TARGET_TYPE_MISMATCH',
                 message: `the type of the expression is ${ getExpressionTypeName(compiler, module, expressionObject) }; expected ${ getTypeName(compiler, module, expectedExpressionTypeObject) }`,
@@ -1443,6 +1447,128 @@ function checkString(compiler, module, node) {
         }
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
+    }
+}
+
+function checkArray(compiler, module, node) {
+    if (node.status === 'CREATED') {
+        setActiveNodeList(compiler, module, [node.childIdList[0]]);
+        node.status = '1';
+    } else if (node.status === '1') {
+        let elementNodeListNode = getNodeById(compiler, module, node.childIdList[0]);
+        let typeNodeListNode = getNodeById(compiler, module, node.childIdList[1]);
+        let firstElementTypeObjectList = [];
+
+        if (elementNodeListNode.childIdList.length === 0) {
+            firstElementTypeObjectList = [getTypeByName(compiler, module, '$v')];
+        } else {
+            let firstElementNode = getNodeById(compiler, module, elementNodeListNode.childIdList[0]);
+            let firstElementObject = getExpressionById(compiler, module, firstElementNode.object.id);
+
+            firstElementTypeObjectList = getExpressionTypeList(compiler, module, firstElementObject);
+            if (firstElementTypeObjectList.length === 1) {
+                let firstElementTypeObject = firstElementTypeObjectList[0];
+
+                if (isTypeVoid(compiler, module, firstElementTypeObject)) {
+                    throw {
+                        code: 'E_CHECK_ARRAY_FIRST_ELEMENT_TYPE_VOID',
+                        message: `type of the array cannot be inferred, because type of the first element of that array is ${ getTypeName(compiler, module, firstElementTypeObject) }`,
+                        location: firstElementNode.location
+                    };
+                }
+            }
+
+            for (let i = 1; i < elementNodeListNode.childIdList.length; i++) {
+                let elementNode = getNodeById(compiler, module, elementNodeListNode.childIdList[i]);
+                let elementObject = getExpressionById(compiler, module, elementNode.object.id);
+                let typeObjectList = [];
+
+                for (let j = 0; j < firstElementTypeObjectList.length; j++) {
+                    let firstElementTypeObject = firstElementTypeObjectList[j];
+
+                    if (isExpressionInstanceOf(compiler, module, elementObject, firstElementTypeObject, false)) {
+                        typeObjectList.push(firstElementTypeObject);
+                    }
+                }
+                if (0 < typeObjectList.length) {
+                    firstElementTypeObjectList = typeObjectList;
+                } else {
+                    throw {
+                        code: 'E_CHECK_ARRAY_ELEMENT_TYPE_MISMATCH',
+                        message: `type of the array element No. ${ i } is ${ getExpressionTypeName(compiler, module, elementObject) }; expected ${ getExpressionTypeName(compiler, module, firstElementObject) }`,
+                        location: elementNode.location
+                    };
+                }
+            }
+        }
+        for (let i = 0; i < firstElementTypeObjectList.length; i++) {
+            let firstElementTypeObject = firstElementTypeObjectList[i];
+            let typeName = `{${ firstElementTypeObject.name }}`;
+            let typeObject = getTypeByName(compiler, module, typeName);
+            let typeNode;
+
+            if (typeObject) {
+                typeNode = getNodeById(compiler, module, typeObject.nodeId);
+            } else {
+                typeNode = getNewNode(compiler, module, 'arrayType', typeNodeListNode.location, [firstElementTypeObject.nodeId], '');
+            }
+            typeNodeListNode.childIdList.push(typeNode.id);
+            typeNode.parentIdList.push(typeNodeListNode.id);
+        }
+        setActiveNodeList(compiler, module, [typeNodeListNode.id]);
+        node.status = '2';
+    } else if (node.status === '2') {
+        let typeNodeListNode = getNodeById(compiler, module, node.childIdList[1]);
+        let expressionObject = getNewExpression(compiler, module, node.id, false, [], -1);
+
+        if (typeNodeListNode.childIdList.length === 1) {
+            /* Type of the array is unique */
+            /* Here we set type of the array as well as type of every element of that array if necessary */
+
+            let typeNode = getNodeById(compiler, module, typeNodeListNode.childIdList[0]);
+            let typeObject = getTypeById(compiler, module, typeNode.object.id);
+
+            setExpressionTypeId(compiler, module, expressionObject, typeObject.id, -1);
+            if (!isExpressionInstanceOf(compiler, module, expressionObject, typeObject, true)) {
+                /* Internal error */
+                throw {
+                    code: 'E_CHECK_ARRAY_ELEMENT_TYPE_MISMATCH',
+                    message: 'E_CHECK_ARRAY_ELEMENT_TYPE_MISMATCH'
+                };
+            }
+        } else {
+            for (let i = 0; i < typeNodeListNode.childIdList.length; i++) {
+                let typeNode = getNodeById(compiler, module, typeNodeListNode.childIdList[i]);
+                let typeObject = getTypeById(compiler, module, typeNode.object.id);
+
+                setExpressionTypeId(compiler, module, expressionObject, typeObject.id, -1);
+            }
+        }
+
+        setNodeObject(compiler, module, node, 'expression', expressionObject.id);
+        unsetActiveNode(compiler, module);
+        node.status = 'CHECKED';
+    }
+}
+
+function checkArrayType(compiler, module, node) {
+    if (node.status === 'CREATED') {
+        setActiveNodeList(compiler, module, node.childIdList);
+        node.status = '1';
+    } else if (node.status === '1') {
+        let toTypeNode = getNodeById(compiler, module, node.childIdList[0]);
+        let toTypeObject = getTypeById(compiler, module, toTypeNode.object.id);
+        let name = `{${ toTypeObject.name }}`;
+        let typeObject = getTypeByName(compiler, module, name);
+
+        if (!typeObject) {
+            typeObject = getNewType(compiler, module, node.id, 'array', name, [], toTypeObject.id);
+        }
+        setNodeObject(compiler, module, node, 'type', typeObject.id);
+        unsetActiveNode(compiler, module);
+        node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
     }
 }
 

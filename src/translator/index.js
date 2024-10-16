@@ -1,6 +1,6 @@
 import Binaryen from './binaryen.js';
 import { getModuleByPath, getNodeById, setActiveNodeList, getActiveNode, unsetActiveNode, getMainNode, getBlockById, getBlockObjectByName, getTypeByName, getTypeById, getFunctionById, getFunctionName, getVariableById, getExpressionById, getExpressionType, getExpressionValueId, getReferenceById, getSubmoduleById } from '../module.js';
-import { getBinaryenStringType } from './library.js';
+import { getBinaryenStringType, getBinaryenArrayType, getBinaryenArrayNewFixed } from './library.js';
 
 async function translateModule(compiler, module) {
     let node = getMainNode(compiler, module);
@@ -90,6 +90,10 @@ async function translateModule(compiler, module) {
             translateExprStmt(compiler, module, node, binaryen);
         } else if (node.name === 'string') {
             translateString(compiler, module, node, binaryen);
+        } else if (node.name === 'array') {
+            translateArray(compiler, module, node, binaryen);
+        } else if (node.name === 'arrayType') {
+            translateArrayType(compiler, module, node, binaryen);
         }
         node = getActiveNode(compiler, module);
     }
@@ -1758,6 +1762,44 @@ function translateString(compiler, module, node, binaryen) {
         }
         unsetActiveNode(compiler, module);
         node.status = 'TRANSLATED';
+    }
+}
+
+function translateArray(compiler, module, node, binaryen) {
+    if (node.status === 'CHECKED') {
+        setActiveNodeList(compiler, module, node.childIdList);
+        node.status = '1';
+    } else if (node.status === '1') {
+        let elementNodeListNode = getNodeById(compiler, module, node.childIdList[0]);
+        let expressionObject = getExpressionById(compiler, module, node.object.id);
+        let expressionTypeObject = getExpressionType(compiler, module, expressionObject);
+        let elementObjectIrList = [];
+
+        for (let i = 0; i < elementNodeListNode.childIdList.length; i++) {
+            let elementNode = getNodeById(compiler, module, elementNodeListNode.childIdList[i]);
+            let elementObject = getExpressionById(compiler, module, elementNode.object.id);
+
+            elementObjectIrList.push(elementObject.ir);
+        }
+        expressionObject.ir = getBinaryenArrayNewFixed(binaryen, module.ir.ptr, expressionTypeObject.ir, elementObjectIrList);
+        unsetActiveNode(compiler, module);
+        node.status = 'TRANSLATED';
+    }
+}
+
+function translateArrayType(compiler, module, node, binaryen) {
+    if (node.status === 'CHECKED') {
+        setActiveNodeList(compiler, module, node.childIdList);
+        node.status = '1';
+    } else if (node.status === '1') {
+        let typeObject = getTypeById(compiler, module, node.object.id);
+        let elementTypeObject = getTypeById(compiler, module, typeObject.toId);
+
+        typeObject.ir = getBinaryenArrayType(binaryen, elementTypeObject.ir);
+        unsetActiveNode(compiler, module);
+        node.status = 'TRANSLATED';
+    } else if (node.status === 'TRANSLATED') {
+        unsetActiveNode(compiler, module);
     }
 }
 

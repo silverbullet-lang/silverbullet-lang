@@ -1,0 +1,16 @@
+1. It would be worth to rename the type '$iu' (integer unsigned) to the type '$p' (pointer).
+
+2. Current definition of the terminal 'interpolateString' may be rewritten to the following one in order to reduce the number of nodes in the AST:
+
+interpolatedString
+    : '"' text nonEmptyInterpolatedExprTextList '"'
+    | '"' text '"'
+    | '"' nonEmptyInterpolatedExprTextList '"'
+    | '"' '"'
+    : '"""' text nonEmptyInterpolatedExprTextList '"""'
+    | '"""' text '"""'
+    | '"""' nonEmptyInterpolatedExprTextList '"""'
+    | '"""' '"""'
+    ;
+
+3. We could apply the function 'isTypeVoid' wider than we are applying it right now.
