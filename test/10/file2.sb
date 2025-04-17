@@ -1,0 +1,5 @@
+let f[x | $f, y | $f] | $s
+	return "{ x } / { y } = { x / y }"
+
+let g[x | [$f, $f] -> [$s], y | $f, z | $f]
+	show[x[y, z]]

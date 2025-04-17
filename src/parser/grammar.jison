@@ -422,6 +422,15 @@
         return 'MODIFIER';
     }
 
+"$$"[a-zA-Z0-9_$]+
+    {
+
+        //console.log('VARIABLE_TYPE', yytext.split());
+
+        yy.parser.yy.location = yylloc;
+        return 'VARIABLE_TYPE';
+    }
+
 "$"[a-zA-Z0-9_$]+
     {
 
@@ -585,9 +594,9 @@ moduleStmt
                 /* $sub | [$i] -> [$i] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$sub').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$sub').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$i').id
@@ -599,9 +608,9 @@ moduleStmt
                 /* $sub | [$iu] -> [$iu] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$sub').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$sub').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id
@@ -613,9 +622,9 @@ moduleStmt
                 /* $sub | [$id] -> [$id] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$sub').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$sub').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$id').id
@@ -627,9 +636,9 @@ moduleStmt
                 /* $sub | [$f] -> [$f] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$sub').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$sub').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$f').id
@@ -641,9 +650,9 @@ moduleStmt
                 /* $sub | [$fd] -> [$fd] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$sub').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$sub').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$fd').id
@@ -655,9 +664,9 @@ moduleStmt
                 /* $sub | [$i, $i] -> [$i] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$sub').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$sub').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$i').id,
@@ -670,9 +679,9 @@ moduleStmt
                 /* $sub | [$iu, $iu] -> [$iu] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$sub').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$sub').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id,
@@ -685,9 +694,9 @@ moduleStmt
                 /* $sub | [$id, $id] -> [$id] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$sub').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$sub').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$id').id,
@@ -700,9 +709,9 @@ moduleStmt
                 /* $sub | [$f, $f] -> [$f] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$sub').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$sub').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$f').id,
@@ -715,9 +724,9 @@ moduleStmt
                 /* $sub | [$fd, $fd] -> [$fd] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$sub').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$sub').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$fd').id,
@@ -730,9 +739,9 @@ moduleStmt
                 /* $add | [$i, $i] -> [$i] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$add').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$add').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$i').id,
@@ -745,9 +754,9 @@ moduleStmt
                 /* $add | [$iu, $iu] -> [$iu] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$add').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$add').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id,
@@ -760,9 +769,9 @@ moduleStmt
                 /* $add | [$id, $id] -> [$id] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$add').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$add').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$id').id,
@@ -775,9 +784,9 @@ moduleStmt
                 /* $add | [$f, $f] -> [$f] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$add').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$add').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$f').id,
@@ -790,9 +799,9 @@ moduleStmt
                 /* $add | [$fd, $fd] -> [$fd] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$add').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$add').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$fd').id,
@@ -805,9 +814,9 @@ moduleStmt
                 /* $mul | [$i, $i] -> [$i] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$mul').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$mul').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$i').id,
@@ -820,9 +829,9 @@ moduleStmt
                 /* $mul | [$iu, $iu] -> [$iu] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$mul').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$mul').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id,
@@ -835,9 +844,9 @@ moduleStmt
                 /* $mul | [$id, $id] -> [$id] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$mul').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$mul').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$id').id,
@@ -850,9 +859,9 @@ moduleStmt
                 /* $mul | [$f, $f] -> [$f] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$mul').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$mul').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$f').id,
@@ -865,9 +874,9 @@ moduleStmt
                 /* $mul | [$fd, $fd] -> [$fd] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$mul').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$mul').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$fd').id,
@@ -880,9 +889,9 @@ moduleStmt
                 /* $div | [$i, $i] -> [$i] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$div').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$div').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$i').id,
@@ -895,9 +904,9 @@ moduleStmt
                 /* $div | [$iu, $iu] -> [$iu] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$div').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$div').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id,
@@ -910,9 +919,9 @@ moduleStmt
                 /* $div | [$id, $id] -> [$id] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$div').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$div').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$id').id,
@@ -925,9 +934,9 @@ moduleStmt
                 /* $div | [$f, $f] -> [$f] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$div').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$div').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$f').id,
@@ -940,9 +949,9 @@ moduleStmt
                 /* $div | [$fd, $fd] -> [$fd] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$div').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$div').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$fd').id,
@@ -955,9 +964,9 @@ moduleStmt
                 /* $rem | [$i, $i] -> [$i] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$rem').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$rem').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$i').id,
@@ -970,9 +979,9 @@ moduleStmt
                 /* $rem | [$iu, $iu] -> [$iu] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$rem').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$rem').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id,
@@ -985,9 +994,9 @@ moduleStmt
                 /* $rem | [$id, $id] -> [$id] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$rem').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$rem').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$id').id,
@@ -1000,9 +1009,9 @@ moduleStmt
                 /* $eq | [$i, $i] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$eq').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$eq').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$i').id,
@@ -1015,9 +1024,9 @@ moduleStmt
                 /* $eq | [$iu, $iu] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$eq').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$eq').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id,
@@ -1030,9 +1039,9 @@ moduleStmt
                 /* $eq | [$id, $id] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$eq').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$eq').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$id').id,
@@ -1045,9 +1054,9 @@ moduleStmt
                 /* $eq | [$f, $f] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$eq').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$eq').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$f').id,
@@ -1060,9 +1069,9 @@ moduleStmt
                 /* $eq | [$fd, $fd] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$eq').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$eq').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$fd').id,
@@ -1075,9 +1084,9 @@ moduleStmt
                 /* $eq | [$s, $s] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$eq').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$eq').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$s').id,
@@ -1090,9 +1099,9 @@ moduleStmt
                 /* $ne | [$i, $i] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$ne').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$ne').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$i').id,
@@ -1105,9 +1114,9 @@ moduleStmt
                 /* $ne | [$iu, $iu] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$ne').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$ne').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id,
@@ -1120,9 +1129,9 @@ moduleStmt
                 /* $ne | [$id, $id] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$ne').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$ne').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$id').id,
@@ -1135,9 +1144,9 @@ moduleStmt
                 /* $ne | [$f, $f] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$ne').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$ne').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$f').id,
@@ -1150,9 +1159,9 @@ moduleStmt
                 /* $ne | [$fd, $fd] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$ne').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$ne').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$fd').id,
@@ -1165,9 +1174,9 @@ moduleStmt
                 /* $ne | [$s, $s] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$ne').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$ne').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$s').id,
@@ -1180,9 +1189,9 @@ moduleStmt
                 /* $lt | [$i, $i] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$lt').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$lt').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$i').id,
@@ -1195,9 +1204,9 @@ moduleStmt
                 /* $lt | [$iu, $iu] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$lt').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$lt').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id,
@@ -1210,9 +1219,9 @@ moduleStmt
                 /* $lt | [$id, $id] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$lt').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$lt').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$id').id,
@@ -1225,9 +1234,9 @@ moduleStmt
                 /* $lt | [$f, $f] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$lt').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$lt').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$f').id,
@@ -1240,9 +1249,9 @@ moduleStmt
                 /* $lt | [$fd, $fd] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$lt').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$lt').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$fd').id,
@@ -1255,9 +1264,9 @@ moduleStmt
                 /* $gt | [$i, $i] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$gt').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$gt').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$i').id,
@@ -1270,9 +1279,9 @@ moduleStmt
                 /* $gt | [$iu, $iu] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$gt').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$gt').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id,
@@ -1285,9 +1294,9 @@ moduleStmt
                 /* $gt | [$id, $id] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$gt').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$gt').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$id').id,
@@ -1300,9 +1309,9 @@ moduleStmt
                 /* $gt | [$f, $f] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$gt').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$gt').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$f').id,
@@ -1315,9 +1324,9 @@ moduleStmt
                 /* $gt | [$fd, $fd] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$gt').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$gt').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$fd').id,
@@ -1330,9 +1339,9 @@ moduleStmt
                 /* $le | [$i, $i] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$le').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$le').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$i').id,
@@ -1345,9 +1354,9 @@ moduleStmt
                 /* $le | [$iu, $iu] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$le').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$le').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id,
@@ -1360,9 +1369,9 @@ moduleStmt
                 /* $le | [$id, $id] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$le').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$le').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$id').id,
@@ -1375,9 +1384,9 @@ moduleStmt
                 /* $le | [$f, $f] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$le').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$le').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$f').id,
@@ -1390,9 +1399,9 @@ moduleStmt
                 /* $le | [$fd, $fd] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$le').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$le').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$fd').id,
@@ -1405,9 +1414,9 @@ moduleStmt
                 /* $ge | [$i, $i] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$ge').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$ge').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$i').id,
@@ -1420,9 +1429,9 @@ moduleStmt
                 /* $ge | [$iu, $iu] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$ge').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$ge').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id,
@@ -1435,9 +1444,9 @@ moduleStmt
                 /* $ge | [$id, $id] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$ge').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$ge').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$id').id,
@@ -1450,9 +1459,9 @@ moduleStmt
                 /* $ge | [$f, $f] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$ge').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$ge').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$f').id,
@@ -1465,9 +1474,9 @@ moduleStmt
                 /* $ge | [$fd, $fd] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$ge').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$ge').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$fd').id,
@@ -1480,9 +1489,9 @@ moduleStmt
                 /* $not | [$i] -> [$i] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$not').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$not').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$i').id
@@ -1494,9 +1503,9 @@ moduleStmt
                 /* $not | [$iu] -> [$iu] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$not').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$not').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id
@@ -1508,9 +1517,9 @@ moduleStmt
                 /* $not | [$id] -> [$id] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$not').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$not').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$id').id
@@ -1522,9 +1531,9 @@ moduleStmt
                 /* $not | [$b] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$not').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$not').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$b').id
@@ -1536,9 +1545,9 @@ moduleStmt
                 /* $and | [$i, $i] -> [$i] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$and').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$and').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$i').id,
@@ -1551,9 +1560,9 @@ moduleStmt
                 /* $and | [$iu, $iu] -> [$iu] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$and').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$and').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id,
@@ -1566,9 +1575,9 @@ moduleStmt
                 /* $and | [$id, $id] -> [$id] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$and').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$and').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$id').id,
@@ -1581,9 +1590,9 @@ moduleStmt
                 /* $and | [$b, $b] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$and').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$and').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$b').id,
@@ -1596,9 +1605,9 @@ moduleStmt
                 /* $or | [$i, $i] -> [$i] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$or').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$or').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$i').id,
@@ -1611,9 +1620,9 @@ moduleStmt
                 /* $or | [$iu, $iu] -> [$iu] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$or').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$or').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id,
@@ -1626,9 +1635,9 @@ moduleStmt
                 /* $or | [$id, $id] -> [$id] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$or').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$or').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$id').id,
@@ -1641,9 +1650,9 @@ moduleStmt
                 /* $or | [$b, $b] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$or').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$or').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$b').id,
@@ -1656,9 +1665,9 @@ moduleStmt
                 /* $store | [$iu, $i] -> [] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$store').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$store').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id,
@@ -1671,9 +1680,9 @@ moduleStmt
                 /* $store | [$iu, $iu] -> [] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$store').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$store').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id,
@@ -1686,9 +1695,9 @@ moduleStmt
                 /* $store | [$iu, $id] -> [] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$store').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$store').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id,
@@ -1701,9 +1710,9 @@ moduleStmt
                 /* $store | [$iu, $f] -> [] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$store').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$store').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id,
@@ -1716,9 +1725,9 @@ moduleStmt
                 /* $store | [$iu, $fd] -> [] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$store').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$store').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id,
@@ -1731,9 +1740,9 @@ moduleStmt
                 /* $store | [$iu, $b] -> [] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$store').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$store').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id,
@@ -1746,9 +1755,9 @@ moduleStmt
                 /* $store8 | [$iu, $i] -> [] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$store8').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$store8').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id,
@@ -1761,9 +1770,9 @@ moduleStmt
                 /* $store8 | [$iu, $iu] -> [] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$store8').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$store8').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id,
@@ -1776,9 +1785,9 @@ moduleStmt
                 /* $store16 | [$iu, $i] -> [] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$store16').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$store16').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id,
@@ -1791,9 +1800,9 @@ moduleStmt
                 /* $store16 | [$iu, $iu] -> [] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$store16').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$store16').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id,
@@ -1806,9 +1815,9 @@ moduleStmt
                 /* $load_$i | [$iu] -> [$i] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$load_$i').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$load_$i').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id
@@ -1820,9 +1829,9 @@ moduleStmt
                 /* $load_$iu | [$iu] -> [$iu] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$load_$iu').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$load_$iu').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id
@@ -1834,9 +1843,9 @@ moduleStmt
                 /* $load_$id | [$iu] -> [$id] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$load_$id').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$load_$id').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id
@@ -1848,9 +1857,9 @@ moduleStmt
                 /* $load_$f | [$iu] -> [$f] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$load_$f').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$load_$f').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id
@@ -1862,9 +1871,9 @@ moduleStmt
                 /* $load_$fd | [$iu] -> [$fd] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$load_$fd').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$load_$fd').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id
@@ -1876,9 +1885,9 @@ moduleStmt
                 /* $load_$b | [$iu] -> [$b] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$load_$b').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$load_$b').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id
@@ -1890,9 +1899,9 @@ moduleStmt
                 /* $load8_$i | [$iu] -> [$i] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$load8_$i').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$load8_$i').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id
@@ -1904,9 +1913,9 @@ moduleStmt
                 /* $load8_$iu | [$iu] -> [$iu] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$load8_$iu').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$load8_$iu').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id
@@ -1918,9 +1927,9 @@ moduleStmt
                 /* $load16_$i | [$iu] -> [$i] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$load16_$i').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$load16_$i').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id
@@ -1932,9 +1941,9 @@ moduleStmt
                 /* $load16_$iu | [$iu] -> [$iu] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$load16_$iu').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$load16_$iu').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id
@@ -1946,9 +1955,9 @@ moduleStmt
                 /* $growMemory | [$iu] -> [$i] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$growMemory').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$growMemory').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id
@@ -1960,9 +1969,9 @@ moduleStmt
                 /* $getMemorySize | [] -> [$iu] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$getMemorySize').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$getMemorySize').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [], '').id,
                         yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id
@@ -1972,9 +1981,9 @@ moduleStmt
                 /* $shl | [$i, $i] -> [$i] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$shl').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$shl').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$i').id,
@@ -1987,9 +1996,9 @@ moduleStmt
                 /* $shl | [$iu, $iu] -> [$iu] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$shl').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$shl').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id,
@@ -2002,9 +2011,9 @@ moduleStmt
                 /* $shl | [$id, $id] -> [$id] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$shl').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$shl').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$id').id,
@@ -2017,9 +2026,9 @@ moduleStmt
                 /* $shr | [$i, $i] -> [$i] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$shr').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$shr').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$i').id,
@@ -2032,9 +2041,9 @@ moduleStmt
                 /* $shr | [$iu, $iu] -> [$iu] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$shr').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$shr').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id,
@@ -2047,9 +2056,9 @@ moduleStmt
                 /* $shr | [$id, $id] -> [$id] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$shr').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$shr').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$id').id,
@@ -2062,9 +2071,9 @@ moduleStmt
                 /* $copyMemory | [$iu, $iu, $iu] -> [] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$copyMemory').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$copyMemory').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id,
@@ -2078,9 +2087,9 @@ moduleStmt
                 /* $getString | [$i] -> [$s] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$getString').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$getString').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$i').id
@@ -2092,9 +2101,9 @@ moduleStmt
                 /* $getString | [$iu] -> [$s] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$getString').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$getString').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$iu').id
@@ -2106,9 +2115,9 @@ moduleStmt
                 /* $getString | [$id] -> [$s] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$getString').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$getString').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$id').id
@@ -2120,9 +2129,9 @@ moduleStmt
                 /* $getString | [$f] -> [$s] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$getString').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$getString').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$f').id
@@ -2134,9 +2143,9 @@ moduleStmt
                 /* $getString | [$fd] -> [$s] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$getString').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$getString').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$fd').id
@@ -2148,9 +2157,9 @@ moduleStmt
                 /* $getString | [$b] -> [$s] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$getString').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$getString').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$b').id
@@ -2162,9 +2171,9 @@ moduleStmt
                 /* $getString | [$s] -> [$s] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$getString').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$getString').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$s').id
@@ -2176,7 +2185,7 @@ moduleStmt
                 /* show | [$i] -> []  */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
                     yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], 'show').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
@@ -2190,7 +2199,7 @@ moduleStmt
                 /* show | [$iu] -> [] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
                     yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], 'show').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
@@ -2204,7 +2213,7 @@ moduleStmt
                 /* show | [$id] -> [] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
                     yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], 'show').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
@@ -2218,7 +2227,7 @@ moduleStmt
                 /* show | [$f] -> [] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
                     yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], 'show').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
@@ -2232,7 +2241,7 @@ moduleStmt
                 /* show | [$fd] -> [] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
                     yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], 'show').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
@@ -2246,7 +2255,7 @@ moduleStmt
                 /* show | [$b] -> [] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
                     yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], 'show').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
@@ -2260,7 +2269,7 @@ moduleStmt
                 /* show | [$s] -> [] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
                     yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], 'show').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
@@ -2274,9 +2283,9 @@ moduleStmt
                 /* $size | [$s] -> [$i] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$size').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$size').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$s').id
@@ -2285,12 +2294,29 @@ moduleStmt
                     ], '').id
                 ], '').id,
 
+                /* $size | [{$$T}] -> [$i] */
+                yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id,
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'template').id
+                    ], '').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$size').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                            yy.getNewNode(yy.compiler, yy.module, 'arrayType', @0, [
+                                yy.getNewNode(yy.compiler, yy.module, 'variableType', @0, [], '$$T').id
+                            ], '').id
+                        ], '').id,
+                        yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$i').id
+                    ], '').id
+                ], '').id,
+
                 /* $join | [$s, $s] -> [$s] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$join').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$join').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$s').id,
@@ -2303,9 +2329,9 @@ moduleStmt
                 /* $slice | [$s, $i, $i] -> [$s] */
                 yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
                     ], '').id,
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$slice').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$slice').id,
                     yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
                         yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$s').id,
@@ -2313,6 +2339,99 @@ moduleStmt
                             yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$i').id
                         ], '').id,
                         yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$s').id
+                    ], '').id
+                ], '').id,
+
+                /* $getElement | [$s, $i] -> [$s] */
+                yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id
+                    ], '').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$getElement').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                            yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$s').id,
+                            yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$i').id
+                        ], '').id,
+                        yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$s').id
+                    ], '').id
+                ], '').id,
+
+                /* $getElement | [{$$T}, $i] -> [$$T] */
+                yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id,
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'template').id
+                    ], '').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$getElement').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                            yy.getNewNode(yy.compiler, yy.module, 'arrayType', @0, [
+                                yy.getNewNode(yy.compiler, yy.module, 'variableType', @0, [], '$$T').id
+                            ], '').id,
+                            yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$i').id
+                        ], '').id,
+                        yy.getNewNode(yy.compiler, yy.module, 'variableType', @0, [], '$$T').id
+                    ], '').id
+                ], '').id,
+
+                /* $getArray | [$i, $$T] -> [{$$T}] */
+                yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id,
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'template').id
+                    ], '').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$getArray').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                            yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$i').id,
+                            yy.getNewNode(yy.compiler, yy.module, 'variableType', @0, [], '$$T').id
+                        ], '').id,
+                        yy.getNewNode(yy.compiler, yy.module, 'arrayType', @0, [
+                            yy.getNewNode(yy.compiler, yy.module, 'variableType', @0, [], '$$T').id
+                        ], '').id
+                    ], '').id
+                ], '').id,
+
+                /* $copyArray | [{$$T}, $i, {$$T}, $i, $i] -> [] */
+                yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id,
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'template').id
+                    ], '').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$copyArray').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                            yy.getNewNode(yy.compiler, yy.module, 'arrayType', @0, [
+                                yy.getNewNode(yy.compiler, yy.module, 'variableType', @0, [], '$$T').id
+                            ], '').id,
+                            yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$i').id,
+                            yy.getNewNode(yy.compiler, yy.module, 'arrayType', @0, [
+                                yy.getNewNode(yy.compiler, yy.module, 'variableType', @0, [], '$$T').id
+                            ], '').id,
+                            yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$i').id,
+                            yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$i').id
+                        ], '').id,
+                        yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$v').id
+                    ], '').id
+                ], '').id,
+
+                /* $setElement | [{$$T}, $i, $$T] -> [] */
+                yy.getNewNode(yy.compiler, yy.module, 'function', @0, [
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'instruction').id,
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'template').id
+                    ], '').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$setElement').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'referenceType', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                            yy.getNewNode(yy.compiler, yy.module, 'arrayType', @0, [
+                                yy.getNewNode(yy.compiler, yy.module, 'variableType', @0, [], '$$T').id
+                            ], '').id,
+                            yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$i').id,
+                            yy.getNewNode(yy.compiler, yy.module, 'variableType', @0, [], '$$T').id
+                        ], '').id,
+                        yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$v').id
                     ], '').id
                 ], '').id
             ], '');
@@ -2625,6 +2744,7 @@ type
     : basicType
     | referenceType
     | arrayType
+    | variableType
     ;
 
 basicType
@@ -2688,6 +2808,15 @@ arrayType
         {
             $$ = [
                 yy.getNewNode(yy.compiler, yy.module, 'arrayType', @0, $2, '').id
+            ];
+        }
+    ;
+
+variableType
+    : VARIABLE_TYPE
+        {
+            $$ = [
+                yy.getNewNode(yy.compiler, yy.module, 'variableType', @0, [], $1).id
             ];
         }
     ;
@@ -2775,9 +2904,40 @@ modifier
 functionStmt
     : functionHead nonEmptyLineList nonModuleBlock
         {
-            $$ = [
-                yy.getNewNode(yy.compiler, yy.module, 'functionStmt', @0, $1.concat($3), '').id
-            ];
+            var functionStmtNode = yy.getNewNode(yy.compiler, yy.module, 'functionStmt', @0, $1.concat($3), '');
+
+            /* Let's check if this function is a template function, i.e., if there exists at least one parameter of variable type or type of the return value is a variable type */
+            var functionNode = yy.getNodeById(yy.compiler, yy.module, functionStmtNode.childIdList[0]);
+            var referenceTypeNode = yy.getNodeById(yy.compiler, yy.module, functionNode.childIdList[2]);
+            var stack = [referenceTypeNode.id];
+            var isTemplateFunction = false;
+
+            while ((0 < stack.length) && !isTemplateFunction) {
+                var node = yy.getNodeById(yy.compiler, yy.module, stack.pop());
+
+                if (node.name === 'referenceType') {
+                    var listNode = yy.getNodeById(yy.compiler, yy.module, node.childIdList[0]);
+
+                    stack.push(node.childIdList[1]);
+                    for (var i = listNode.childIdList.length - 1; -1 < i; i--) {
+                        stack.push(listNode.childIdList[i]);
+                    }
+                } else if (node.name === 'arrayType') {
+                    stack.push(node.childIdList[0]);
+                } else if (node.name === 'variableType') {
+                    isTemplateFunction = true;
+                }
+            }
+
+            /* If this function is a template function, then create an additional modifier 'template' */
+            if (isTemplateFunction) {
+                var modifierNodeListNode = yy.getNodeById(yy.compiler, yy.module, functionNode.childIdList[0]);
+                var templateModifierNode = yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'template');
+
+                modifierNodeListNode.childIdList.push(templateModifierNode.id);
+                templateModifierNode.parentIdList.push(modifierNodeListNode.id);
+            }
+            $$ = [functionStmtNode.id];
         }
     ;
 
@@ -2813,6 +2973,12 @@ functionHeadMandatoryPart
                 yy.getNewNode(yy.compiler, yy.module, 'list', @0, $1, '').id
             ].concat($3);
         }
+    | nonEmptyModifierList 'let' instruction
+        {
+            $$ = [
+                yy.getNewNode(yy.compiler, yy.module, 'list', @0, $1, '').id
+            ].concat($3);
+        }
     | nonEmptyModifierList 'let' operator
         {
             $$ = [
@@ -2820,6 +2986,12 @@ functionHeadMandatoryPart
             ].concat($3);
         }
     | 'let' identifier
+        {
+            $$ = [
+                yy.getNewNode(yy.compiler, yy.module, 'list', @0, [], '').id
+            ].concat($2);
+        }
+    | 'let' instruction
         {
             $$ = [
                 yy.getNewNode(yy.compiler, yy.module, 'list', @0, [], '').id
@@ -2883,7 +3055,9 @@ param
         {
             $$ = [
                 yy.getNewNode(yy.compiler, yy.module, 'variable', @0, [
-                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, [], '').id
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'parameter').id
+                    ], '').id
                 ].concat($1, $3), '').id
             ];
         }
@@ -2938,20 +3112,121 @@ outdent
 
 /* The assignment statement */
 assignmentStmt
-    : assignmentHead nonEmptyLineList
+    : assignmentToNameStmt
+    | assignmentToCallStmt
+    | assignmentToMemberStmt
+    ;
+
+assignmentToNameStmt
+    : assignmentToNameHead nonEmptyLineList
         {
             $$ = [
-                yy.getNewNode(yy.compiler, yy.module, 'assignmentStmt', @0, $1, '').id
+                yy.getNewNode(yy.compiler, yy.module, 'assignmentToNameStmt', @0, $1, '').id
             ];
         }
     ;
 
-assignmentHead
+assignmentToNameHead
     : identifier '=' expr
         {
             $$ = $1.concat($3);
         }
     ;
+
+assignmentToCallStmt
+    : assignmentToCallByNameStmt
+    | assignmentToCallByExpressionStmt
+    | assignmentToCallByMemberByNameStmt
+    | assignmentToCallByMemberByExpressionStmt
+    ;
+
+assignmentToCallByNameStmt
+    : assignmentToCallByNameHead nonEmptyLineList
+        {
+            $$ = [
+                yy.getNewNode(yy.compiler, yy.module, 'exprStmt', @0, $1, '').id
+            ];
+        }
+    ;
+
+assignmentToCallByNameHead
+    : identifier '[' argList ']' '=' expr
+        {
+            var identifierNode = yy.getNodeById(yy.compiler, yy.module, $1[0]);
+
+            $$ = [
+                yy.getNewNode(yy.compiler, yy.module, 'callByName', @0, [
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$setElement').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
+                        yy.getNewNode(yy.compiler, yy.module, 'callByName', @0, [
+                            yy.getNewNode(yy.compiler, yy.module, 'name', @0, [identifierNode.id], identifierNode.value).id,
+                            yy.getNewNode(yy.compiler, yy.module, 'list', @0, [], '').id
+                        ], '').id
+                    ].concat($3, $6), '').id
+                ], '').id
+            ];
+        }
+    ;
+
+assignmentToCallByExpressionStmt
+    : assignmentToCallByExpressionHead nonEmptyLineList
+        {
+            $$ = [
+                yy.getNewNode(yy.compiler, yy.module, 'exprStmt', @0, $1, '').id
+            ];
+        }
+    ;
+
+assignmentToCallByExpressionHead
+    : call '[' argList ']' '=' expr
+        {
+            $$ = [
+                yy.getNewNode(yy.compiler, yy.module, 'callByName', @0, [
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$setElement').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, $1.concat($3, $6), '').id
+                ], '').id
+            ];
+        }
+    ;
+
+/*assignmentToCallByMemberByNameStmt
+    : assignmentToCallByMemberByNameHead nonEmptyLineList
+    ;
+
+assignmentToCallByMemberByNameHead
+    : identifier '.' identifier '[' argList ']' '=' expr
+    ;*/
+
+/*assignmentToCallByMemberByExpressionStmt
+    : assignmentToCallByMemberByExpressionHead nonEmptyLineList
+    ;
+
+assignmentToCallByMemberByExpressionHead
+    : call '.' identifier '[' argList ']' '=' expr
+    | member '.' identifier '[' argList ']' '=' expr
+    ;*/
+
+/*assignmentToMemberStmt
+    : assignmentToMemberByNameStmt
+    | assignmentToMemberByExpressionStmt
+    ;*/
+
+/*assignmentToMemberByNameStmt
+    : assignmentToMemberByNameHead nonEmptyLineList
+    ;
+
+assignmentToMemberByNameHead
+    : identifier '.' identifier '=' expr
+    ;*/
+
+/*assignmentToMemberByExpressionStmt
+    : assignmentToMemberByExpressionHead nonEmptyLineList
+    ;
+
+assignmentToMemberByExpressionHead
+    : call '.' identifier '=' expr
+    | member '.' identifier '=' expr
+    ;*/
 
 /* The expression statement */
 exprStmt
@@ -3147,6 +3422,7 @@ expr
     | string
     | join
     | array
+    | member
     ;
 
 /* Literal values */
@@ -3221,15 +3497,16 @@ reference
                 yy.getNewNode(yy.compiler, yy.module, 'reference', @0, $2, '').id
             ];
         }
-    | '&' externalIdentifier
+    /*| '&' externalIdentifier
         {
             $$ = [
                 yy.getNewNode(yy.compiler, yy.module, 'reference', @0, $2, '').id
             ];
-        }
+        }*/
+    /*| '&' identifier '.' identifier*/
     ;
 
-externalIdentifier
+/*externalIdentifier
     : identifier '.' identifier
         {
             var submoduleNameNode = yy.getNodeById(yy.compiler, yy.module, $1[0]);
@@ -3239,7 +3516,7 @@ externalIdentifier
                 yy.getNewNode(yy.compiler, yy.module, 'externalIdentifier', @0, $1.concat($3), submoduleNameNode.value + '.' + externalNameNode.value).id
             ];
         }
-    ;
+    ;*/
 
 /* Arithmetic expressions */
 arithmetic
@@ -3392,22 +3669,32 @@ logical
 name
     : identifier
         {
+            var identifierNode = yy.getNodeById(yy.compiler, yy.module, $1[0]);
+
             $$ = [
-                yy.getNewNode(yy.compiler, yy.module, 'name', @0, $1, '').id
+                yy.getNewNode(yy.compiler, yy.module, 'callByName', @0, [
+                    yy.getNewNode(yy.compiler, yy.module, 'name', @0, $1, identifierNode.value).id,
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, [], '').id
+                ], '').id
             ];
         }
     | instruction
         {
+            var instructionNode = yy.getNodeById(yy.compiler, yy.module, $1[0]);
+
             $$ = [
-                yy.getNewNode(yy.compiler, yy.module, 'name', @0, $1, '').id
+                yy.getNewNode(yy.compiler, yy.module, 'callByName', @0, [
+                    yy.getNewNode(yy.compiler, yy.module, 'name', @0, $1, instructionNode.value).id,
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, [], '').id
+                ], '').id
             ];
         }
-    | externalIdentifier
+    /*| externalIdentifier
         {
             $$ = [
                 yy.getNewNode(yy.compiler, yy.module, 'name', @0, $1, '').id
             ];
-        }
+        }*/
     ;
 
 instruction
@@ -3423,6 +3710,8 @@ instruction
 call
     : callByName
     | callByExpression
+    | callByMemberByName
+    | callByMemberByExpression
     ;
 
 callByName
@@ -3442,25 +3731,14 @@ callByName
                 ]), '').id
             ];
         }
-    | externalIdentifier '[' argList ']'
+    /*| externalIdentifier '[' argList ']'
         {
             $$ = [
                 yy.getNewNode(yy.compiler, yy.module, 'callByName', @0, $1.concat([
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, $3, '').id
                 ]), '').id
             ];
-        }
-    ;
-
-callByExpression
-    : call '[' argList ']'
-        {
-            $$ = [
-                yy.getNewNode(yy.compiler, yy.module, 'callByExpression', @0, $1.concat([
-                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, $3, '').id
-                ]), '').id
-            ];
-        }
+        }*/
     ;
 
 argList
@@ -3482,6 +3760,46 @@ nonEmptyArgList
 arg
     : expr
     ;
+
+callByExpression
+    : call '[' argList ']'
+        {
+            $$ = [
+                yy.getNewNode(yy.compiler, yy.module, 'callByExpression', @0, $1.concat([
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, $3, '').id
+                ]), '').id
+            ];
+        }
+    | string '[' argList ']'
+        {
+            $$ = [
+                yy.getNewNode(yy.compiler, yy.module, 'callByName', @0, [
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$getElement').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, $1.concat($3), '').id
+                ], '').id
+            ];
+        }
+    | array '[' argList ']'
+        {
+            $$ = [
+                yy.getNewNode(yy.compiler, yy.module, 'callByName', @0, [
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$getElement').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, $1.concat($3), '').id
+                ], '').id
+            ];
+        }
+    ;
+
+/*callByMemberByName
+    : identifier '.' identifier '[' argList ']'
+    ;*/
+
+/*callByMemberByExpression
+    : call '.' identifier '[' argList ']'
+    | string '.' identifier '[' argList ']'
+    | array '.' identifier '[' argList ']'
+    | member '.' identifier '[' argList ']'
+    ;*/
 
 /* The grouping expression */
 grouping
@@ -3604,7 +3922,7 @@ interpolatedExpr
         {
             $$ = [
                 yy.getNewNode(yy.compiler, yy.module, 'callByName', @0, [
-                    yy.getNewNode(yy.compiler, yy.module, 'identifier', @0, [], '$getString').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'instruction', @0, [], '$getString').id,
                     yy.getNewNode(yy.compiler, yy.module, 'list', @0, $2, '').id
                 ], '').id
             ];
@@ -3660,6 +3978,23 @@ arrayElem
     : expr
     ;
 
+/* The member expression */
+/*member
+    : memberByName
+    | memberByExpression
+    ;*/
+
+/*memberByName
+    : identifier '.' identifier
+    ;*/
+
+/*memberByExpression
+    : call '.' identifier
+    | string '.' identifier
+    | array '.' identifier
+    | member '.' identifier
+    ;*/
+
 %%
 
 /* We rewrite the function 'parseError' in order to provide our own error messages */
@@ -3682,6 +4017,8 @@ parser.parseError = function(str, hash) {
             tokenText = 'outdentation';
         } else if (token === 'BASIC_TYPE') {
             tokenText = 'type';
+        } else if (token === 'VARIABLE_TYPE') {
+            tokenText = 'type variable';
         } else if (token === 'TEXT') {
             tokenText = 'text';
         } else if (token === 'UNICODE_CODE_POINT_OUT_OF_BOUNDS') {
@@ -3717,7 +4054,7 @@ parser.parseError = function(str, hash) {
     var getTokenTextList = function(hash) {
         var tokenTextList = [];
 
-        if (('expected' in hash) && (hash.expected.length > 0)) {
+        if (Object.hasOwn(hash, 'expected') && (hash.expected.length > 0)) {
             var length = Math.min(3, hash.expected.length);
 
             for (var i = 0; i < length; i++) {

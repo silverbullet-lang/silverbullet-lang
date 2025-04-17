@@ -1,0 +1,93 @@
+let f
+	array0 := {{-5}, {3, -1}, {1, -3}, {5}}
+	array1 := {{-5}, {3, -1}, {1, 3}, {5}}
+
+	show[array0]
+	show[array1]
+
+	show[array0 == array1]
+	show[array0 != array1]
+	show[array0 & array1]
+
+	array2 := {} | {$i}
+	show[$slice[array2, 0, 1]]
+	show[$slice[array0, 1, 100]]
+	show[$slice[array1, 3, 4]]
+	show[$slice[array1, 4, 5]]
+
+let show[value | {$$T}]
+	show[$getString[value]]
+
+let $getString[value | {$$T}] | $s
+	string := '{'
+	index := 0
+	size := $size[value]
+
+	while index < size
+		if 0 < index
+			string = string & ', '
+
+		element := $getElement[value, index]
+		string = string & $getString[element]
+		index = index + 1
+
+	string = string & '}'
+	return string
+
+let $eq[value0 | {$$T}, value1 | {$$T}] | $b
+	isEqual := false
+	size0 := $size[value0]
+	size1 := $size[value1]
+
+	if size0 == size1
+		isEqual = true
+		index := 0
+
+		while isEqual and (index < size0)
+			element0 := $getElement[value0, index]
+			element1 := $getElement[value1, index]
+
+			if element0 != element1
+				isEqual = false
+
+			index = index + 1
+
+	return isEqual
+
+let $ne[value0 | {$$T}, value1 | {$$T}] | $b
+	return not $eq[value0, value1]
+
+let $join[value0 | {$$T}, value1 | {$$T}] | {$$T}
+	array := {} | {$$T}
+	size0 := $size[value0]
+	size1 := $size[value1]
+	size := size0 + size1
+
+	if 0 < size
+		if 0 < size0
+			element := $getElement[value0, 0]
+			array = $getArray[size, element]
+		else
+			element := $getElement[value1, 0]
+			array = $getArray[size, element]
+
+		$copyArray[array, 0, value0, 0, size0]
+		$copyArray[array, size0, value1, 0, size1]
+
+	return array
+
+let $slice[value | {$$T}, fromIndex | $i, toIndex | $i] | {$$T}
+	array := {} | {$$T}
+	size := $size[value]
+
+	if (0 <= fromIndex) and (fromIndex < size) and (fromIndex < toIndex)
+		if size < toIndex
+			toIndex = size
+
+		size = toIndex - fromIndex
+		element := $getElement[value, fromIndex]
+		array = $getArray[size, element]
+		$copyArray[array, 0, value, fromIndex, size]
+
+	return array
+

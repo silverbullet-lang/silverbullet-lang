@@ -6,7 +6,7 @@
         "test": "node --experimental-wasm-imported-strings ./test/index.js"
     },
     "devDependencies": {
-        "jison": "^0.4.18",
-        "binaryen": "117"
+        "binaryen": "123",
+        "jison": "^0.4.18"
     }
 }

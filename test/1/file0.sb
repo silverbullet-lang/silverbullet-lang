@@ -7,7 +7,7 @@ private let f[x | $i]
 
 private let start
 	show[Y]
-	x := &file1.f | [$b] -> []
-	x[159 == 158 + 1]
+	--x := &file1.f | [$b] -> []
+	--x[159 == 158 + 1]
 	Y = 159
-	x[false]
+	--x[false]

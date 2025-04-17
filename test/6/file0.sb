@@ -17,7 +17,7 @@ let start
 	show[big-s]
 
 	s-1 := getText[1] | $s
-	show[file2.getText["Text", s-1, getText[2]]]
+	--show[file2.getText["Text", s-1, getText[2]]]
 
 	show[S]
 

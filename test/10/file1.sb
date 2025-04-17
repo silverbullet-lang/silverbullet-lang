@@ -1,0 +1,11 @@
+use f as F from file2
+
+let f[x | $f, y | $f] | $s
+	return "{ x } * { y } = { x * y }"
+
+let g[x | $i] | [$f, $f] -> [$s]
+	if x == 0
+		return &f
+	else
+		return &F
+

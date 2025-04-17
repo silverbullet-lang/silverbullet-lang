@@ -1,4 +1,4 @@
-import { getNewModule, setActiveModule, getModuleByPath, setModuleChild, getNewNode, getNodeById, setActiveNodeList, getActiveNode, unsetActiveNode, getMainNode, setNodeObject, getNodeFromNode, getNewBlock, setActiveBlock, getActiveBlock, getBlockById, getBlockObjectByName, setBlockObject, unsetActiveBlock, getNewType, getTypeByName, getTypeById, getTypeName, isTypeVoid, getNewFunction, getFunctionById, getActiveFunction, getFunctionName, getNewVariable, getVariableById, getNewExpression, getExpressionById, isExpressionInstanceOf, getExpressionTypeName, setExpressionTypeId, getExpressionType, getExpressionTypeList, setExpressionValueId, getNewReference, getReferenceByName, getNewSubmodule, setSubmodulePath, getSubmoduleById, setSubmoduleObject, setStringNode } from './module.js';
+import { getNewModule, setActiveModule, getModuleByPath, setModuleChild, getNewNode, getNodeById, setActiveNodeList, getActiveNode, unsetActiveNode, getMainNode, setNodeObject, getNodeFromNode, getNodeCopy, getTypeVariableNode, getNewBlock, setActiveBlock, getActiveBlock, getBlockById, getBlockObjectByName, setBlockObject, unsetActiveBlock, getNewType, getTypeByName, getTypeById, getTypeName, isTypeVoid, isTypeEquivalentTo, getNewFunction, getFunctionById, getActiveFunction, getFunctionName, setFunctionReferenceIndex, getNewVariable, getVariableById, getNewExpression, getExpressionById, isExpressionInstanceOf, getExpressionTypeName, setExpressionType, isExpressionTypeSet, getExpressionType, getExpressionTypeList, setExpressionValue, getNewSubmodule, setSubmodulePath, getSubmoduleById, setSubmoduleObject, setStringNode } from './module.js';
 
 function checkModule(compiler, module) {
     let node = getMainNode(compiler, module);
@@ -12,6 +12,9 @@ function checkModule(compiler, module) {
         node = getActiveNode(compiler, module);
     }
     while (node && (module.status === 'CHECKING')) {
+
+        //console.log(node.id, node.name, node.status, node.location.first_line, node.value);
+
         if (node.name === 'moduleStmt') {
             checkModuleStmt(compiler, module, node);
         } else if (node.name === 'moduleBlock') {
@@ -50,8 +53,8 @@ function checkModule(compiler, module) {
             checkFunctionStmt(compiler, module, node);
         } else if (node.name === 'nonModuleBlock') {
             checkNonModuleBlock(compiler, module, node);
-        } else if (node.name === 'assignmentStmt') {
-            checkAssignmentStmt(compiler, module, node);
+        } else if (node.name === 'assignmentToNameStmt') {
+            checkAssignmentToNameStmt(compiler, module, node);
         } else if (node.name === 'nothingStmt') {
             checkNothingStmt(compiler, module, node);
         } else if (node.name === 'ifElseStmt') {
@@ -86,6 +89,8 @@ function checkModule(compiler, module) {
             checkArray(compiler, module, node);
         } else if (node.name === 'arrayType') {
             checkArrayType(compiler, module, node);
+        } else if (node.name === 'variableType') {
+            checkVariableType(compiler, module, node);
         }
         node = getActiveNode(compiler, module);
     }
@@ -105,6 +110,8 @@ function checkModuleStmt(compiler, module, node) {
         unsetActiveBlock(compiler, module);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
     }
 }
 
@@ -123,6 +130,8 @@ function checkModuleBlock(compiler, module, node) {
         unsetActiveBlock(compiler, module);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
     }
 }
 
@@ -192,7 +201,7 @@ function checkSubmodule(compiler, module, node) {
                 }
             }
             setSubmodulePath(compiler, module, submoduleObject, path);
-            setBlockObject(compiler, module, getActiveBlock(compiler, module), submoduleObject.name, 'submodule', submoduleObject.id);
+            setBlockObject(compiler, module, getActiveBlock(compiler, module), submoduleObject.name, 'submodule', submoduleObject.id, false);
         }
 
         /* Create a sub-module */
@@ -219,6 +228,8 @@ function checkSubmodule(compiler, module, node) {
     } else if (node.status === '1') {
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
     }
 }
 
@@ -229,6 +240,8 @@ function checkList(compiler, module, node) {
     } else if (node.status === '1') {
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
     }
 }
 
@@ -399,6 +412,8 @@ function checkExternalObject(compiler, module, node) {
         }
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
     }
 }
 
@@ -412,7 +427,7 @@ function checkVariable(compiler, module, node) {
         let object = getBlockObjectByName(compiler, module, getActiveBlock(compiler, module), nameNode.value);
         let typeNode = getNodeById(compiler, module, node.childIdList[2]);
         let typeObject = getTypeById(compiler, module, typeNode.object.id);
-        let variableObject = getNewVariable(compiler, module, node.id, false, false, nameNode.value, typeObject.id);
+        let variableObject = getNewVariable(compiler, module, node.id, false, false, false, nameNode.value, typeObject.id);
 
         /* Set modifiers */
         for (let i = 0; i < modifierNodeListNode.childIdList.length; i++) {
@@ -447,6 +462,9 @@ function checkVariable(compiler, module, node) {
                         location: modifierNode.location
                     };
                 }
+            } else if (modifierNode.value === 'parameter') {
+                /* Built-in modifier */
+                variableObject.isParameter = true;
             } else {
                 throw {
                     code: 'E_CHECK_VARIABLE_INVALID_MODIFIER',
@@ -455,6 +473,18 @@ function checkVariable(compiler, module, node) {
                     note: 'the following modifiers are valid for a variable: constant, private'
                 };
             }
+        }
+
+        /* If this variable is not a parameter, then its type must be a fixed type */
+        if (!variableObject.isParameter && typeObject.isVariable) {
+            let typeVariableNode = getTypeVariableNode(compiler, module, typeNode);
+            let typeVariableObject = getTypeById(compiler, module, typeVariableNode.object.id);
+
+            throw {
+                code: 'E_CHECK_VARIABLE_TYPE_VARIABLE_IS_UNDEFINED',
+                message: `value of type variable ${ getTypeName(compiler, module, typeVariableObject) } is not defined`,
+                location: typeVariableNode.location
+            };
         }
 
         /* Check name */
@@ -496,27 +526,27 @@ function checkVariable(compiler, module, node) {
                 location: nameNode.location
             };
         } else if (object.type === '') {
-            setBlockObject(compiler, module, getActiveBlock(compiler, module), variableObject.name, 'variable', variableObject.id);
+            setBlockObject(compiler, module, getActiveBlock(compiler, module), variableObject.name, 'variable', variableObject.id, false);
         }
 
         setNodeObject(compiler, module, node, 'variable', variableObject.id);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
     }
 }
 
 function checkBasicType(compiler, module, node) {
     if (node.status === 'CREATED') {
         let name = node.value;
-        let fromTypeIdList = [];
-        let toTypeId = -1;
         let typeObject = getTypeByName(compiler, module, name);
 
         /* Check if there is a type with the same name */
         if (!typeObject) {
             /* There is no type with the given name */
             /* Let's create a new one */
-            typeObject = getNewType(compiler, module, node.id, 'basic', name, fromTypeIdList, toTypeId);
+            typeObject = getNewType(compiler, module, node.id, 'basic', name, [], -1, false);
         }
         setNodeObject(compiler, module, node, 'type', typeObject.id);
         unsetActiveNode(compiler, module);
@@ -536,7 +566,13 @@ function checkFunction(compiler, module, node) {
         let object = getBlockObjectByName(compiler, module, getActiveBlock(compiler, module), nameNode.value);
         let typeNode = getNodeById(compiler, module, node.childIdList[2]);
         let typeObject = getTypeById(compiler, module, typeNode.object.id);
-        let functionObject = getNewFunction(compiler, module, node.id, false, nameNode.value, typeObject.id);
+        let functionObject = getNewFunction(compiler, module, node.id, false, false, false, nameNode.value, typeObject.id);
+
+        /* Check if this function is a copy of a template function */
+        if (node.isCopy) {
+            object.type = '';
+            object.idList = [];
+        }
 
         /* Set modifiers */
         for (let i = 0; i < modifierNodeListNode.childIdList.length; i++) {
@@ -553,6 +589,12 @@ function checkFunction(compiler, module, node) {
                         note: 'if a function is imported from a sub-module, then it is declared as a private function by default'
                     };
                 }
+            } else if (modifierNode.value === 'template') {
+                /* Built-in modifier */
+                functionObject.isTemplate = true;
+            } else if (modifierNode.value === 'instruction') {
+                /* Built-in modifier */
+                functionObject.isInstruction = true;
             } else {
                 throw {
                     code: 'E_CHECK_FUNCTION_INVALID_MODIFIER',
@@ -562,7 +604,27 @@ function checkFunction(compiler, module, node) {
                 };
             }
         }
+
+        /* If this function is not a template function, then its type must be a fixed type */
+        if (!functionObject.isTemplate && typeObject.isVariable) {
+            let typeVariableNode = getTypeVariableNode(compiler, module, typeNode);
+            let typeVariableObject = getTypeById(compiler, module, typeVariableNode.object.id);
+
+            throw {
+                code: 'E_CHECK_FUNCTION_TYPE_VARIABLE_IS_NOT_DEFINED',
+                message: `value of type variable ${ getTypeName(compiler, module, typeVariableObject) } is not defined`,
+                location: typeVariableNode.location
+            };
+        }
+
         /* Check name */
+        if (!functionObject.isInstruction && (nameNode.name === 'instruction') && !module.isLibrary) {
+            throw {
+                code: 'E_CHECK_FUNCTION_INSTRUCTION',
+                message: `custom instruction '${ functionObject.name }' cannot be created in a module that is stored outside the library folder; the folder '${ compiler.options.libraryFolder }' is set as a library folder`,
+                location: nameNode.location
+            };
+        }
         if (functionObject.name === 'start') {
             /* Check if the signature of the starting function is correct */
             if ((typeObject.fromIdList.length > 0) || (typeObject.toId !== getTypeByName(compiler, module, '$v').id)) {
@@ -589,40 +651,41 @@ function checkFunction(compiler, module, node) {
             /* Let's compare the types of parameters */
             /* If they match, then throw an error */
 
-            for (let i = 0; i < object.idList.length; i++) {
+            let isMatch = false;
+            let i = 0;
+
+            while (!isMatch && (i < object.idList.length)) {
                 let $functionObject = getFunctionById(compiler, module, object.idList[i]);
-                let $functionTypeObject = getTypeById(compiler, module, $functionObject.typeId);
+                let $typeObject = getTypeById(compiler, module, $functionObject.typeId);
 
-                if (typeObject.fromIdList.length === $functionTypeObject.fromIdList.length) {
+                if (typeObject.fromIdList.length === $typeObject.fromIdList.length) {
                     let j = 0;
-                    let isMatch = true;
 
-                    while ((j < typeObject.fromIdList.length) && isMatch) {
+                    isMatch = true;
+                    while (isMatch && (j < typeObject.fromIdList.length)) {
                         let fromTypeObject = getTypeById(compiler, module, typeObject.fromIdList[j]);
-                        let $functionFromTypeObject = getTypeById(compiler, module, $functionTypeObject.fromIdList[j]);
+                        let $fromTypeObject = getTypeById(compiler, module, $typeObject.fromIdList[j]);
 
-                        if (fromTypeObject.id !== $functionFromTypeObject.id) {
+                        if (!isTypeEquivalentTo(compiler, module, fromTypeObject, $fromTypeObject)) {
                             isMatch = false;
-                            /* If two different functions with the same name have a parameter at the same position that is a reference, then we assume that types of such parameters match */
-                            if ((fromTypeObject.kind === 'reference') && ($functionFromTypeObject.kind === 'reference')) {
-                                isMatch = true;
-                            }
                         }
                         j++;
                     }
-                    if (isMatch) {
-                        let $functionNode = getNodeById(compiler, module, $functionObject.nodeId);
-
-                        throw {
-                            code: 'E_CHECK_FUNCTION_REPETITIVE_NAME_AND_TYPES_OF_PARAMETERS',
-                            message: `the function '${ functionObject.name }' cannot be created, because there is already a function with the same name and the same types of parameters defined on the line ${ $functionNode.location.first_line }`,
-                            location: nameNode.location,
-                            note: 'if two different functions with the same name have a parameter at the same position that is a reference, then we assume that types of such parameters match; for instance, the following two functions cannot be created: f[x | [] -> []] and f[x | [$i] -> []]'
-                        };
-                    }
                 }
+                i++;
             }
-            setBlockObject(compiler, module, getActiveBlock(compiler, module), functionObject.name, 'function', functionObject.id);
+            if (!isMatch) {
+                setBlockObject(compiler, module, getActiveBlock(compiler, module), functionObject.name, 'function', functionObject.id, functionObject.isTemplate);
+            } else {
+                let $functionObject = getFunctionById(compiler, module, object.idList[i - 1]);
+                let $functionNode = getNodeById(compiler, module, $functionObject.nodeId);
+
+                throw {
+                    code: 'E_CHECK_FUNCTION_SIGNATURE_MATCH',
+                    message: `function '${ functionObject.name }' cannot be created, because its signature is equivalent to the signature of the function '${ $functionObject.name  }' defined on the line ${ $functionNode.location.first_line }`,
+                    location: nameNode.location
+                };
+            }
         } else if (object.type === 'submodule') {
             let submoduleObject = getSubmoduleById(compiler, module, object.idList[0]);
             let submoduleNode = getNodeById(compiler, module, submoduleObject.nodeId);
@@ -633,12 +696,14 @@ function checkFunction(compiler, module, node) {
                 location: nameNode.location
             };
         } else if (object.type === '') {
-            setBlockObject(compiler, module, getActiveBlock(compiler, module), functionObject.name, 'function', functionObject.id);
+            setBlockObject(compiler, module, getActiveBlock(compiler, module), functionObject.name, 'function', functionObject.id, false);
         }
 
         setNodeObject(compiler, module, node, 'function', functionObject.id);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
     }
 }
 
@@ -649,11 +714,11 @@ function checkReferenceType(compiler, module, node) {
     } else if (node.status === '1') {
         let name = '[';
         let fromTypeNodeListNode = getNodeById(compiler, module, node.childIdList[0]);
-        let fromTypeIdList = [];
+        let fromTypeObjectIdList = [];
         let toTypeNode = getNodeById(compiler, module, node.childIdList[1]);
         let toTypeObject = getTypeById(compiler, module, toTypeNode.object.id);
-        let toTypeId = toTypeObject.id;
         let typeObject;
+        let isVariable = false;
 
         /* Construct the name of the type */
         for (let i = 0; i < fromTypeNodeListNode.childIdList.length; i++) {
@@ -664,19 +729,25 @@ function checkReferenceType(compiler, module, node) {
                 name += ', ';
             }
             name += fromTypeObject.name;
-            fromTypeIdList.push(fromTypeObject.id);
+            fromTypeObjectIdList.push(fromTypeObject.id);
+            if (fromTypeObject.isVariable) {
+                isVariable = true;
+            }
         }
         name += '] -> [';
         if (toTypeObject.id !== getTypeByName(compiler, module, '$v').id) {
             name += toTypeObject.name;
         }
         name += ']';
+        if (toTypeObject.isVariable) {
+            isVariable = true;
+        }
 
         /* Check if there is a type with the same name */
         typeObject = getTypeByName(compiler, module, name);
         if (!typeObject) {
             /* Create a new type with the constructed name */
-            typeObject = getNewType(compiler, module, node.id, 'reference', name, fromTypeIdList, toTypeId);
+            typeObject = getNewType(compiler, module, node.id, 'reference', name, fromTypeObjectIdList, toTypeObject.id, isVariable);
         }
 
         setNodeObject(compiler, module, node, 'type', typeObject.id);
@@ -694,6 +765,8 @@ function checkVoid(compiler, module, node) {
         setNodeObject(compiler, module, node, 'expression', expressionObject.id);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
     }
 }
 
@@ -728,7 +801,7 @@ function checkInitializationStmt(compiler, module, node) {
                     };
                 }
             } else {
-                if (!isExpressionInstanceOf(compiler, module, expressionObject, variableTypeObject, true)) {
+                if (!isExpressionInstanceOf(compiler, module, expressionObject, variableTypeObject, true, {})) {
                     throw {
                         code: 'E_CHECK_INITIALIZATION_TYPE_MISMATCH',
                         message: `the type of the expression is ${ getExpressionTypeName(compiler, module, expressionObject) }; expected ${ getTypeName(compiler, module, variableTypeObject) }`,
@@ -757,6 +830,8 @@ function checkIntegerSingleSigned(compiler, module, node) {
         setNodeObject(compiler, module, node, 'expression', expressionObject.id);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
     }
 }
 
@@ -767,6 +842,8 @@ function checkIntegerSingleUnsigned(compiler, module, node) {
         setNodeObject(compiler, module, node, 'expression', expressionObject.id);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
     }
 }
 
@@ -777,6 +854,8 @@ function checkIntegerDouble(compiler, module, node) {
         setNodeObject(compiler, module, node, 'expression', expressionObject.id);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
     }
 }
 
@@ -787,6 +866,8 @@ function checkFloatingPointSingle(compiler, module, node) {
         setNodeObject(compiler, module, node, 'expression', expressionObject.id);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
     }
 }
 
@@ -797,6 +878,8 @@ function checkFloatingPointDouble(compiler, module, node) {
         setNodeObject(compiler, module, node, 'expression', expressionObject.id);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
     }
 }
 
@@ -807,6 +890,8 @@ function checkBoolean(compiler, module, node) {
         setNodeObject(compiler, module, node, 'expression', expressionObject.id);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
     }
 }
 
@@ -815,8 +900,17 @@ function checkFunctionStmt(compiler, module, node) {
         setActiveNodeList(compiler, module, [node.childIdList[0]]);
         node.status = '1';
     } else if (node.status === '1') {
+        let functionNode = getNodeById(compiler, module, node.childIdList[0]);
+        let functionObject = getFunctionById(compiler, module, functionNode.object.id);
+
         unsetActiveNode(compiler, module);
-        node.status = '2';
+        if (functionObject.isTemplate) {
+            /* Template functions are not checked */
+            /* Copies of template functions are checked */
+            node.status = 'CHECKED';
+        } else {
+            node.status = '2';
+        }
     } else if (node.status === '2') {
         let functionNode = getNodeById(compiler, module, node.childIdList[0]);
         let functionObject = getFunctionById(compiler, module, functionNode.object.id);
@@ -859,6 +953,8 @@ function checkFunctionStmt(compiler, module, node) {
         unsetActiveBlock(compiler, module);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
     }
 }
 
@@ -874,10 +970,12 @@ function checkNonModuleBlock(compiler, module, node) {
         unsetActiveBlock(compiler, module);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
     }
 }
 
-function checkAssignmentStmt(compiler, module, node) {
+function checkAssignmentToNameStmt(compiler, module, node) {
     if (node.status === 'CREATED') {
         setActiveNodeList(compiler, module, [node.childIdList[1]]);
         node.status = '1';
@@ -893,41 +991,43 @@ function checkAssignmentStmt(compiler, module, node) {
 
             setNodeObject(compiler, module, nameNode, 'variable', variableObject.id);
             if (!variableObject.isConstant) {
-                if (!isExpressionInstanceOf(compiler, module, expressionObject, variableTypeObject, true)) {
+                if (!isExpressionInstanceOf(compiler, module, expressionObject, variableTypeObject, true, {})) {
                     throw {
-                        code: 'E_CHECK_ASSIGNMENT_TYPE_MISMATCH',
+                        code: 'E_CHECK_ASSIGNMENT_TO_NAME_VARIABLE_TYPE_MISMATCH',
                         message: `the type of the expression is ${ getExpressionTypeName(compiler, module, expressionObject) }; expected ${ getTypeName(compiler, module, variableTypeObject) }`,
                         location: expressionNode.location
                     };
                 }
             } else {
                 throw {
-                    code: 'E_CHECK_ASSIGNMENT_TO_CONSTANT',
+                    code: 'E_CHECK_ASSIGNMENT_TO_NAME_VARIABLE_CONSTANT',
                     message: 'assignment to a variable with the modifier \'constant\' is not allowed',
                     location: nameNode.location
                 };
             }
         } else if (object.type === 'function') {
             throw {
-                code: 'E_CHECK_ASSIGNMENT_TO_FUNCTION',
+                code: 'E_CHECK_ASSIGNMENT_TO_NAME_FUNCTION',
                 message: 'assignment to a function is not allowed',
                 location: nameNode.location
             };
         } else if (object.type === 'submodule') {
             throw {
-                code: 'E_CHECK_ASSIGNMENT_TO_SUBMODULE',
+                code: 'E_CHECK_ASSIGNMENT_TO_NAME_SUBMODULE',
                 message: 'assignment to a sub-module is not allowed',
                 location: nameNode.location
             };
         } else if (object.type === '') {
             throw {
-                code: 'E_CHECK_ASSIGNMENT_OBJECT_NOT_FOUND',
+                code: 'E_CHECK_ASSIGNMENT_TO_NAME_OBJECT_NOT_FOUND',
                 message: `there is no object associated with the name '${ nameNode.value }'`,
                 location: nameNode.location
             };
         }
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
     }
 }
 
@@ -935,6 +1035,8 @@ function checkNothingStmt(compiler, module, node) {
     if (node.status === 'CREATED') {
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
     }
 }
 
@@ -947,7 +1049,7 @@ function checkIfElseStmt(compiler, module, node) {
         let expressionObject = getExpressionById(compiler, module, expressionNode.object.id);
         let expectedExpressionTypeObject = getTypeByName(compiler, module, '$b');
 
-        if (!isExpressionInstanceOf(compiler, module, expressionObject, expectedExpressionTypeObject, true)) {
+        if (!isExpressionInstanceOf(compiler, module, expressionObject, expectedExpressionTypeObject, true, {})) {
             throw {
                 code: 'E_CHECK_IF_ELSE_TYPE_MISMATCH',
                 message: `the type of the 'if-else' expression is ${ getExpressionTypeName(compiler, module, expressionObject) }; expected ${ getTypeName(compiler, module, expectedExpressionTypeObject) }`,
@@ -956,6 +1058,8 @@ function checkIfElseStmt(compiler, module, node) {
         }
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
     }
 }
 
@@ -968,7 +1072,7 @@ function checkWhileStmt(compiler, module, node) {
         let expressionObject = getExpressionById(compiler, module, expressionNode.object.id);
         let expectedExpressionTypeObject = getTypeByName(compiler, module, '$b');
 
-        if (!isExpressionInstanceOf(compiler, module, expressionObject, expectedExpressionTypeObject, true)) {
+        if (!isExpressionInstanceOf(compiler, module, expressionObject, expectedExpressionTypeObject, true, {})) {
             throw {
                 code: 'E_CHECK_WHILE_TYPE_MISMATCH',
                 message: `the type of the 'while' expression is ${ getExpressionTypeName(compiler, module, expressionObject) }; expected ${ getTypeName(compiler, module, expectedExpressionTypeObject) }`,
@@ -977,6 +1081,8 @@ function checkWhileStmt(compiler, module, node) {
         }
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
     }
 }
 
@@ -991,7 +1097,7 @@ function checkReturnStmt(compiler, module, node) {
         let functionTypeObject = getTypeById(compiler, module, functionObject.typeId);
         let functionToTypeObject = getTypeById(compiler, module, functionTypeObject.toId);
 
-        if (!isExpressionInstanceOf(compiler, module, expressionObject, functionToTypeObject, true)) {
+        if (!isExpressionInstanceOf(compiler, module, expressionObject, functionToTypeObject, true, {})) {
             throw {
                 code: 'E_CHECK_RETURN_TYPE_MISMATCH',
                 message: `the type of the returned expression is ${ getExpressionTypeName(compiler, module, expressionObject) }; expected ${ getTypeName(compiler, module, functionToTypeObject) }`,
@@ -1000,55 +1106,71 @@ function checkReturnStmt(compiler, module, node) {
         }
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
     }
 }
 
 function checkReference(compiler, module, node) {
     if (node.status === 'CREATED') {
-        setActiveNodeList(compiler, module, node.childIdList);
+        setActiveNodeList(compiler, module, [node.childIdList[0]]);
         node.status = '1';
     } else if (node.status === '1') {
         let nameNode = getNodeById(compiler, module, node.childIdList[0]);
-        let object = getBlockObjectByName(compiler, module, getActiveBlock(compiler, module), nameNode.value);
+        let activeBlock = getActiveBlock(compiler, module);
+        let object = getBlockObjectByName(compiler, module, activeBlock, nameNode.value);
         let expressionObject = getNewExpression(compiler, module, node.id, false, [], -1);
 
         if (object.type === 'variable') {
-            let variableObject = getVariableById(compiler, module, object.idList[0]);
-            let variableTypeObject = getTypeById(compiler, module, variableObject.typeId);
-
-            setNodeObject(compiler, module, nameNode, 'variable', variableObject.id);
-            setExpressionTypeId(compiler, module, expressionObject, variableTypeObject.id, 0);
-            if (variableTypeObject.kind !== 'reference') {
-                throw {
-                    code: 'E_CHECK_REFERENCE_VARIABLE_IS_NOT_REFERENCE',
-                    message: `value of the variable '${ nameNode.value }' is not a reference to a function`,
-                    location: nameNode.location
-                };
-            }
+            throw {
+                code: 'E_CHECK_REFERENCE_VARIABLE',
+                message: `'${ nameNode.value }' is a variable; reference to a variable cannot be created`,
+                location: nameNode.location
+            };
         } else if (object.type === 'function') {
             for (let i = 0; i < object.idList.length; i++) {
                 let functionObject = getFunctionById(compiler, module, object.idList[i]);
-                let functionTypeObject = getTypeById(compiler, module, functionObject.typeId);
-                let functionName = getFunctionName(compiler, module, functionObject);
-                let reference = getReferenceByName(compiler, module, functionName);
 
-                if (!reference) {
-                    reference = getNewReference(compiler, module, functionName);
-                }
-                if (i === 0) {
-                    setNodeObject(compiler, module, nameNode, 'function', functionObject.id);
-                    setExpressionTypeId(compiler, module, expressionObject, functionTypeObject.id, i);
-                    setExpressionValueId(compiler, module, expressionObject, reference.id, i);
+                if (!functionObject.isInstruction) {
+                    if (!functionObject.isTemplate) {
+                        let idIndex = -1;
+
+                        if (functionObject.referenceIndex === -1) {
+                            setFunctionReferenceIndex(compiler, module, functionObject);
+                        }
+                        if (!isExpressionTypeSet(compiler, module, expressionObject)) {
+                            idIndex = 0;
+                        }
+                        setExpressionType(compiler, module, expressionObject, functionObject.typeId, idIndex);
+                        setExpressionValue(compiler, module, expressionObject, functionObject.id, idIndex);
+                    } else {
+                        /* We don't create references to template functions */
+                        /* There is no error, we just skip template functions */
+                    }
                 } else {
-                    setNodeObject(compiler, module, nameNode, 'function', -1);
-                    setExpressionTypeId(compiler, module, expressionObject, functionTypeObject.id, -1);
-                    setExpressionValueId(compiler, module, expressionObject, reference.id, -1);
+                    throw {
+                        code: 'E_CHECK_REFERENCE_INSTRUCTION',
+                        message: `'${ nameNode.value }' is a built-in function; reference to a built-in function cannot be created`,
+                        location: nameNode.location
+                    };
                 }
+            }
+            if (!isExpressionTypeSet(compiler, module, expressionObject)) {
+                let message = `'${ nameNode.value }' is a template function; reference to a template function cannot be created`;
+
+                if (1 < object.idList.length) {
+                    message = `every ${ message }`;
+                }
+                throw {
+                    code: 'E_CHECK_REFERENCE_TEMPLATE_FUNCTION',
+                    message: message,
+                    location: nameNode.location
+                };
             }
         } else if (object.type === 'submodule') {
             throw {
-                code: 'E_CHECK_REFERENCE_TO_SUBMODULE',
-                message: 'reference to a sub-module is not allowed',
+                code: 'E_CHECK_REFERENCE_SUBMODULE',
+                message: `'${ nameNode.value }' is a sub-module; reference to a sub-module cannot be created`,
                 location: nameNode.location
             };
         } else if (object.type === '') {
@@ -1058,9 +1180,12 @@ function checkReference(compiler, module, node) {
                 location: nameNode.location
             };
         }
+
         setNodeObject(compiler, module, node, 'expression', expressionObject.id);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
     }
 }
 
@@ -1068,6 +1193,8 @@ function checkIdentifier(compiler, module, node) {
     if (node.status === 'CREATED') {
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
     }
 }
 
@@ -1133,6 +1260,8 @@ function checkExternalIdentifier(compiler, module, node) {
         unsetActiveBlock(compiler, module);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
     }
 }
 
@@ -1141,65 +1270,10 @@ function checkName(compiler, module, node) {
         setActiveNodeList(compiler, module, node.childIdList);
         node.status = '1';
     } else if (node.status === '1') {
-        let nameNode = getNodeById(compiler, module, node.childIdList[0]);
-        let object = getBlockObjectByName(compiler, module, getActiveBlock(compiler, module), nameNode.value);
-        let expressionObject = getNewExpression(compiler, module, node.id, false, [], -1);
-
-        if (object.type === 'variable') {
-            let variableObject = getVariableById(compiler, module, object.idList[0]);
-            let variableTypeObject = getTypeById(compiler, module, variableObject.typeId);
-
-            setNodeObject(compiler, module, nameNode, 'variable', variableObject.id);
-            if (variableTypeObject.kind === 'reference') {
-                setExpressionTypeId(compiler, module, expressionObject, variableTypeObject.toId, 0);
-                if (variableTypeObject.fromIdList.length !== 0) {
-                    throw {
-                        code: 'E_CHECK_NAME_PARAMETER_ARGUMENT_NUMBER_MISMATCH',
-                        message: `the value of variable '${ nameNode.value }' is a reference to a function defined with ${ variableTypeObject.fromIdList.length } parameter(s), but the given number of arguments is 0`,
-                        location: nameNode.location
-                    };
-                }
-            } else {
-                setExpressionTypeId(compiler, module, expressionObject, variableTypeObject.id, 0);
-            }
-        } else if (object.type === 'function') {
-            let i = 0;
-            let isMatch = false;
-
-            while ((i < object.idList.length) && !isMatch) {
-                let functionObject = getFunctionById(compiler, module, object.idList[i]);
-                let functionTypeObject = getTypeById(compiler, module, functionObject.typeId);
-
-                setNodeObject(compiler, module, nameNode, 'function', functionObject.id);
-                setExpressionTypeId(compiler, module, expressionObject, functionTypeObject.toId, i);
-                if (functionTypeObject.fromIdList.length === 0) {
-                    isMatch = true;
-                }
-                i++;
-            }
-            if (!isMatch) {
-                throw {
-                    code: 'E_CHECK_NAME_FUNCTION_NOT_FOUND',
-                    message: `function '${ nameNode.value }' is defined with at least one parameter, but the given number of arguments is 0`,
-                    location: nameNode.location
-                };
-            }
-        } else if (object.type === 'submodule') {
-            throw {
-                code: 'E_CHECK_NAME_SUBMODULE',
-                message: `'${ nameNode.value }' is a sub-module; a sub-module has no value by itself`,
-                location: nameNode.location
-            };
-        } else if (object.type === '') {
-            throw {
-                code: 'E_CHECK_NAME_OBJECT_NOT_FOUND',
-                message: `there is no object associated with the name '${ nameNode.value }'`,
-                location: nameNode.location
-            };
-        }
-        setNodeObject(compiler, module, node, 'expression', expressionObject.id);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
     }
 }
 
@@ -1207,6 +1281,8 @@ function checkInstruction(compiler, module, node) {
     if (node.status === 'CREATED') {
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
     }
 }
 
@@ -1216,104 +1292,164 @@ function checkCallByName(compiler, module, node) {
         node.status = '1';
     } else if (node.status === '1') {
         let nameNode = getNodeById(compiler, module, node.childIdList[0]);
-        let object = getBlockObjectByName(compiler, module, getActiveBlock(compiler, module), nameNode.value);
         let argumentNodeListNode = getNodeById(compiler, module, node.childIdList[1]);
-        let expressionObject = getNewExpression(compiler, module, node.id, false, [], -1);
+        let activeBlockObject = getActiveBlock(compiler, module);
+        let object = getBlockObjectByName(compiler, module, activeBlockObject, nameNode.value);
 
-        /* Operator overloading */
         if (nameNode.name === 'operator') {
-            let idList = [];
+            /* Operator overloading */
+            let operators = {
+                '-': '$sub',
+                '+': '$add',
+                '*': '$mul',
+                '/': '$div',
+                '%': '$rem',
+                '==': '$eq',
+                '!=': '$ne',
+                '<': '$lt',
+                '>': '$gt',
+                '<=': '$le',
+                '>=': '$ge',
+                'not': '$not',
+                'and': '$and',
+                'or': '$or',
+                '&': '$join'
+            };
 
-            if (nameNode.value === '-') {
-                idList = getBlockObjectByName(compiler, module, getActiveBlock(compiler, module), '$sub').idList;
-            } else if (nameNode.value === '+') {
-                idList = getBlockObjectByName(compiler, module, getActiveBlock(compiler, module), '$add').idList;
-            } else if (nameNode.value === '*') {
-                idList = getBlockObjectByName(compiler, module, getActiveBlock(compiler, module), '$mul').idList;
-            } else if (nameNode.value === '/') {
-                idList = getBlockObjectByName(compiler, module, getActiveBlock(compiler, module), '$div').idList;
-            } else if (nameNode.value === '%') {
-                idList = getBlockObjectByName(compiler, module, getActiveBlock(compiler, module), '$rem').idList;
-            } else if (nameNode.value === '==') {
-                idList = getBlockObjectByName(compiler, module, getActiveBlock(compiler, module), '$eq').idList;
-            } else if (nameNode.value === '!=') {
-                idList = getBlockObjectByName(compiler, module, getActiveBlock(compiler, module), '$ne').idList;
-            } else if (nameNode.value === '<') {
-                idList = getBlockObjectByName(compiler, module, getActiveBlock(compiler, module), '$lt').idList;
-            } else if (nameNode.value === '>') {
-                idList = getBlockObjectByName(compiler, module, getActiveBlock(compiler, module), '$gt').idList;
-            } else if (nameNode.value === '<=') {
-                idList = getBlockObjectByName(compiler, module, getActiveBlock(compiler, module), '$le').idList;
-            } else if (nameNode.value === '>=') {
-                idList = getBlockObjectByName(compiler, module, getActiveBlock(compiler, module), '$ge').idList;
-            } else if (nameNode.value === 'not') {
-                idList = getBlockObjectByName(compiler, module, getActiveBlock(compiler, module), '$not').idList;
-            } else if (nameNode.value === 'and') {
-                idList = getBlockObjectByName(compiler, module, getActiveBlock(compiler, module), '$and').idList;
-            } else if (nameNode.value === 'or') {
-                idList = getBlockObjectByName(compiler, module, getActiveBlock(compiler, module), '$or').idList;
-            } else if (nameNode.value === '&') {
-                idList = getBlockObjectByName(compiler, module, getActiveBlock(compiler, module), '$join').idList;
+            if (Object.hasOwn(operators, nameNode.value)) {
+                let name = operators[nameNode.value];
+                let idList = getBlockObjectByName(compiler, module, activeBlockObject, name).idList;
+
+                object.type = 'function';
+                for (let i = 0; i < idList.length; i++) {
+                    object.idList.push(idList[i]);
+                }
             }
-            object.type = 'function';
-            object.idList = object.idList.concat(idList);
         }
 
         if (object.type === 'variable') {
             let variableObject = getVariableById(compiler, module, object.idList[0]);
             let variableTypeObject = getTypeById(compiler, module, variableObject.typeId);
 
-            setNodeObject(compiler, module, nameNode, 'variable', variableObject.id);
             if (variableTypeObject.kind === 'reference') {
-                setExpressionTypeId(compiler, module, expressionObject, variableTypeObject.toId, 0);
-                if (variableTypeObject.fromIdList.length === argumentNodeListNode.childIdList.length) {
-                    for (let i = 0; i < argumentNodeListNode.childIdList.length; i++) {
+                let isMatch = false;
+
+                if (argumentNodeListNode.childIdList.length === variableTypeObject.fromIdList.length) {
+                    let i = 0;
+
+                    isMatch = true;
+                    while (isMatch && (i < argumentNodeListNode.childIdList.length)) {
                         let argumentNode = getNodeById(compiler, module, argumentNodeListNode.childIdList[i]);
                         let argumentObject = getExpressionById(compiler, module, argumentNode.object.id);
-                        let expectedArgumentTypeObject = getTypeById(compiler, module, variableTypeObject.fromIdList[i]);
+                        let fromTypeObject = getTypeById(compiler, module, variableTypeObject.fromIdList[i]);
 
-                        if (!isExpressionInstanceOf(compiler, module, argumentObject, expectedArgumentTypeObject, true)) {
-                            throw {
-                                code: 'E_CHECK_CALL_BY_NAME_TYPE_MISMATCH',
-                                message: `the type of the argument number ${ i + 1 } is ${ getExpressionTypeName(compiler, module, argumentObject) }; expected ${ getTypeName(compiler, module, expectedArgumentTypeObject) }`,
-                                location: argumentNode.location
-                            };
+                        if (!isExpressionInstanceOf(compiler, module, argumentObject, fromTypeObject, true, {})) {
+                            isMatch = false;
+                        }
+                        i++;
+                    }
+                }
+                if (isMatch) {
+                    let variableNode = getNodeById(compiler, module, variableObject.nodeId);
+
+                    node.childIdList.push(variableNode.id);
+                    variableNode.parentIdList.push(node.id);
+                } else {
+                    let message = `value of variable '${ nameNode.value }' is a reference to a function defined with`;
+
+                    if (variableTypeObject.fromIdList.length === 0) {
+                        message += ' no parameters';
+                    } else {
+                        message += ` ${ variableTypeObject.fromIdList.length } parameter(s) of the following type(s):`;
+                        for (let i = 0; i < variableTypeObject.fromIdList.length; i++) {
+                            let fromTypeObject = getTypeById(compiler, module, variableTypeObject.fromIdList[i]);
+
+                            if (0 < i) {
+                                message += ',';
+                            }
+                            message += ` ${ getTypeName(compiler, module, fromTypeObject) }`;
                         }
                     }
-                } else {
+                    message += ', but this function is called with';
+                    if (argumentNodeListNode.childIdList.length === 0) {
+                        message += ' no arguments';
+                    } else {
+                        message += ` ${ argumentNodeListNode.childIdList.length } argument(s) of the following type(s):`;
+                        for (let i = 0; i < argumentNodeListNode.childIdList.length; i++) {
+                            let argumentNode = getNodeById(compiler, module, argumentNodeListNode.childIdList[i]);
+                            let argumentObject = getExpressionById(compiler, module, argumentNode.object.id);
+
+                            if (0 < i) {
+                                message += ',';
+                            }
+                            message += ` ${ getExpressionTypeName(compiler, module, argumentObject) }`;
+                        }
+                    }
                     throw {
-                        code: 'E_CHECK_CALL_BY_NAME_PARAMETER_ARGUMENT_NUMBER_MISMATCH',
-                        message: `value of the variable '${ nameNode.value  }' is a reference to a function defined with ${ variableTypeObject.fromIdList.length } parameter(s), but the given number of arguments is ${ argumentNodeListNode.childIdList.length }`,
+                        code: 'E_CHECK_CALL_BY_NAME_INVALID_ARGUMENT_LIST',
+                        message: message,
                         location: nameNode.location
                     };
                 }
+            } else if ((variableTypeObject.name === '$s') || (variableTypeObject.kind === 'array')) {
+                if (nameNode.name === 'name') {
+                    let variableNode = getNodeById(compiler, module, variableObject.nodeId);
+
+                    node.childIdList.push(variableNode.id);
+                    variableNode.parentIdList.push(node.id);
+                } else {
+                    /* We have the case 'name[argumentList]', where 'name' is a variable and its value is either a string or an array */
+                    /* Here, we replace 'name[argumentList]' with '$getElement[name, argumentList]' */
+                    let callByNameNode = getNewNode(compiler, module, 'callByName', node.location, [
+                        getNewNode(compiler, module, 'instruction', nameNode.location, [], '$getElement').id,
+                        getNewNode(compiler, module, 'list', argumentNodeListNode.location, [
+                            getNewNode(compiler, module, 'callByName', nameNode.location, [
+                                getNewNode(compiler, module, 'name', nameNode.location, [nameNode.id], nameNode.value).id,
+                                getNewNode(compiler, module, 'list', nameNode.location, [], '').id
+                            ], '').id
+                        ].concat(argumentNodeListNode.childIdList), '').id
+                    ], '');
+
+                    node.childIdList.push(callByNameNode.id);
+                    callByNameNode.parentIdList.push(node.id);
+                    setActiveNodeList(compiler, module, [callByNameNode.id]);
+                }
             } else {
-                throw {
-                    code: 'E_CHECK_CALL_BY_NAME_VARIABLE_IS_NOT_REFERENCE',
-                    message: `value of the variable '${ nameNode.value }' is not a reference to a function`,
-                    location: nameNode.location
-                };
+                if (nameNode.name === 'name') {
+                    let variableNode = getNodeById(compiler, module, variableObject.nodeId);
+
+                    node.childIdList.push(variableNode.id);
+                    variableNode.parentIdList.push(node.id);
+                } else {
+                    throw {
+                        code: 'E_CHECK_CALL_BY_NAME_VARIABLE_TYPE_MISMATCH',
+                        message: `value of variable '${ nameNode.value }' is neither a reference to a function nor a string nor an array`,
+                        location: nameNode.location
+                    };
+                }
             }
         } else if (object.type === 'function') {
-            let i = 0;
             let isMatch = false;
+            let i = 0;
 
-            while ((i < object.idList.length) && !isMatch) {
+            /* This object maps names of type variables to values of them, i.e., to the corresponding ids */
+            let typeVariables = {};
+
+            while (!isMatch && (i < object.idList.length)) {
                 let functionObject = getFunctionById(compiler, module, object.idList[i]);
                 let functionTypeObject = getTypeById(compiler, module, functionObject.typeId);
 
-                setNodeObject(compiler, module, nameNode, 'function', functionObject.id);
-                setExpressionTypeId(compiler, module, expressionObject, functionTypeObject.toId, i);
-                if (functionTypeObject.fromIdList.length === argumentNodeListNode.childIdList.length) {
+                if (argumentNodeListNode.childIdList.length === functionTypeObject.fromIdList.length) {
                     let j = 0;
 
                     isMatch = true;
-                    while ((j < argumentNodeListNode.childIdList.length) && isMatch) {
+                    typeVariables = {};
+                    while (isMatch && (j < argumentNodeListNode.childIdList.length)) {
                         let argumentNode = getNodeById(compiler, module, argumentNodeListNode.childIdList[j]);
                         let argumentObject = getExpressionById(compiler, module, argumentNode.object.id);
-                        let expectedArgumentTypeObject = getTypeById(compiler, module, functionTypeObject.fromIdList[j]);
+                        let fromTypeObject = getTypeById(compiler, module, functionTypeObject.fromIdList[j]);
 
-                        if (!isExpressionInstanceOf(compiler, module, argumentObject, expectedArgumentTypeObject, true)) {
+                        if (!isExpressionInstanceOf(compiler, module, argumentObject, fromTypeObject, true, typeVariables)) {
                             isMatch = false;
                         }
                         j++;
@@ -1321,21 +1457,73 @@ function checkCallByName(compiler, module, node) {
                 }
                 i++;
             }
-            if (!isMatch) {
-                let message = `function '${ nameNode.value }' is defined with at least one parameter, but the given number of arguments is 0`;
+            if (isMatch) {
+                let functionObject = getFunctionById(compiler, module, object.idList[i - 1]);
+                let functionNode = getNodeById(compiler, module, functionObject.nodeId);
 
-                if (argumentNodeListNode.childIdList.length > 0) {
-                    message = `there is no function '${ nameNode.value }' defined with ${ argumentNodeListNode.childIdList.length } parameter(s) of the following type(s): `;
+                if (functionObject.isTemplate) {
+                    if (functionObject.isInstruction) {
+                        let listNode = getNodeById(compiler, module, functionNode.parentIdList[0]);
+                        let functionNodeCopy = getNodeCopy(compiler, module, module, functionNode, module, typeVariables, false);
 
-                    for (let i = 0; i < argumentNodeListNode.childIdList.length; i++) {
-                        let argumentNode = getNodeById(compiler, module, argumentNodeListNode.childIdList[i]);
+                        listNode.childIdList.push(functionNodeCopy.id);
+                        functionNodeCopy.parentIdList.push(listNode.id);
+
+                        node.childIdList.push(functionNodeCopy.id);
+                        functionNodeCopy.parentIdList.push(node.id);
+
+                        setActiveNodeList(compiler, module, [functionNodeCopy.id]);
+                        setActiveBlock(compiler, module, 0);
+                    } else if (functionObject.isExternal) {
+
+                        console.log('callByName: 2; functionObject is external');
+                        process.exit();
+
+                    } else {
+                        /* This template function is defined locally */
+                        let functionStmtNode = getNodeById(compiler, module, functionNode.parentIdList[0]);
+                        let moduleBlockNode = getNodeById(compiler, module, functionStmtNode.parentIdList[0]);
+                        let functionStmtNodeCopy = getNodeCopy(compiler, module, module, functionStmtNode, module, typeVariables, false);
+                        let functionNodeCopy = getNodeById(compiler, module, functionStmtNodeCopy.childIdList[0]);
+
+                        moduleBlockNode.childIdList.push(functionStmtNodeCopy.id);
+                        functionStmtNodeCopy.parentIdList.push(moduleBlockNode.id);
+
+                        node.childIdList.push(functionNodeCopy.id);
+                        functionNodeCopy.parentIdList.push(node.id);
+
+                        setActiveNodeList(compiler, module, [functionStmtNodeCopy.id, functionStmtNodeCopy.id]);
+                        setActiveBlock(compiler, module, 1);
+                    }
+                } else {
+                    node.childIdList.push(functionNode.id);
+                    functionNode.parentIdList.push(node.id);
+
+                    /* Here, we don't need to reset an active block, but we do this due to consistency (see above) */
+                    setActiveBlock(compiler, module, activeBlockObject.id);
+                }
+            } else {
+                let message = `function '${ nameNode.value }' is called with`;
+
+                if (argumentNodeListNode.childIdList.length === 0) {
+                    message += ' no arguments';
+                } else {
+                    message += ` ${ argumentNodeListNode.childIdList.length } argument(s) of the following type(s):`
+                    for (let j = 0; j < argumentNodeListNode.childIdList.length; j++) {
+                        let argumentNode = getNodeById(compiler, module, argumentNodeListNode.childIdList[j]);
                         let argumentObject = getExpressionById(compiler, module, argumentNode.object.id);
 
-                        if (i > 0) {
-                            message += ', ';
+                        if (0 < j) {
+                            message += ',';
                         }
-                        message += getExpressionTypeName(compiler, module, argumentObject);
+                        message += ` ${ getExpressionTypeName(compiler, module, argumentObject) }`;
                     }
+                }
+                message += `, but there is no function '${ nameNode.value }' defined with`;
+                if (argumentNodeListNode.childIdList.length === 0) {
+                    message += ' no parameters';
+                } else {
+                    message += ` ${ argumentNodeListNode.childIdList.length } parameter(s) of the mentioned type(s)`;
                 }
                 throw {
                     code: 'E_CHECK_CALL_BY_NAME_FUNCTION_NOT_FOUND',
@@ -1346,7 +1534,7 @@ function checkCallByName(compiler, module, node) {
         } else if (object.type === 'submodule') {
             throw {
                 code: 'E_CHECK_CALL_BY_NAME_SUBMODULE',
-                message: `'${ nameNode.value }' is a sub-module; a sub-module has no value by itself`,
+                message: `'${ nameNode.value }' is a sub-module; a sub-module cannot be used as call target`,
                 location: nameNode.location
             };
         } else if (object.type === '') {
@@ -1356,9 +1544,39 @@ function checkCallByName(compiler, module, node) {
                 location: nameNode.location
             };
         }
+        node.status = '2';
+    } else if (node.status === '2') {
+        let objectNode = getNodeById(compiler, module, node.childIdList[2]);
+        let object = objectNode.object;
+        let expressionObject = getNewExpression(compiler, module, node.id, false, [], -1);
+
+        if (object.type === 'variable') {
+            let variableObject = getVariableById(compiler, module, object.id);
+            let variableTypeObject = getTypeById(compiler, module, variableObject.typeId);
+
+            if (variableTypeObject.kind === 'reference') {
+                setExpressionType(compiler, module, expressionObject, variableTypeObject.toId, 0);
+            } else {
+                setExpressionType(compiler, module, expressionObject, variableTypeObject.id, 0);
+            }
+        } else if (object.type === 'function') {
+            let functionObject = getFunctionById(compiler, module, object.id);
+            let functionTypeObject = getTypeById(compiler, module, functionObject.typeId);
+
+            /* We restore the active block */
+            unsetActiveBlock(compiler, module);
+            setExpressionType(compiler, module, expressionObject, functionTypeObject.toId, 0);
+        } else if (object.type === 'expression') {
+            let $expressionObject = getExpressionById(compiler, module, object.id);
+            let $expressionTypeObject = getExpressionType(compiler, module, $expressionObject);
+
+            setExpressionType(compiler, module, expressionObject, $expressionTypeObject.id, 0);
+        }
         setNodeObject(compiler, module, node, 'expression', expressionObject.id);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
     }
 }
 
@@ -1366,6 +1584,8 @@ function checkOperator(compiler, module, node) {
     if (node.status === 'CREATED') {
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
     }
 }
 
@@ -1375,44 +1595,112 @@ function checkCallByExpression(compiler, module, node) {
         node.status = '1';
     } else if (node.status === '1') {
         let $expressionNode = getNodeById(compiler, module, node.childIdList[0]);
+
+        /* Type of this expression is always defined due to the syntax rules */
         let $expressionObject = getExpressionById(compiler, module, $expressionNode.object.id);
         let $expressionTypeObject = getExpressionType(compiler, module, $expressionObject);
+
         let argumentNodeListNode = getNodeById(compiler, module, node.childIdList[1]);
-        let expressionObject = getNewExpression(compiler, module, node.id, false, [], -1);
 
         if ($expressionTypeObject.kind === 'reference') {
-            setExpressionTypeId(compiler, module, expressionObject, $expressionTypeObject.toId, 0);
-            if ($expressionTypeObject.fromIdList.length === argumentNodeListNode.childIdList.length) {
-                for (let i = 0; i < argumentNodeListNode.childIdList.length; i++) {
+            let isMatch = false;
+
+            if (argumentNodeListNode.childIdList.length === $expressionTypeObject.fromIdList.length) {
+                let i = 0;
+
+                isMatch = true;
+                while (isMatch && (i < argumentNodeListNode.childIdList.length)) {
                     let argumentNode = getNodeById(compiler, module, argumentNodeListNode.childIdList[i]);
                     let argumentObject = getExpressionById(compiler, module, argumentNode.object.id);
-                    let expectedArgumentTypeObject = getTypeById(compiler, module, $expressionTypeObject.fromIdList[i]);
+                    let fromTypeObject = getTypeById(compiler, module, $expressionTypeObject.fromIdList[i]);
 
-                    if (!isExpressionInstanceOf(compiler, module, argumentObject, expectedArgumentTypeObject, true)) {
-                        throw {
-                            code: 'E_CHECK_CALL_BY_EXPRESSION_TYPE_MISMATCH',
-                            message: `the type of the argument number ${ i + 1 } is ${ getExpressionTypeName(compiler, module, argumentObject) }; expected ${ getTypeName(compiler, module, expectedArgumentTypeObject) }`,
-                            location: argumentNode.location
-                        };
+                    if (!isExpressionInstanceOf(compiler, module, argumentObject, fromTypeObject, true, {})) {
+                        isMatch = false;
+                    }
+                    i++;
+                }
+            }
+            if (isMatch) {
+                node.childIdList.push($expressionNode.id);
+            } else {
+                let message = 'value of the expression is a reference to a function defined with';
+
+                if ($expressionTypeObject.fromIdList.length === 0) {
+                    message += ' no parameters';
+                } else {
+                    message += ` ${ $expressionTypeObject.fromIdList.length } parameter(s) of the following type(s):`;
+
+                    for (let i = 0; i < $expressionTypeObject.fromIdList.length; i++) {
+                        let fromTypeObject = getTypeById(compiler, module, $expressionTypeObject.fromIdList[i]);
+
+                        if (0 < i) {
+                            message += ',';
+                        }
+                        message += ` ${ getTypeName(compiler, module, fromTypeObject) }`;
                     }
                 }
-            } else {
+                message += ', but this function is called with';
+                if (argumentNodeListNode.childIdList.length === 0) {
+                    message += ' no arguments';
+                } else {
+                    message += ` ${ argumentNodeListNode.childIdList.length } argument(s) of the following type(s):`;
+                    for (let i = 0; i < argumentNodeListNode.childIdList.length; i++) {
+                        let argumentNode = getNodeById(compiler, module, argumentNodeListNode.childIdList[i]);
+                        let argumentObject = getExpressionById(compiler, module, argumentNode.object.id);
+
+                        if (0 < i) {
+                            message += ',';
+                        }
+                        message += ` ${ getExpressionTypeName(compiler, module, argumentObject) }`;
+                    }
+                }
                 throw {
-                    code: 'E_CHECK_CALL_BY_EXPRESSION_PARAMETER_ARGUMENT_NUMBER_MISMATCH',
-                    message: `value of the expression is a reference to a function defined with ${ $expressionTypeObject.fromIdList.length } parameter(s), but the given number of arguments is ${ argumentNodeListNode.childIdList.length }`,
+                    code: 'E_CHECK_CALL_BY_EXPRESSION_INVALID_ARGUMENT_LIST',
+                    message: message,
                     location: $expressionNode.location
                 };
             }
+        } else if (($expressionTypeObject.name === '$s') || ($expressionTypeObject.kind === 'array')) {
+            /* We have the case 'expression[argumentList]', where type of 'expression' is either a string or an array */
+            /* Here, we replace 'expression[argumentList]' with '$getElement[expression, argumentList]' */
+            let callByNameNode = getNewNode(compiler, module, 'callByName', node.location, [
+                getNewNode(compiler, module, 'instruction', $expressionNode.location, [], '$getElement').id,
+                getNewNode(compiler, module, 'list', argumentNodeListNode.location, [$expressionNode.id].concat(argumentNodeListNode.childIdList), '').id
+            ], '');
+
+            node.childIdList.push(callByNameNode.id);
+            callByNameNode.parentIdList.push(node.id);
+            setActiveNodeList(compiler, module, [callByNameNode.id]);
         } else {
             throw {
-                code: 'E_CHECK_CALL_BY_EXPRESSION_EXPRESSION_IS_NOT_REFERENCE',
-                message: 'value of the expression is not a reference to a function',
+                code: 'E_CHECK_CALL_BY_EXPRESSION_TYPE_MISMATCH',
+                message: 'value of the expression is neither a reference to a function nor a string nor an array',
                 location: $expressionNode.location
             };
         }
+        node.status = '2';
+    } else if (node.status === '2') {
+        let $expressionNode = getNodeById(compiler, module, node.childIdList[0]);
+        let $expressionObject = getExpressionById(compiler, module, $expressionNode.object.id);
+        let $expressionTypeObject = getExpressionType(compiler, module, $expressionObject);
+
+        let $$expressionNode = getNodeById(compiler, module, node.childIdList[2]);
+        let $$expressionObject = getExpressionById(compiler, module, $$expressionNode.object.id);
+        let $$expressionTypeObject = getExpressionType(compiler, module, $$expressionObject);
+
+        let expressionObject = getNewExpression(compiler, module, node.id, false, [], -1);
+
+        if ($expressionTypeObject.kind === 'reference') {
+            setExpressionType(compiler, module, expressionObject, $$expressionTypeObject.toId, 0);
+        } else if (($expressionTypeObject.name === '$s') || ($expressionTypeObject.kind === 'array')) {
+            setExpressionType(compiler, module, expressionObject, $$expressionTypeObject.id, 0);
+        }
+
         setNodeObject(compiler, module, node, 'expression', expressionObject.id);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
     }
 }
 
@@ -1425,15 +1713,17 @@ function checkExprStmt(compiler, module, node) {
         let expressionObject = getExpressionById(compiler, module, expressionNode.object.id);
         let expectedExpressionTypeObject = getTypeByName(compiler, module, '$v');
 
-        if (!isExpressionInstanceOf(compiler, module, expressionObject, expectedExpressionTypeObject, true)) {
+        if (!isExpressionInstanceOf(compiler, module, expressionObject, expectedExpressionTypeObject, true, {})) {
             throw {
-                code: 'E_CHECK_TARGET_TYPE_MISMATCH',
+                code: 'E_CHECK_EXPR_TYPE_MISMATCH',
                 message: `the type of the expression is ${ getExpressionTypeName(compiler, module, expressionObject) }; expected ${ getTypeName(compiler, module, expectedExpressionTypeObject) }`,
                 location: expressionNode.location
             };
         }
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
     }
 }
 
@@ -1447,6 +1737,8 @@ function checkString(compiler, module, node) {
         }
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
     }
 }
 
@@ -1486,7 +1778,7 @@ function checkArray(compiler, module, node) {
                 for (let j = 0; j < firstElementTypeObjectList.length; j++) {
                     let firstElementTypeObject = firstElementTypeObjectList[j];
 
-                    if (isExpressionInstanceOf(compiler, module, elementObject, firstElementTypeObject, false)) {
+                    if (isExpressionInstanceOf(compiler, module, elementObject, firstElementTypeObject, false, {})) {
                         typeObjectList.push(firstElementTypeObject);
                     }
                 }
@@ -1528,8 +1820,8 @@ function checkArray(compiler, module, node) {
             let typeNode = getNodeById(compiler, module, typeNodeListNode.childIdList[0]);
             let typeObject = getTypeById(compiler, module, typeNode.object.id);
 
-            setExpressionTypeId(compiler, module, expressionObject, typeObject.id, -1);
-            if (!isExpressionInstanceOf(compiler, module, expressionObject, typeObject, true)) {
+            setExpressionType(compiler, module, expressionObject, typeObject.id, -1);
+            if (!isExpressionInstanceOf(compiler, module, expressionObject, typeObject, true, {})) {
                 /* Internal error */
                 throw {
                     code: 'E_CHECK_ARRAY_ELEMENT_TYPE_MISMATCH',
@@ -1541,13 +1833,15 @@ function checkArray(compiler, module, node) {
                 let typeNode = getNodeById(compiler, module, typeNodeListNode.childIdList[i]);
                 let typeObject = getTypeById(compiler, module, typeNode.object.id);
 
-                setExpressionTypeId(compiler, module, expressionObject, typeObject.id, -1);
+                setExpressionType(compiler, module, expressionObject, typeObject.id, -1);
             }
         }
 
         setNodeObject(compiler, module, node, 'expression', expressionObject.id);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
     }
 }
 
@@ -1562,7 +1856,23 @@ function checkArrayType(compiler, module, node) {
         let typeObject = getTypeByName(compiler, module, name);
 
         if (!typeObject) {
-            typeObject = getNewType(compiler, module, node.id, 'array', name, [], toTypeObject.id);
+            typeObject = getNewType(compiler, module, node.id, 'array', name, [], toTypeObject.id, toTypeObject.isVariable);
+        }
+        setNodeObject(compiler, module, node, 'type', typeObject.id);
+        unsetActiveNode(compiler, module);
+        node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
+    }
+}
+
+function checkVariableType(compiler, module, node) {
+    if (node.status === 'CREATED') {
+        let name = node.value;
+        let typeObject = getTypeByName(compiler, module, name);
+
+        if (!typeObject) {
+            typeObject = getNewType(compiler, module, node.id, 'variable', name, [], -1, true);
         }
         setNodeObject(compiler, module, node, 'type', typeObject.id);
         unsetActiveNode(compiler, module);

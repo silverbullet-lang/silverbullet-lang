@@ -90,7 +90,7 @@ let imports_${ module.id } = {`;
 let instance_${ module.id } = new WebAssembly.Instance(module_${ module.id }, imports_${ module.id });
 let exports_${ module.id } = instance_${ module.id }.exports;`;
 
-            tableOffset += module.references.list.length;
+            tableOffset += module.functions.referenceList.length;
 
             unsetActiveModule(compiler);
             module.status = 'LINKED';

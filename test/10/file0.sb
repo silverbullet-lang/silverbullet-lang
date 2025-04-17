@@ -1,0 +1,91 @@
+use \
+	f as F-1, \
+	g as G-1 \
+from file1
+use \
+	f as F-2, \
+	g as G-2 \
+from file2
+
+use	f as F-3 from file3
+use f as F-4 from file4
+
+let start
+	f[1, &g]
+	f[&g]
+
+	x := 0
+	y := h[x]
+	show[y[x, x + 1]]
+	y = h[x + 2]
+	show[y[x + 3, x + 4]]
+
+	z := G-1[x]
+	show[z[100.0, 300.0]]
+	z = G-1[1]
+	show[z[200.0, 400.0]]
+
+	G-2[&F-1, 5.0, 5.0]
+	G-2[&F-2, 25.0, 5.0]
+
+	w := i[3.5]['5 + 5', 10]
+	show[w]
+
+	show[l[][0]]
+	show[l[10][5]]
+	show[l[false][0][20]]
+
+	F-3
+	F-4
+
+let f[x | $i, y | [$i, $i] -> [$s]]
+	show[y[x, x]]
+
+let f[x | $i, y | $i] | $s
+	return "{ x } + { y } = { x + y}"
+
+let f[x | $$T]
+	show[x[1, 2]]
+
+let g[x | $i, y | $i] | $s
+	return "{ x } - { y } = { x - y }"
+
+let h[x | $i] | [$i, $i] -> [$s]
+	if x == 0
+		return &f
+	else
+		return &g
+
+let i[x | $i] | $s
+	return ''
+
+let i[x | $f] | [$s, $i] -> [$s]
+	show['f']
+	return &k
+
+let j[x | [] -> [$fd]] | {$s}
+	show['g']
+	return {''}
+
+let k | $fd
+	show['h_']
+	return 0.0d
+
+let k[x | $s, y | $i] | $s
+	show['h_$s']
+	return "{ x } = { y }"
+
+let l | [$i] -> [$b]
+	return &m
+
+let l[x | $i] | $s
+	show[x]
+	return 'Hello, World!'
+
+let l[x | $b] | {[$i]->[$b]}
+	return {&m}
+
+let m[x | $i] | $b
+	show[x]
+	return true
+

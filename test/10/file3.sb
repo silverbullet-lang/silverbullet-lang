@@ -1,0 +1,94 @@
+let start
+	f
+
+let f
+	a := {'abc', 'defg', 'hijkl'}
+	show["Array before: { a }"]
+	a[1] = 'Hello'
+	show["Array after: { a }"]
+
+	show[g[0]]
+	g[0][1] = 10
+	show[g[0]]
+
+	b := {0, 10, 20, 30, 40, 50}
+	show[b[{0, 2, 4}]]
+
+	c := {{0, 1, 2}, {3, 4, 5, 6, 7, 8}, {9, 10, 11, 12, 13, 14, 15}}
+	show[c[2, 0] == 9]
+
+let g[i | $i] | {$i}
+	return {i, i + 1, i + 2, i + 3, i + 4}
+
+
+--( Custom instructions $getElement )--
+let $getElement[array | {$$T}, index-list | {$i}] | {$$T}
+	sub-array := {} | {$$T}
+
+	array-size := $size[array]
+	index-list-size := $size[index-list]
+
+	if (0 < array-size) and (0 < index-list-size)
+		min-size := array-size
+		if index-list-size < min-size
+			min-size = index-list-size
+
+		sub-array = $getArray[min-size, array[0]]
+		i := 0
+
+		while i < min-size
+			index := index-list[i]
+
+			if (0 <= index) and (index < array-size - 1)
+				sub-array[i] = array[index]
+
+			i = i + 1
+
+	return sub-array
+
+let $getElement[array | {{$$T}}, index-0 | $i, index-1 | $i] | $$T
+	return array[index-0][index-1]
+
+
+--( Printing an array )--
+let show[value | {$$T}]
+	show[$getString[value]]
+
+
+let $getString[value | {$$T}] | $s
+	string := '{'
+	index := 0
+	size := $size[value]
+
+	while index < size
+		if 0 < index
+			string = string & ', '
+
+		element := $getElement[value, index]
+		string = string & $getString[element]
+		index = index + 1
+
+	string = string & '}'
+	return string
+
+--( Joining array )--
+let $join[value0 | {$$T}, value1 | {$$T}] | {$$T}
+	array := {} | {$$T}
+	size0 := $size[value0]
+	size1 := $size[value1]
+	size := size0 + size1
+
+	if 0 < size
+		if 0 < size0
+			element := $getElement[value0, 0]
+			array = $getArray[size, element]
+		else
+			element := $getElement[value1, 0]
+			array = $getArray[size, element]
+
+		$copyArray[array, 0, value0, 0, size0]
+		$copyArray[array, size0, value1, 0, size1]
+
+	return array
+
+

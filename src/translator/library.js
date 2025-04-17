@@ -48,4 +48,26 @@ function getBinaryenArrayNewFixed(binaryen, module, arrayType, arrayElementList)
     return arrayNewFixed;
 }
 
-export { getBinaryenStringType, getBinaryenArrayType, getBinaryenArrayNewFixed };
+function getBinaryenArrayLength(binaryen, module, array) {
+    return binaryen._BinaryenArrayLen(module, array);
+}
+
+function getBinaryenArrayElement(binaryen, module, array, index, arrayElementType) {
+    return binaryen._BinaryenArrayGet(module, array, index, arrayElementType, 0);
+}
+
+function getBinaryenArrayNew(binaryen, module, arrayType, arrayLength, arrayElement) {
+    let arrayHeapType = binaryen._BinaryenTypeGetHeapType(arrayType);
+
+    return binaryen._BinaryenArrayNew(module, arrayHeapType, arrayLength, arrayElement);
+}
+
+function getBinaryenArrayCopy(binaryen, module, toArray, toIndex, fromArray, fromIndex, length) {
+    return binaryen._BinaryenArrayCopy(module, toArray, toIndex, fromArray, fromIndex, length);
+}
+
+function setBinaryenArrayElement(binaryen, module, array, index, arrayElement) {
+    return binaryen._BinaryenArraySet(module, array, index, arrayElement);
+}
+
+export { getBinaryenStringType, getBinaryenArrayType, getBinaryenArrayNewFixed, getBinaryenArrayLength, getBinaryenArrayElement, getBinaryenArrayNew, getBinaryenArrayCopy, setBinaryenArrayElement };

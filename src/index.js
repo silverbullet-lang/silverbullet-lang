@@ -57,7 +57,10 @@ function getNewCompiler() {
 
             /* Minimum and maximum size of memory in WebAssembly (WA) pages (1 WA = 64 KB) */
             minMemorySize: 0,
-            maxMemorySize: 1
+            maxMemorySize: 1,
+
+            /* Path to a folder containing library files */
+            libraryFolder: (new URL('./library/', import.meta.url)).href
         },
         modules: {
             id: 0,
@@ -73,8 +76,8 @@ function getNewCompiler() {
 }
 
 function setCompilerOptions(compiler, options) {
-    for (let option in compiler.options) {
-        if (option in options) {
+    for (let option of Object.keys(compiler.options)) {
+        if (Object.hasOwn(options, option)) {
             compiler.options[option] = options[option];
         }
     }

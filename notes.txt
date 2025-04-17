@@ -1,6 +1,6 @@
 1. It would be worth to rename the type '$iu' (integer unsigned) to the type '$p' (pointer).
 
-2. Current definition of the terminal 'interpolateString' may be rewritten to the following one in order to reduce the number of nodes in the AST:
+2. Current definition of the terminal 'interpolatedString' may be rewritten to the following one in order to reduce the number of nodes in the AST:
 
 interpolatedString
     : '"' text nonEmptyInterpolatedExprTextList '"'
@@ -14,3 +14,4 @@ interpolatedString
     ;
 
 3. We could apply the function 'isTypeVoid' wider than we are applying it right now.
+4. In the function 'src/translator/index.js:checkCallByName', we should use a better implementation for deciding which function to call. Implementation of the case '$size' should be used as an example.
