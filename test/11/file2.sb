@@ -1,0 +1,13 @@
+let f[x | $$G, y | {$$G}] | $$G
+	show[x]
+
+	size := $size[y]
+	show[size]
+	if 0 < size
+		return y[0]
+	else
+		return x
+
+let f[x | $i, y | $s]
+	show[x]
+	show[y]

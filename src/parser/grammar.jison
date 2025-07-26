@@ -2542,7 +2542,7 @@ importHead
                 ]), '').id
             ];
         }
-    | 'use' identifier 'at' path
+    /*| 'use' identifier 'at' path
         {
             $$ = [
                 yy.getNewNode(yy.compiler, yy.module, 'list', @0, [], '').id,
@@ -2557,7 +2557,7 @@ importHead
                     yy.getNewNode(yy.compiler, yy.module, 'path', @0, [], '').id
                 ]), '').id
             ];
-        }
+        }*/
     ;
 
 nonEmptyExternalObjectList
@@ -2569,59 +2569,37 @@ nonEmptyExternalObjectList
     ;
 
 externalObject
-    : externalName 'as' externalName '|' type
+    : externalName 'as' internalName '|' type
         {
             $$ = [
-                yy.getNewNode(yy.compiler, yy.module, 'externalObject', @0, $1.concat([
-                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'object', @0, [
-                            yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                                yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
-                            ], '').id
-                        ].concat($3, $5), '').id
-                    ], '').id
+                yy.getNewNode(yy.compiler, yy.module, 'externalObject', @0, $1.concat($3, $5, [
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, [], '').id
                 ]), '').id
             ];
         }
-    | externalName 'as' externalName
+    | externalName 'as' internalName
         {
             $$ = [
-                yy.getNewNode(yy.compiler, yy.module, 'externalObject', @0, $1.concat([
-                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'object', @0, [
-                            yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                                yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
-                            ], '').id
-                        ].concat($3, [-1]), '').id
-                    ], '').id
+                yy.getNewNode(yy.compiler, yy.module, 'externalObject', @0, $1.concat($3, [
+                    yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$v').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, [], '').id
                 ]), '').id
             ];
         }
     | externalName '|' type
         {
             $$ = [
-                yy.getNewNode(yy.compiler, yy.module, 'externalObject', @0, $1.concat([
-                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'object', @0, [
-                            yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                                yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
-                            ], '').id
-                        ].concat($1, $3), '').id
-                    ], '').id
+                yy.getNewNode(yy.compiler, yy.module, 'externalObject', @0, $1.concat($1, $3, [
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, [], '').id
                 ]), '').id
             ];
         }
     | externalName
         {
             $$ = [
-                yy.getNewNode(yy.compiler, yy.module, 'externalObject', @0, $1.concat([
-                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                        yy.getNewNode(yy.compiler, yy.module, 'object', @0, [
-                            yy.getNewNode(yy.compiler, yy.module, 'list', @0, [
-                                yy.getNewNode(yy.compiler, yy.module, 'modifier', @0, [], 'private').id
-                            ], '').id
-                        ].concat($1, [-1]), '').id
-                    ], '').id
+                yy.getNewNode(yy.compiler, yy.module, 'externalObject', @0, $1.concat($1, [
+                    yy.getNewNode(yy.compiler, yy.module, 'basicType', @0, [], '$v').id,
+                    yy.getNewNode(yy.compiler, yy.module, 'list', @0, [], '').id
                 ]), '').id
             ];
         }
@@ -2645,7 +2623,7 @@ operator
     : '-'
         {
             $$ = [
-                yy.getNewNode(yy.compiler, yy.module, 'operator', @0, [], $1).id
+                yy.getNewNode(yy.compiler, yy.module, 'operator', @0, [], '-').id
             ];
         }
     | SUBTRACTION
@@ -2738,6 +2716,11 @@ operator
                 yy.getNewNode(yy.compiler, yy.module, 'operator', @0, [], '&').id
             ];
         }
+    ;
+
+internalName
+    : identifier
+    | operator
     ;
 
 type

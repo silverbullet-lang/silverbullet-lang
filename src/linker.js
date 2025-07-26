@@ -1,97 +1,34 @@
-import { getMainModule, setActiveModule, unsetActiveModule, getActiveModule, getModuleByPath, getNodeById, getBlockById, getBlockObjectByName, getTypeById, getVariableById, getFunctionById, getFunctionName } from './module.js';
+import { getMainModule, setActiveModuleList, unsetActiveModule, getActiveModule, getModuleByPath, getNodeById, getBlockById, getBlockObjectByName, getTypeById, getVariableById, getFunctionById, getFunctionName } from './module.js';
 
 function link(compiler) {
     let module = getMainModule(compiler);
-    let footer = '';
-    let body = '';
-    let header = '';
-    let tableOffset = 0;
+    let mainModuleId = module.id;
+    let data = {
+        footer: '',
+        body: '',
+        header: '',
+        tableOffset: 0
+    };
 
-    /* Footer */
-    footer += `
+    /* Set footer */
+    if (compiler.options.isOutputExecutable) {
+        data.footer += `
+if (Object.hasOwn(exports_${ mainModuleId }, 'start')) {
+    exports_${ mainModuleId }.start();
+}`;
+    } else {
+        data.footer += `
+export { memory, exports_${ mainModuleId } as 'exports' };`;
+    }
 
-export { exports_${ module.id } as '${ module.name }' };`;
-
-    /* Body */
-    setActiveModule(compiler, [module.id]);
+    /* Set body and value of 'tableOffset' */
+    setActiveModuleList(compiler, [module.id]);
     while (module) {
         if (module.status === 'TRANSLATED') {
-            setActiveModule(compiler, module.childIdList);
+            setActiveModuleList(compiler, module.childIdList);
             module.status = 'LINKING';
         } else if (module.status === 'LINKING') {
-
-            body += `
-
-/* ${ module.path } */
-/*
-${ module.ir.emitText().replace(/\/\*/g, '\\\/\\\*').replace(/\*\//g, '\\\*\\\/') }*/`;
-            body += `
-
-let buffer_${ module.id } = (new Uint8Array([${ module.ir.emitBinary() }])).buffer;
-let module_${ module.id } = new WebAssembly.Module(buffer_${ module.id }, {
-    builtins: ['js-string']
-});
-let imports_${ module.id } = {`;
-
-            /* Default imports */
-            body += `
-    '$globalObjects': globalObjects,
-    '$localObjects': {
-        '$tableOffset': new WebAssembly.Global({
-            value: 'i32'
-        }, ${ tableOffset })
-    },
-    '$globalStrings': globalStrings,
-    '$localStrings': {`;
-            for (let i = 0; i < module.nodes.stringIdList.length; i++) {
-                let stringNode = getNodeById(compiler, module, module.nodes.stringIdList[i]);
-
-                if (0 < i) {
-                    body += ',';
-                }
-                body += `
-        '$string_${ stringNode.id }': ${ JSON.stringify(stringNode.value) }`;
-            }
-            body += `
-    },
-    '$globalFunctions': globalFunctions`;
-
-            /* Custom import(s) */
-            for (let i = 0; i < module.submodules.list.length; i++) {
-                let submoduleObject = module.submodules.list[i];
-                let submodule = getModuleByPath(compiler, submoduleObject.path);
-
-                body += `,
-    '${ submoduleObject.name }': {`;
-                for (let j = 0; j < submoduleObject.objectList.length; j++) {
-                    let externalObject = submoduleObject.objectList[j];
-                    let externalObjectName = '';
-
-                    if (externalObject.type === 'variable') {
-                        let externalVariableObject = getVariableById(compiler, submodule, externalObject.id);
-
-                        externalObjectName = externalVariableObject.name;
-                    } else if (externalObject.type === 'function') {
-                        let externalFunctionObject = getFunctionById(compiler, submodule, externalObject.id);
-
-                        externalObjectName = getFunctionName(compiler, submodule, externalFunctionObject);
-                    }
-                    if (0 < j) {
-                        body += ',';
-                    }
-                    body += `
-        '${ externalObjectName }': exports_${ submodule.id }['${ externalObjectName }']`;
-                }
-                body += `
-    }`;
-            }
-            body += `
-};
-let instance_${ module.id } = new WebAssembly.Instance(module_${ module.id }, imports_${ module.id });
-let exports_${ module.id } = instance_${ module.id }.exports;`;
-
-            tableOffset += module.functions.referenceList.length;
-
+            linkModule(compiler, module, data);
             unsetActiveModule(compiler);
             module.status = 'LINKED';
         } else if (module.status === 'LINKED') {
@@ -100,21 +37,17 @@ let exports_${ module.id } = instance_${ module.id }.exports;`;
         module = getActiveModule(compiler);
     }
 
-    /* Header */
-    header += `let globalObjects = {
-    '$memory': new WebAssembly.Memory({
-        initial: ${ compiler.options.minMemorySize },
-        maximum: ${ compiler.options.maxMemorySize }
-    }),
-    '$table': new WebAssembly.Table({
-        element: 'anyfunc',
-        initial: ${ tableOffset }
-    })
-};
-let globalStrings = {
-    '$string_empty': ${ JSON.stringify('') }
-};
-let globalFunctions = {
+    /* Set header */
+    data.header += `let memory = new WebAssembly.Memory({
+    initial: ${ compiler.options.minMemorySize },
+    maximum: ${ compiler.options.maxMemorySize }
+});
+let table = new WebAssembly.Table({
+    element: 'anyfunc',
+    initial: ${ data.tableOffset },
+    maximum: ${ data.tableOffset }
+});
+let functions = {
     '$getString_[$i]->[$s]': function(value) {
         return (new Int32Array([value])[0]).toString();
     },
@@ -145,8 +78,77 @@ let globalFunctions = {
     }
 };`;
 
-    /* The final output */
-    compiler.executable = `${ header }${ body }${ footer }`;
+    /* Set value of the final executable */
+    compiler.executable += `${ data.header }
+${ data.body }
+${ data.footer }`;
+}
+
+function linkModule(compiler, module, data) {
+
+    /* FOR DEVELOPMENT */
+    data.body += `
+/* ${ module.path } */
+/*
+${ module.ir.emitText().replace(/\/\*/g, '\\\/\\\*').replace(/\*\//g, '\\\*\\\/') }*/`;
+
+    /* Set body */
+    data.body += `
+let buffer_${ module.id } = (new Uint8Array([${ module.ir.emitBinary() }])).buffer;
+let module_${ module.id } = new WebAssembly.Module(buffer_${ module.id }, {
+    builtins: ['js-string'],
+    importedStringConstants: '$strings'
+});
+let imports_${ module.id } = {
+    '$objects': {
+        '$memory': memory,
+        '$table': table,
+        '$tableOffset': new WebAssembly.Global({
+            value: 'i32',
+            mutable: false
+        }, ${ data.tableOffset })
+    },
+    '$functions': functions`;
+
+    /* Import objects from other modules */
+    for (let i = 0; i < module.submodules.list.length; i++) {
+        let submoduleObject = module.submodules.list[i];
+        let submodule = getModuleByPath(compiler, submoduleObject.path);
+
+        data.body += `,
+    '${ submoduleObject.name }': {`;
+
+        for (let j = 0; j < submoduleObject.outerObjectNodeIdList.length; j++) {
+            let outerObjectNode = getNodeById(compiler, submodule, submoduleObject.outerObjectNodeIdList[j]);
+            let outerObject = outerObjectNode.object;
+            let outerObjectName = '';
+
+            if (outerObject.type === 'variable') {
+                let outerVariableObject = getVariableById(compiler, submodule, outerObject.id);
+
+                outerObjectName = outerVariableObject.name
+            } else if (outerObject.type === 'function') {
+                let outerFunctionObject = getFunctionById(compiler, submodule, outerObject.id);
+
+                outerObjectName = getFunctionName(compiler, submodule, outerFunctionObject);
+            }
+            if (0 < j) {
+                data.body += ',';
+            }
+            data.body += `
+        '${ outerObjectName }': exports_${ submodule.id }['${ outerObjectName }']`;
+        }
+        data.body += `
+    }`;
+    }
+
+    data.body += `
+};
+let instance_${ module.id } = new WebAssembly.Instance(module_${ module.id }, imports_${ module.id });
+let exports_${ module.id } = instance_${ module.id }.exports;`;
+
+    /* Set value of 'tableOffset' */
+    data.tableOffset += module.functions.referenceList.length;
 }
 
 export { link };

@@ -15,3 +15,5 @@ interpolatedString
 
 3. We could apply the function 'isTypeVoid' wider than we are applying it right now.
 4. In the function 'src/translator/index.js:checkCallByName', we should use a better implementation for deciding which function to call. Implementation of the case '$size' should be used as an example.
+5. Should we print the path of every module and the corresponding WebAssembly text (WAT) in the generated output file?
+6. Review the definition of the concept "literal expression".

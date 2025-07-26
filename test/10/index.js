@@ -9,8 +9,8 @@ async function main() {
             libraryFolder: (new URL('./', import.meta.url)).href
         });
         module = await import('./file0.sb.js');
-        console.log(module['file0']);
-        module['file0'].start();
+        console.log(module);
+        module.exports.start();
     } catch (err) {
         console.log(err.message);
         console.log(err);

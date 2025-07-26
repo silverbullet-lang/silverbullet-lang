@@ -1,0 +1,5 @@
+let	f[x	| $$T]
+	show[x]
+
+let g[x | [$i, $s] -> [], y | $$T1, z | $$T2]
+	x[y, z]

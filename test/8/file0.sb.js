@@ -1,17 +1,13 @@
-let globalObjects = {
-    '$memory': new WebAssembly.Memory({
-        initial: 1,
-        maximum: 1
-    }),
-    '$table': new WebAssembly.Table({
-        element: 'anyfunc',
-        initial: 0
-    })
-};
-let globalStrings = {
-    '$string_empty': ""
-};
-let globalFunctions = {
+let memory = new WebAssembly.Memory({
+    initial: 1,
+    maximum: 1
+});
+let table = new WebAssembly.Table({
+    element: 'anyfunc',
+    initial: 0,
+    maximum: 0
+});
+let functions = {
     '$getString_[$i]->[$s]': function(value) {
         return (new Int32Array([value])[0]).toString();
     },
@@ -57,40 +53,40 @@ let globalFunctions = {
  (type $9 (func (param externref externref) (result (ref extern))))
  (type $10 (func (param externref i32 i32) (result (ref extern))))
  (type $11 (func (param externref externref) (result i32)))
- (import "$globalObjects" "$memory" (memory $$memory 0))
- (import "$globalObjects" "$table" (table $$table 0 funcref))
- (import "$globalStrings" "$string_empty" (global $$string_empty (ref extern)))
- (import "$localStrings" "$string_3" (global $$string_3 (ref extern)))
- (import "$localStrings" "$string_11" (global $$string_11 (ref extern)))
- (import "$localStrings" "$string_19" (global $$string_19 (ref extern)))
- (import "$localStrings" "$string_32" (global $$string_32 (ref extern)))
- (import "$localStrings" "$string_53" (global $$string_53 (ref extern)))
- (import "$localStrings" "$string_59" (global $$string_59 (ref extern)))
- (import "$localStrings" "$string_122" (global $$string_122 (ref extern)))
- (import "$localStrings" "$string_129" (global $$string_129 (ref extern)))
- (import "$localStrings" "$string_130" (global $$string_130 (ref extern)))
- (import "$localStrings" "$string_138" (global $$string_138 (ref extern)))
- (import "$localStrings" "$string_139" (global $$string_139 (ref extern)))
- (import "$localStrings" "$string_177" (global $$string_177 (ref extern)))
- (import "$localStrings" "$string_182" (global $$string_182 (ref extern)))
- (import "$localStrings" "$string_187" (global $$string_187 (ref extern)))
- (import "$localStrings" "$string_190" (global $$string_190 (ref extern)))
- (import "$localStrings" "$string_195" (global $$string_195 (ref extern)))
- (import "$localStrings" "$string_201" (global $$string_201 (ref extern)))
- (import "$localStrings" "$string_202" (global $$string_202 (ref extern)))
- (import "$localStrings" "$string_206" (global $$string_206 (ref extern)))
- (import "$localStrings" "$string_210" (global $$string_210 (ref extern)))
- (import "$localStrings" "$string_238" (global $$string_238 (ref extern)))
- (import "$localStrings" "$string_234" (global $$string_234 (ref extern)))
- (import "$localObjects" "$tableOffset" (global $$tableOffset i32))
- (import "$globalFunctions" "$getString_[$i]->[$s]" (func $"$getString_[$i]->[$s]" (type $0) (param i32) (result (ref extern))))
- (import "$globalFunctions" "$getString_[$iu]->[$s]" (func $"$getString_[$iu]->[$s]" (type $0) (param i32) (result (ref extern))))
- (import "$globalFunctions" "$getString_[$id]->[$s]" (func $"$getString_[$id]->[$s]" (type $3) (param i64) (result (ref extern))))
- (import "$globalFunctions" "$getString_[$f]->[$s]" (func $"$getString_[$f]->[$s]" (type $4) (param f32) (result (ref extern))))
- (import "$globalFunctions" "$getString_[$fd]->[$s]" (func $"$getString_[$fd]->[$s]" (type $5) (param f64) (result (ref extern))))
- (import "$globalFunctions" "$getString_[$b]->[$s]" (func $"$getString_[$b]->[$s]" (type $0) (param i32) (result (ref extern))))
- (import "$globalFunctions" "$getString_[$s]->[$s]" (func $"$getString_[$s]->[$s]" (type $6) (param (ref extern)) (result (ref extern))))
- (import "$globalFunctions" "$show" (func $$show (type $7) (param (ref extern))))
+ (import "$objects" "$memory" (memory $$memory 0))
+ (import "$objects" "$table" (table $$table 0 funcref))
+ (import "$strings" "" (global $$string_empty (ref extern)))
+ (import "$strings" "\'\"\\\n\r\0b\t\08\0c" (global $$string_3 (ref extern)))
+ (import "$strings" "\n !\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\n" (global $$string_11 (ref extern)))
+ (import "$strings" "\n !\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\n" (global $$string_19 (ref extern)))
+ (import "$strings" "Hello, World!" (global $$string_82 (ref extern)))
+ (import "$strings" "\n" (global $$string_103 (ref extern)))
+ (import "$strings" "How Are You Today?" (global $$string_109 (ref extern)))
+ (import "$strings" ".." (global $$string_172 (ref extern)))
+ (import "$strings" "0" (global $$string_179 (ref extern)))
+ (import "$strings" "0" (global $$string_180 (ref extern)))
+ (import "$strings" "A" (global $$string_188 (ref extern)))
+ (import "$strings" "a" (global $$string_189 (ref extern)))
+ (import "$strings" "\f0\9f\8f\b4\f3\a0\81\a7\f3\a0\81\a2\f3\a0\81\b3\f3\a0\81\a3\f3\a0\81\b4\f3\a0\81\bf" (global $$string_197 (ref extern)))
+ (import "$strings" "Hello" (global $$string_202 (ref extern)))
+ (import "$strings" ", " (global $$string_207 (ref extern)))
+ (import "$strings" "World" (global $$string_210 (ref extern)))
+ (import "$strings" "!" (global $$string_215 (ref extern)))
+ (import "$strings" "Hello" (global $$string_221 (ref extern)))
+ (import "$strings" ", " (global $$string_222 (ref extern)))
+ (import "$strings" "World" (global $$string_226 (ref extern)))
+ (import "$strings" "!" (global $$string_230 (ref extern)))
+ (import "$strings" "let start\n\tshow[" (global $$string_258 (ref extern)))
+ (import "$strings" "]\n" (global $$string_254 (ref extern)))
+ (import "$objects" "$tableOffset" (global $$tableOffset i32))
+ (import "$functions" "$getString_[$i]->[$s]" (func $"$getString_[$i]->[$s]" (type $0) (param i32) (result (ref extern))))
+ (import "$functions" "$getString_[$iu]->[$s]" (func $"$getString_[$iu]->[$s]" (type $0) (param i32) (result (ref extern))))
+ (import "$functions" "$getString_[$id]->[$s]" (func $"$getString_[$id]->[$s]" (type $3) (param i64) (result (ref extern))))
+ (import "$functions" "$getString_[$f]->[$s]" (func $"$getString_[$f]->[$s]" (type $4) (param f32) (result (ref extern))))
+ (import "$functions" "$getString_[$fd]->[$s]" (func $"$getString_[$fd]->[$s]" (type $5) (param f64) (result (ref extern))))
+ (import "$functions" "$getString_[$b]->[$s]" (func $"$getString_[$b]->[$s]" (type $0) (param i32) (result (ref extern))))
+ (import "$functions" "$getString_[$s]->[$s]" (func $"$getString_[$s]->[$s]" (type $6) (param (ref extern)) (result (ref extern))))
+ (import "$functions" "$show" (func $$show (type $7) (param (ref extern))))
  (import "wasm:js-string" "length" (func $$wasm:js-string_length (type $8) (param externref) (result i32)))
  (import "wasm:js-string" "concat" (func $$wasm:js-string_concat (type $9) (param externref externref) (result (ref extern))))
  (import "wasm:js-string" "substring" (func $$wasm:js-string_substring (type $10) (param externref i32 i32) (result (ref extern))))
@@ -105,8 +101,39 @@ let globalFunctions = {
   (local $1 (ref extern))
   (local $2 (ref extern))
   (local $3 (ref extern))
+  (call $$show
+   (call $"$getString_[$b]->[$s]"
+    (i32.eq
+     (call $$wasm:js-string_length
+      (global.get $ESCAPE-SEQUENCES)
+     )
+     (i32.sub
+      (i32.const 10)
+      (i32.const 1)
+     )
+    )
+   )
+  )
+  (call $$show
+   (call $"$getString_[$s]->[$s]"
+    (global.get $ASCII-1)
+   )
+  )
+  (call $$show
+   (call $"$getString_[$s]->[$s]"
+    (global.get $ASCII-2)
+   )
+  )
+  (call $$show
+   (call $"$getString_[$b]->[$s]"
+    (call $$wasm:js-string_equals
+     (global.get $ASCII-1)
+     (global.get $ASCII-1)
+    )
+   )
+  )
   (local.set $0
-   (global.get $$string_32)
+   (global.get $$string_82)
   )
   (call $$show
    (call $"$getString_[$b]->[$s]"
@@ -119,10 +146,10 @@ let globalFunctions = {
    )
   )
   (local.set $1
-   (global.get $$string_53)
+   (global.get $$string_103)
   )
   (local.set $2
-   (global.get $$string_59)
+   (global.get $$string_109)
   )
   (local.set $3
    (call $$wasm:js-string_concat
@@ -153,47 +180,29 @@ let globalFunctions = {
        (local.get $3)
       )
      )
-     (global.get $$string_122)
+     (global.get $$string_172)
     )
    )
   )
   (call $$show
    (call $"$getString_[$b]->[$s]"
     (call $$wasm:js-string_equals
-     (global.get $$string_129)
-     (global.get $$string_130)
+     (global.get $$string_179)
+     (global.get $$string_180)
     )
    )
   )
   (call $$show
    (call $"$getString_[$b]->[$s]"
     (call $!=
-     (global.get $$string_138)
-     (global.get $$string_139)
-    )
-   )
-  )
-  (call $$show
-   (call $"$getString_[$b]->[$s]"
-    (i32.eq
-     (call $$wasm:js-string_length
-      (global.get $ESCAPE-SEQUENCES)
-     )
-     (i32.const 10)
-    )
-   )
-  )
-  (call $$show
-   (call $"$getString_[$b]->[$s]"
-    (call $$wasm:js-string_equals
-     (global.get $ASCII-1)
-     (global.get $ASCII-1)
+     (global.get $$string_188)
+     (global.get $$string_189)
     )
    )
   )
   (call $$show
    (call $"$getString_[$s]->[$s]"
-    (global.get $$string_177)
+    (global.get $$string_197)
    )
   )
   (call $$show
@@ -202,26 +211,26 @@ let globalFunctions = {
      (call $$wasm:js-string_concat
       (call $$wasm:js-string_concat
        (call $"$getString_[$s]->[$s]"
-        (global.get $$string_182)
+        (global.get $$string_202)
        )
-       (global.get $$string_187)
+       (global.get $$string_207)
       )
       (call $$wasm:js-string_concat
        (call $"$getString_[$s]->[$s]"
-        (global.get $$string_190)
+        (global.get $$string_210)
        )
-       (global.get $$string_195)
+       (global.get $$string_215)
       )
      )
      (call $$wasm:js-string_concat
       (call $$wasm:js-string_concat
        (call $$wasm:js-string_concat
-        (global.get $$string_201)
-        (global.get $$string_202)
+        (global.get $$string_221)
+        (global.get $$string_222)
        )
-       (global.get $$string_206)
+       (global.get $$string_226)
       )
-      (global.get $$string_210)
+      (global.get $$string_230)
      )
     )
    )
@@ -229,7 +238,7 @@ let globalFunctions = {
   (call $$show
    (call $"$getString_[$s]->[$s]"
     (call $$wasm:js-string_concat
-     (global.get $$string_238)
+     (global.get $$string_258)
      (call $$wasm:js-string_concat
       (call $"$getString_[$i]->[$s]"
        (i32.add
@@ -240,7 +249,7 @@ let globalFunctions = {
         (i32.const 30)
        )
       )
-      (global.get $$string_234)
+      (global.get $$string_254)
      )
     )
    )
@@ -269,46 +278,23 @@ let globalFunctions = {
  )
 )
 */
-
-let buffer_0 = (new Uint8Array([0,97,115,109,1,0,0,0,1,74,12,96,1,127,1,100,111,96,0,0,96,2,100,111,100,111,1,127,96,1,126,1,100,111,96,1,125,1,100,111,96,1,124,1,100,111,96,1,100,111,1,100,111,96,1,100,111,0,96,1,111,1,127,96,2,111,111,1,100,111,96,3,111,127,127,1,100,111,96,2,111,111,1,127,2,159,9,38,16,36,103,108,111,98,97,108,70,117,110,99,116,105,111,110,115,21,36,103,101,116,83,116,114,105,110,103,95,91,36,105,93,45,62,91,36,115,93,0,0,16,36,103,108,111,98,97,108,70,117,110,99,116,105,111,110,115,22,36,103,101,116,83,116,114,105,110,103,95,91,36,105,117,93,45,62,91,36,115,93,0,0,16,36,103,108,111,98,97,108,70,117,110,99,116,105,111,110,115,22,36,103,101,116,83,116,114,105,110,103,95,91,36,105,100,93,45,62,91,36,115,93,0,3,16,36,103,108,111,98,97,108,70,117,110,99,116,105,111,110,115,21,36,103,101,116,83,116,114,105,110,103,95,91,36,102,93,45,62,91,36,115,93,0,4,16,36,103,108,111,98,97,108,70,117,110,99,116,105,111,110,115,22,36,103,101,116,83,116,114,105,110,103,95,91,36,102,100,93,45,62,91,36,115,93,0,5,16,36,103,108,111,98,97,108,70,117,110,99,116,105,111,110,115,21,36,103,101,116,83,116,114,105,110,103,95,91,36,98,93,45,62,91,36,115,93,0,0,16,36,103,108,111,98,97,108,70,117,110,99,116,105,111,110,115,21,36,103,101,116,83,116,114,105,110,103,95,91,36,115,93,45,62,91,36,115,93,0,6,16,36,103,108,111,98,97,108,70,117,110,99,116,105,111,110,115,5,36,115,104,111,119,0,7,14,119,97,115,109,58,106,115,45,115,116,114,105,110,103,6,108,101,110,103,116,104,0,8,14,119,97,115,109,58,106,115,45,115,116,114,105,110,103,6,99,111,110,99,97,116,0,9,14,119,97,115,109,58,106,115,45,115,116,114,105,110,103,9,115,117,98,115,116,114,105,110,103,0,10,14,119,97,115,109,58,106,115,45,115,116,114,105,110,103,6,101,113,117,97,108,115,0,11,14,36,103,108,111,98,97,108,83,116,114,105,110,103,115,13,36,115,116,114,105,110,103,95,101,109,112,116,121,3,100,111,0,13,36,108,111,99,97,108,83,116,114,105,110,103,115,9,36,115,116,114,105,110,103,95,51,3,100,111,0,13,36,108,111,99,97,108,83,116,114,105,110,103,115,10,36,115,116,114,105,110,103,95,49,49,3,100,111,0,13,36,108,111,99,97,108,83,116,114,105,110,103,115,10,36,115,116,114,105,110,103,95,49,57,3,100,111,0,13,36,108,111,99,97,108,83,116,114,105,110,103,115,10,36,115,116,114,105,110,103,95,51,50,3,100,111,0,13,36,108,111,99,97,108,83,116,114,105,110,103,115,10,36,115,116,114,105,110,103,95,53,51,3,100,111,0,13,36,108,111,99,97,108,83,116,114,105,110,103,115,10,36,115,116,114,105,110,103,95,53,57,3,100,111,0,13,36,108,111,99,97,108,83,116,114,105,110,103,115,11,36,115,116,114,105,110,103,95,49,50,50,3,100,111,0,13,36,108,111,99,97,108,83,116,114,105,110,103,115,11,36,115,116,114,105,110,103,95,49,50,57,3,100,111,0,13,36,108,111,99,97,108,83,116,114,105,110,103,115,11,36,115,116,114,105,110,103,95,49,51,48,3,100,111,0,13,36,108,111,99,97,108,83,116,114,105,110,103,115,11,36,115,116,114,105,110,103,95,49,51,56,3,100,111,0,13,36,108,111,99,97,108,83,116,114,105,110,103,115,11,36,115,116,114,105,110,103,95,49,51,57,3,100,111,0,13,36,108,111,99,97,108,83,116,114,105,110,103,115,11,36,115,116,114,105,110,103,95,49,55,55,3,100,111,0,13,36,108,111,99,97,108,83,116,114,105,110,103,115,11,36,115,116,114,105,110,103,95,49,56,50,3,100,111,0,13,36,108,111,99,97,108,83,116,114,105,110,103,115,11,36,115,116,114,105,110,103,95,49,56,55,3,100,111,0,13,36,108,111,99,97,108,83,116,114,105,110,103,115,11,36,115,116,114,105,110,103,95,49,57,48,3,100,111,0,13,36,108,111,99,97,108,83,116,114,105,110,103,115,11,36,115,116,114,105,110,103,95,49,57,53,3,100,111,0,13,36,108,111,99,97,108,83,116,114,105,110,103,115,11,36,115,116,114,105,110,103,95,50,48,49,3,100,111,0,13,36,108,111,99,97,108,83,116,114,105,110,103,115,11,36,115,116,114,105,110,103,95,50,48,50,3,100,111,0,13,36,108,111,99,97,108,83,116,114,105,110,103,115,11,36,115,116,114,105,110,103,95,50,48,54,3,100,111,0,13,36,108,111,99,97,108,83,116,114,105,110,103,115,11,36,115,116,114,105,110,103,95,50,49,48,3,100,111,0,13,36,108,111,99,97,108,83,116,114,105,110,103,115,11,36,115,116,114,105,110,103,95,50,51,56,3,100,111,0,13,36,108,111,99,97,108,83,116,114,105,110,103,115,11,36,115,116,114,105,110,103,95,50,51,52,3,100,111,0,13,36,108,111,99,97,108,79,98,106,101,99,116,115,12,36,116,97,98,108,101,79,102,102,115,101,116,3,127,0,14,36,103,108,111,98,97,108,79,98,106,101,99,116,115,7,36,109,101,109,111,114,121,2,0,0,14,36,103,108,111,98,97,108,79,98,106,101,99,116,115,6,36,116,97,98,108,101,1,112,0,0,3,3,2,1,2,6,19,3,100,111,0,35,1,11,100,111,0,35,2,11,100,111,0,35,3,11,7,9,1,5,115,116,97,114,116,0,12,9,6,1,0,35,23,11,0,10,204,1,2,176,1,1,4,100,111,35,4,33,0,32,0,16,8,65,13,70,16,5,16,7,35,5,33,1,35,6,33,2,32,0,32,1,32,2,16,9,16,9,33,3,32,3,16,6,16,7,32,3,32,3,16,8,65,6,107,32,3,16,8,16,10,35,7,16,9,16,6,16,7,35,8,35,9,16,11,16,5,16,7,35,10,35,11,16,13,16,5,16,7,35,24,16,8,65,10,70,16,5,16,7,35,25,35,25,16,11,16,5,16,7,35,12,16,6,16,7,35,13,16,6,35,14,16,9,35,15,16,6,35,16,16,9,16,9,35,17,35,18,16,9,35,19,16,9,35,20,16,9,16,11,16,5,16,7,35,21,65,10,65,20,106,65,30,106,16,0,35,22,16,9,16,9,16,6,16,7,11,24,0,32,0,16,6,16,7,32,1,16,6,16,7,32,0,32,1,16,11,65,1,115,15,11])).buffer;
+let buffer_0 = (new Uint8Array([0,97,115,109,1,0,0,0,1,74,12,96,1,127,1,100,111,96,0,0,96,2,100,111,100,111,1,127,96,1,126,1,100,111,96,1,125,1,100,111,96,1,124,1,100,111,96,1,100,111,1,100,111,96,1,100,111,0,96,1,111,1,127,96,2,111,111,1,100,111,96,3,111,127,127,1,100,111,96,2,111,111,1,127,2,171,8,38,10,36,102,117,110,99,116,105,111,110,115,21,36,103,101,116,83,116,114,105,110,103,95,91,36,105,93,45,62,91,36,115,93,0,0,10,36,102,117,110,99,116,105,111,110,115,22,36,103,101,116,83,116,114,105,110,103,95,91,36,105,117,93,45,62,91,36,115,93,0,0,10,36,102,117,110,99,116,105,111,110,115,22,36,103,101,116,83,116,114,105,110,103,95,91,36,105,100,93,45,62,91,36,115,93,0,3,10,36,102,117,110,99,116,105,111,110,115,21,36,103,101,116,83,116,114,105,110,103,95,91,36,102,93,45,62,91,36,115,93,0,4,10,36,102,117,110,99,116,105,111,110,115,22,36,103,101,116,83,116,114,105,110,103,95,91,36,102,100,93,45,62,91,36,115,93,0,5,10,36,102,117,110,99,116,105,111,110,115,21,36,103,101,116,83,116,114,105,110,103,95,91,36,98,93,45,62,91,36,115,93,0,0,10,36,102,117,110,99,116,105,111,110,115,21,36,103,101,116,83,116,114,105,110,103,95,91,36,115,93,45,62,91,36,115,93,0,6,10,36,102,117,110,99,116,105,111,110,115,5,36,115,104,111,119,0,7,14,119,97,115,109,58,106,115,45,115,116,114,105,110,103,6,108,101,110,103,116,104,0,8,14,119,97,115,109,58,106,115,45,115,116,114,105,110,103,6,99,111,110,99,97,116,0,9,14,119,97,115,109,58,106,115,45,115,116,114,105,110,103,9,115,117,98,115,116,114,105,110,103,0,10,14,119,97,115,109,58,106,115,45,115,116,114,105,110,103,6,101,113,117,97,108,115,0,11,8,36,115,116,114,105,110,103,115,0,3,100,111,0,8,36,115,116,114,105,110,103,115,9,39,34,92,10,13,11,9,8,12,3,100,111,0,8,36,115,116,114,105,110,103,115,97,10,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,10,3,100,111,0,8,36,115,116,114,105,110,103,115,97,10,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,10,3,100,111,0,8,36,115,116,114,105,110,103,115,13,72,101,108,108,111,44,32,87,111,114,108,100,33,3,100,111,0,8,36,115,116,114,105,110,103,115,1,10,3,100,111,0,8,36,115,116,114,105,110,103,115,18,72,111,119,32,65,114,101,32,89,111,117,32,84,111,100,97,121,63,3,100,111,0,8,36,115,116,114,105,110,103,115,2,46,46,3,100,111,0,8,36,115,116,114,105,110,103,115,1,48,3,100,111,0,8,36,115,116,114,105,110,103,115,1,48,3,100,111,0,8,36,115,116,114,105,110,103,115,1,65,3,100,111,0,8,36,115,116,114,105,110,103,115,1,97,3,100,111,0,8,36,115,116,114,105,110,103,115,28,240,159,143,180,243,160,129,167,243,160,129,162,243,160,129,179,243,160,129,163,243,160,129,180,243,160,129,191,3,100,111,0,8,36,115,116,114,105,110,103,115,5,72,101,108,108,111,3,100,111,0,8,36,115,116,114,105,110,103,115,2,44,32,3,100,111,0,8,36,115,116,114,105,110,103,115,5,87,111,114,108,100,3,100,111,0,8,36,115,116,114,105,110,103,115,1,33,3,100,111,0,8,36,115,116,114,105,110,103,115,5,72,101,108,108,111,3,100,111,0,8,36,115,116,114,105,110,103,115,2,44,32,3,100,111,0,8,36,115,116,114,105,110,103,115,5,87,111,114,108,100,3,100,111,0,8,36,115,116,114,105,110,103,115,1,33,3,100,111,0,8,36,115,116,114,105,110,103,115,16,108,101,116,32,115,116,97,114,116,10,9,115,104,111,119,91,3,100,111,0,8,36,115,116,114,105,110,103,115,2,93,10,3,100,111,0,8,36,111,98,106,101,99,116,115,12,36,116,97,98,108,101,79,102,102,115,101,116,3,127,0,8,36,111,98,106,101,99,116,115,7,36,109,101,109,111,114,121,2,0,0,8,36,111,98,106,101,99,116,115,6,36,116,97,98,108,101,1,112,0,0,3,3,2,1,2,6,19,3,100,111,0,35,1,11,100,111,0,35,2,11,100,111,0,35,3,11,7,9,1,5,115,116,97,114,116,0,12,9,6,1,0,35,23,11,0,10,219,1,2,191,1,1,4,100,111,35,24,16,8,65,10,65,1,107,70,16,5,16,7,35,25,16,6,16,7,35,26,16,6,16,7,35,25,35,25,16,11,16,5,16,7,35,4,33,0,32,0,16,8,65,13,70,16,5,16,7,35,5,33,1,35,6,33,2,32,0,32,1,32,2,16,9,16,9,33,3,32,3,16,6,16,7,32,3,32,3,16,8,65,6,107,32,3,16,8,16,10,35,7,16,9,16,6,16,7,35,8,35,9,16,11,16,5,16,7,35,10,35,11,16,13,16,5,16,7,35,12,16,6,16,7,35,13,16,6,35,14,16,9,35,15,16,6,35,16,16,9,16,9,35,17,35,18,16,9,35,19,16,9,35,20,16,9,16,11,16,5,16,7,35,21,65,10,65,20,106,65,30,106,16,0,35,22,16,9,16,9,16,6,16,7,11,24,0,32,0,16,6,16,7,32,1,16,6,16,7,32,0,32,1,16,11,65,1,115,15,11])).buffer;
 let module_0 = new WebAssembly.Module(buffer_0, {
-    builtins: ['js-string']
+    builtins: ['js-string'],
+    importedStringConstants: '$strings'
 });
 let imports_0 = {
-    '$globalObjects': globalObjects,
-    '$localObjects': {
+    '$objects': {
+        '$memory': memory,
+        '$table': table,
         '$tableOffset': new WebAssembly.Global({
-            value: 'i32'
+            value: 'i32',
+            mutable: false
         }, 0)
     },
-    '$globalStrings': globalStrings,
-    '$localStrings': {
-        '$string_3': "\u0000'\"\\\n\r\u000b\t\b\f",
-        '$string_11': "\n !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\n",
-        '$string_19': "\n !\"#$%&'()*+,-./\u0000123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\n",
-        '$string_32': "Hello, World!",
-        '$string_53': "\n",
-        '$string_59': "How Are You Today?",
-        '$string_122': "..",
-        '$string_129': "0",
-        '$string_130': "0",
-        '$string_138': "A",
-        '$string_139': "a",
-        '$string_177': "🏴󠁧󠁢󠁳󠁣󠁴󠁿",
-        '$string_182': "Hello",
-        '$string_187': ", ",
-        '$string_190': "World",
-        '$string_195': "!",
-        '$string_201': "Hello",
-        '$string_202': ", ",
-        '$string_206': "World",
-        '$string_210': "!",
-        '$string_238': "let start\n\tshow[",
-        '$string_234': "]\n"
-    },
-    '$globalFunctions': globalFunctions
+    '$functions': functions
 };
 let instance_0 = new WebAssembly.Instance(module_0, imports_0);
 let exports_0 = instance_0.exports;
 
-export { exports_0 as 'file0' };
+export { memory, exports_0 as 'exports' };

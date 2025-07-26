@@ -1,0 +1,15 @@
+use f from file1
+use f | [$$G, {$$G}] -> [$$G], f | [$i, $s] -> [] from file2
+use g from file3 at './file1.sb'
+
+let start
+	f[10]
+	f[true]
+	f['Hello']
+	f[{'a', 'b', 'c'}[0]]
+
+	array := {} | {$s}
+	show[f['A', array] == 'A']
+	show[f[10.47d, {-147.36d}] == -147.36d]
+
+	g[&f, 10, '20']

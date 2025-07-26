@@ -3,7 +3,6 @@ function getNewModule(compiler, path) {
     let module = {
         id: compiler.modules.id,
         path: path,
-        name: '',
         code: '',
 
         /* Child of a module is a sub-module */
@@ -56,7 +55,6 @@ function getNewModule(compiler, path) {
     };
 
     /* Set some initial values */
-    setModuleName(compiler, module);
     setModuleIsLibrary(compiler, module);
 
     compiler.modules.id++;
@@ -65,19 +63,17 @@ function getNewModule(compiler, path) {
     return module;
 }
 
-function setModuleName(compiler, module) {
-    let fileName = module.path.split('/').pop();
-
-    module.name = fileName.slice(0, fileName.lastIndexOf('.'));
-}
-
 function setModuleIsLibrary(compiler, module) {
     let moduleDir = module.path.slice(0, module.path.lastIndexOf('/') + 1);
 
     module.isLibrary = -1 < moduleDir.indexOf(compiler.options.libraryFolder);
 }
 
-function setActiveModule(compiler, idList) {
+function setMainModule(compiler, module) {
+    compiler.modules.mainId = module.id;
+}
+
+function setActiveModuleList(compiler, idList) {
     for (let i = idList.length - 1; i > -1; i--) {
         compiler.modules.stack.unshift(idList[i]);
     }
@@ -103,10 +99,6 @@ function getMainModule(compiler) {
     return getModuleById(compiler, compiler.modules.mainId);
 }
 
-function setModuleChild(compiler, module, child) {
-    module.childIdList.push(child.id);
-}
-
 /* Nodes */
 function getNewNode(compiler, module, name, location, childIdList, value) {
     let node = {
@@ -118,11 +110,10 @@ function getNewNode(compiler, module, name, location, childIdList, value) {
         value: value,
         object: {
             type: '',
-            id: -1
+            id: -1,
+            submoduleId: -1
         },
         status: 'CREATED',
-        isVisited: false,
-        copyId: -1,
         isCopy: false,
         ir: -1
     };
@@ -165,38 +156,10 @@ function unsetActiveNode(compiler, module) {
     module.nodes.stack.shift();
 }
 
-function setNodeObject(compiler, module, node, type, id) {
+function setNodeObject(compiler, module, node, type, id, submoduleId) {
     node.object.type = type;
     node.object.id = id;
-}
-
-function getNodeFromNode(compiler, module, submodule, nodeId) {
-    let nodeFromNode;
-    let stack0 = [nodeId];
-    let node = getNodeById(compiler, submodule, stack0[0]);
-    let stack1 = [];
-
-    while (node) {
-        if ((node.childIdList.length > 0) && !node.isVisited) {
-            for (let i = node.childIdList.length - 1; i > -1; i--) {
-                stack0.unshift(node.childIdList[i]);
-            }
-            node.isVisited = true;
-        } else {
-            let childIdList = [];
-
-            for (let i = node.childIdList.length - 1; i > -1; i--) {
-                childIdList.unshift((stack1.shift()));
-            }
-            nodeFromNode = getNewNode(compiler, module, node.name, node.location, childIdList, node.value);
-            stack1.unshift(nodeFromNode.id);
-            stack0.shift();
-            node.isVisited = false;
-        }
-        node = getNodeById(compiler, submodule, stack0[0]);
-    }
-    stack1.shift();
-    return nodeFromNode;
+    node.object.submoduleId = submoduleId;
 }
 
 function setMainNode(compiler, module, node) {
@@ -213,123 +176,68 @@ function setStringNode(compiler, module, node) {
 
 function getNodeCopy(compiler, module, fromModule, fromNode, toModule, typeVariables, isModifierTemplateAllowed) {
     let nodeCopy;
-    let stack0 = [fromNode.id];
-    let stack1 = [];
+    let stack = [fromNode.id];
+    let map = new Map();
 
-    //console.log('fromNode', fromNode);
-    //console.log('typeVariables', typeVariables);
-    //console.log('isModifierTemplateAllowed', isModifierTemplateAllowed);
+    while (0 < stack.length) {
+        let node = getNodeById(compiler, fromModule, stack[stack.length - 1]);
 
-    while (0 < stack0.length) {
-        let nodeId = stack0[stack0.length - 1];
+        /* Here, we try to avoid copying type nodes in the same module */
+        if (node.name === 'basicType') {
+            if (fromModule.id === toModule.id) {
+                map.set(node.id, node.id);
+            }
+        } else if ((node.name === 'referenceType') || (node.name === 'arrayType')) {
+            if (node.object.type === 'type') {
+                let typeObject = getTypeById(compiler, fromModule, node.object.id);
 
-        //console.log('nodeId', nodeId);
-
-        if (nodeId < 0) {
-            stack1.push(stack0.pop());
-        } else {
-            let node = getNodeById(compiler, fromModule, nodeId);
-
-            //console.log('node', node);
-
-            if (node.isVisited) {
-                if (node.copyId === -1) {
-                    let childNodeCopyIdList = [];
-
-                    for (let i = 0; i < node.childIdList.length; i++) {
-                        let childNodeCopyId = stack1.pop();
-
-                        //console.log('childNodeCopyId', childNodeCopyId);
-
-                        if (-2 < childNodeCopyId) {
-                            childNodeCopyIdList.push(childNodeCopyId);
-                        }
+                if (!typeObject.isVariable) {
+                    if (fromModule.id === toModule.id) {
+                        map.set(node.id, node.id);
                     }
-                    nodeCopy = getNewNode(compiler, toModule, node.name, node.location, childNodeCopyIdList, node.value);
-                    nodeCopy.isCopy = true;
-                    node.copyId = nodeCopy.id;
-
-                    //console.log('nodeCopy', nodeCopy);
-
                 }
-                stack1.push(node.copyId);
-                stack0.pop();
+            }
+        } else if (node.name === 'variableType') {
+            if (Object.hasOwn(typeVariables, node.value)) {
+                map.set(node.id, typeVariables[node.value]);
             } else {
-                node.isVisited = true;
-                for (let i = 0; i < node.childIdList.length; i++) {
-                    let childNodeId = node.childIdList[i];
-
-                    //console.log('childNodeId', childNodeId);
-
-                    if (childNodeId < 0) {
-                        stack0.push(childNodeId);
-                    } else {
-                        let childNode = getNodeById(compiler, fromModule, childNodeId);
-
-                        //console.log('childNode', childNode);
-
-                        if ((childNode.name === 'modifier') && (childNode.value === 'template') && !isModifierTemplateAllowed) {
-                            stack0.push(-2);
-                        } else if ((childNode.name === 'variableType') && (Object.hasOwn(typeVariables, childNode.value))) {
-                            let typeObject = getTypeById(compiler, module, typeVariables[childNode.value]);
-                            let typeNode = getNodeById(compiler, module, typeObject.nodeId);
-
-                            //console.log('typeObject', typeObject);
-                            //console.log('typeNode', typeNode);
-
-                            if (module.id === fromModule.id) {
-                                stack0.push(typeNode.id);
-                            } else {
-
-                                console.log('getNodeCopy: module.id !== fromModule.id');
-                                process.exit();
-
-                            }
-                        } else {
-                            stack0.push(childNode.id);
-                        }
-                    }
+                if (fromModule.id === toModule.id) {
+                    map.set(node.id, node.id);
                 }
             }
-        }
-
-        //console.log('stack0', stack0);
-        //console.log('stack1', stack1);
-
-    }
-    nodeCopy = getNodeById(compiler, toModule, stack1.pop());
-
-    //console.log('nodeCopy', nodeCopy);
-    //console.log('module.nodes.list', module.nodes.list.slice(0, 50));
-
-    /* Restore some values of properties of nodes */
-    stack0 = [fromNode.id];
-    while (0 < stack0.length) {
-        let nodeId = stack0.pop();
-
-        //console.log('nodeId', nodeId);
-
-        if (0 < nodeId) {
-            let node = getNodeById(compiler, module, nodeId);
-
-            //console.log('node before', node);
-
-            node.isVisited = false;
-            node.copyId = -1;
-
-            //console.log('node after', node);
-
-            for (let i = 0; i < node.childIdList.length; i++) {
-                stack0.push(node.childIdList[i]);
+        /* Also, we do not make a copy of the node 'modifier' with the value 'template', if value of 'isModifierTemplateAllowed' is set to false */
+        } else if (node.name === 'modifier') {
+            if ((node.value === 'template') && !isModifierTemplateAllowed) {
+                map.set(node.id, -2);
             }
         }
 
-        //console.log('stack0', stack0);
+        if (map.has(node.id)) {
+            if (map.get(node.id) === -1) {
+                let nodeCopyChildIdList = [];
 
+                for (let i = 0; i < node.childIdList.length; i++) {
+                    let nodeCopyChildId = map.get(node.childIdList[i]);
+
+                    if (-1 < nodeCopyChildId) {
+                        nodeCopyChildIdList.push(nodeCopyChildId);
+                    }
+                }
+                nodeCopy = getNewNode(compiler, toModule, node.name, node.location, nodeCopyChildIdList, node.value);
+                nodeCopy.isCopy = true;
+                map.set(node.id, nodeCopy.id);
+                stack.pop();
+            } else {
+                stack.pop();
+            }
+        } else {
+            for (let i = node.childIdList.length - 1; -1 < i; i--) {
+                stack.push(node.childIdList[i]);
+            }
+            map.set(node.id, -1);
+        }
     }
-
-    //console.log('module.nodes.list', module.nodes.list.slice(0, 50));
-
+    nodeCopy = getNodeById(compiler, toModule, map.get(fromNode.id));
     return nodeCopy;
 }
 
@@ -486,13 +394,14 @@ function isTypeEquivalentTo(compiler, module, type0, type1) {
 }
 
 /* Functions */
-function getNewFunction(compiler, module, nodeId, isPrivate, isTemplate, isInstruction, name, typeId) {
+function getNewFunction(compiler, module, nodeId, isPrivate, isTemplate, isInstruction, isExternal, name, typeId) {
     let $function = {
         id: module.functions.id,
         nodeId: nodeId,
         isPrivate: isPrivate,
         isTemplate: isTemplate,
         isInstruction: isInstruction,
+        isExternal: isExternal,
         name: name,
         typeId: typeId,
         blockId: -1,
@@ -550,13 +459,14 @@ function setFunctionReferenceIndex(compiler, module, $function) {
 }
 
 /* Variables */
-function getNewVariable(compiler, module, nodeId, isConstant, isPrivate, isParameter, name, typeId) {
+function getNewVariable(compiler, module, nodeId, isConstant, isPrivate, isParameter, isExternal, name, typeId) {
     let variable = {
         id: module.variables.id,
         nodeId: nodeId,
         isConstant: isConstant,
         isPrivate: isPrivate,
         isParameter: isParameter,
+        isExternal: isExternal,
         name: name,
         typeId: typeId,
         index: -1
@@ -646,13 +556,13 @@ function isExpressionInstanceOf(compiler, module, expression, type, isExpression
                     stack1.push(typeObject.toId);
                 } else if (typeObject.kind === 'variable') {
                     if (Object.hasOwn(typeVariables, typeObject.name)) {
-                        if (expressionTypeObject.id === typeVariables[typeObject.name]) {
+                        if (expressionTypeObject.nodeId === typeVariables[typeObject.name]) {
                             is = true;
                         }
                     } else {
                         if (expressionTypeObject.id !== getTypeByName(compiler, module, '$v').id) {
                             is = true;
-                            typeVariables[typeObject.name] = expressionTypeObject.id;
+                            typeVariables[typeObject.name] = expressionTypeObject.nodeId;
                         }
                     }
                 }
@@ -776,15 +686,15 @@ function getExpressionValue(compiler, module, expression) {
 }
 
 /* Sub-modules */
-function getNewSubmodule(compiler, module, nodeId, name) {
+function getNewSubmodule(compiler, module, nodeId, name, path) {
     let submodule = {
         id: module.submodules.id,
         nodeId: nodeId,
         name: name,
-        path: '',
+        path: path,
 
         /* Objects which are imported from this sub-module */
-        objectList: []
+        outerObjectNodeIdList: []
     };
 
     module.submodules.id++;
@@ -800,14 +710,4 @@ function getSubmoduleById(compiler, module, id) {
     return module.submodules.list[id];
 }
 
-function setSubmoduleObject(compiler, module, submodule, type, id, internalId) {
-    let object = {
-        type: type,
-        id: id,
-        internalId: internalId
-    };
-
-    submodule.objectList.push(object);
-}
-
-export { getNewModule, setActiveModule, unsetActiveModule, getModuleById, getModuleByPath, getActiveModule, getMainModule, setModuleChild, getNewNode, getNodeById, setActiveNodeList, getActiveNode, unsetActiveNode, setNodeObject, getNodeFromNode, getNodeCopy, setMainNode, getMainNode, getTypeVariableNode, getNewBlock, setActiveBlock, getActiveBlock, getBlockObjectByName, getBlockById, setBlockObject, unsetActiveBlock, getNewType, getTypeByName, getTypeById, getTypeName, isTypeVoid, isTypeEquivalentTo, getNewFunction, getFunctionById, getActiveFunction, getFunctionName, setFunctionReferenceIndex, getNewVariable, getVariableById, getNewExpression, getExpressionById, isExpressionInstanceOf, getExpressionTypeName, setExpressionType, isExpressionTypeSet, getExpressionType, getExpressionTypeList, setExpressionValue, getExpressionValue, getNewSubmodule, setSubmodulePath, getSubmoduleById, setSubmoduleObject, setStringNode };
+export { getNewModule, setMainModule, setActiveModuleList, unsetActiveModule, getModuleById, getModuleByPath, getActiveModule, getMainModule, getNewNode, getNodeById, setActiveNodeList, getActiveNode, unsetActiveNode, setNodeObject, getNodeCopy, setMainNode, getMainNode, getTypeVariableNode, getNewBlock, setActiveBlock, getActiveBlock, getBlockObjectByName, getBlockById, setBlockObject, unsetActiveBlock, getNewType, getTypeByName, getTypeById, getTypeName, isTypeVoid, isTypeEquivalentTo, getNewFunction, getFunctionById, getActiveFunction, getFunctionName, setFunctionReferenceIndex, getNewVariable, getVariableById, getNewExpression, getExpressionById, isExpressionInstanceOf, getExpressionTypeName, setExpressionType, isExpressionTypeSet, getExpressionType, getExpressionTypeList, setExpressionValue, getExpressionValue, getNewSubmodule, setSubmodulePath, getSubmoduleById, setStringNode };

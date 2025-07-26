@@ -1,13 +1,29 @@
 import Binaryen from './binaryen.js';
-import { getModuleByPath, getNodeById, setActiveNodeList, getActiveNode, unsetActiveNode, getMainNode, getBlockById, getBlockObjectByName, getTypeByName, getTypeById, getFunctionById, getFunctionName, getVariableById, getExpressionById, getExpressionType, getExpressionValue, getSubmoduleById } from '../module.js';
+import { getMainModule, setActiveModuleList, getActiveModule, getModuleByPath, unsetActiveModule, getNodeById, setActiveNodeList, getActiveNode, unsetActiveNode, getMainNode, getBlockById, getBlockObjectByName, getTypeByName, getTypeById, getFunctionById, getFunctionName, getVariableById, getExpressionById, getExpressionType, getExpressionValue, getSubmoduleById } from '../module.js';
 import { getBinaryenStringType, getBinaryenArrayType, getBinaryenArrayNewFixed, getBinaryenArrayLength, getBinaryenArrayElement, getBinaryenArrayNew, getBinaryenArrayCopy, setBinaryenArrayElement } from './library.js';
 
-async function translateModule(compiler, module) {
-    let node = getMainNode(compiler, module);
+async function translate(compiler) {
+    let module = getMainModule(compiler);
     let binaryen = await Binaryen();
 
-    module.status = 'TRANSLATING';
-    setActiveNodeList(compiler, module, [node.id]);
+    setActiveModuleList(compiler, [module.id]);
+    while (module) {
+        if (module.status === 'CHECKED') {
+            setActiveModuleList(compiler, module.childIdList);
+            module.status = 'TRANSLATING';
+        } else if (module.status === 'TRANSLATING') {
+            translateModule(compiler, module, binaryen);
+            unsetActiveModule(compiler);
+            module.status = 'TRANSLATED';
+        } else if (module.status === 'TRANSLATED') {
+            unsetActiveModule(compiler);
+        }
+        module = getActiveModule(compiler);
+    }
+}
+
+function translateModule(compiler, module, binaryen) {
+    let node = getMainNode(compiler, module);
 
     module.ir = new binaryen.Module();
     /* Set some features of the Binaryen library */
@@ -19,9 +35,11 @@ async function translateModule(compiler, module) {
         binaryen.Features.ReferenceTypes |
         binaryen.Features.GC
     );
+
+    setActiveNodeList(compiler, module, [node.id]);
     while (node) {
 
-        //console.log(node.id, node.name, node.status, node.location.first_line, node.value);
+        //console.log(module.path, node.id, node.name, node.status, node.location.first_line, node.value);
 
         if (node.name === 'moduleStmt') {
             translateModuleStmt(compiler, module, node, binaryen);
@@ -31,10 +49,20 @@ async function translateModule(compiler, module) {
             translateImportStmt(compiler, module, node, binaryen);
         } else if (node.name === 'submodule') {
             translateSubmodule(compiler, module, node, binaryen);
+        } else if (node.name === 'identifier') {
+            translateIdentifier(compiler, module, node, binaryen);
+        } else if (node.name === 'path') {
+            translatePath(compiler, module, node, binaryen);
         } else if (node.name === 'list') {
             translateList(compiler, module, node, binaryen);
         } else if (node.name === 'externalObject') {
             translateExternalObject(compiler, module, node, binaryen);
+        } else if (node.name === 'operator') {
+            translateOperator(compiler, module, node, binaryen);
+        } else if (node.name === 'externalVariable') {
+            translateExternalVariable(compiler, module, node, binaryen);
+        } else if (node.name === 'externalFunction') {
+            translateExternalFunction(compiler, module, node, binaryen);
         } else if (node.name === 'variable') {
             translateVariable(compiler, module, node, binaryen);
         } else if (node.name === 'basicType') {
@@ -75,8 +103,6 @@ async function translateModule(compiler, module) {
             translateVoid(compiler, module, node, binaryen);
         } else if (node.name === 'reference') {
             translateReference(compiler, module, node, binaryen);
-        } else if (node.name === 'identifier') {
-            translateIdentifier(compiler, module, node, binaryen);
         } else if (node.name === 'externalIdentifier') {
             translateExternalIdentifier(compiler, module, node, binaryen);
         } else if (node.name === 'name') {
@@ -85,8 +111,6 @@ async function translateModule(compiler, module) {
             translateInstruction(compiler, module, node, binaryen);
         } else if (node.name === 'callByName') {
             translateCallByName(compiler, module, node, binaryen);
-        } else if (node.name === 'operator') {
-            translateOperator(compiler, module, node, binaryen);
         } else if (node.name === 'callByExpression') {
             translateCallByExpression(compiler, module, node, binaryen);
         } else if (node.name === 'exprStmt') {
@@ -103,7 +127,6 @@ async function translateModule(compiler, module) {
         node = getActiveNode(compiler, module);
     }
     module.ir.validate();
-    module.status = 'TRANSLATED';
 }
 
 function translateModuleStmt(compiler, module, node, binaryen) {
@@ -116,8 +139,8 @@ function translateModuleStmt(compiler, module, node, binaryen) {
         /* Import strings */
         module.ir.addGlobalImport(
             '$string_empty',
-            '$globalStrings',
-            '$string_empty',
+            '$strings',
+            '',
             getBinaryenStringType(binaryen),
             false
         );
@@ -126,8 +149,8 @@ function translateModuleStmt(compiler, module, node, binaryen) {
 
             module.ir.addGlobalImport(
                 `$string_${ stringNode.id }`,
-                '$localStrings',
-                `$string_${ stringNode.id }`,
+                '$strings',
+                stringNode.value,
                 getBinaryenStringType(binaryen),
                 false
             );
@@ -143,33 +166,30 @@ function translateModuleStmt(compiler, module, node, binaryen) {
             false,
             '$memory'
         );
-
         /* Import memory */
         module.ir.addMemoryImport(
             '$memory',
-            '$globalObjects',
+            '$objects',
             '$memory',
-            false
-        );
-
-        /* Number of elements of the table added so far */
-        /* Note that an element of the table is reference to a function */
-        /* Linker calculates the exact value of this variable for every module */
-        module.ir.addGlobalImport(
-            '$tableOffset',
-            '$localObjects',
-            '$tableOffset',
-            binaryen.i32,
             false
         );
 
         /* Import table */
         module.ir.addTableImport(
             '$table',
-            '$globalObjects',
+            '$objects',
             '$table'
         );
-
+        /* Number of elements of the table added so far */
+        /* Note that an element of the table is reference to a function */
+        /* Linker calculates the exact value of this variable for every module */
+        module.ir.addGlobalImport(
+            '$tableOffset',
+            '$objects',
+            '$tableOffset',
+            binaryen.i32,
+            false
+        );
         /* Fill the table */
         for (let i = 0; i < module.functions.referenceList.length; i++) {
             let functionObject = getFunctionById(compiler, module, module.functions.referenceList[i]);
@@ -190,7 +210,7 @@ function translateModuleStmt(compiler, module, node, binaryen) {
         /* Import functions '$getString' */
         module.ir.addFunctionImport(
             '$getString_[$i]->[$s]',
-            '$globalFunctions',
+            '$functions',
             '$getString_[$i]->[$s]',
             binaryen.createType([
                 binaryen.i32
@@ -199,7 +219,7 @@ function translateModuleStmt(compiler, module, node, binaryen) {
         );
         module.ir.addFunctionImport(
             '$getString_[$iu]->[$s]',
-            '$globalFunctions',
+            '$functions',
             '$getString_[$iu]->[$s]',
             binaryen.createType([
                 binaryen.i32
@@ -208,7 +228,7 @@ function translateModuleStmt(compiler, module, node, binaryen) {
         );
         module.ir.addFunctionImport(
             '$getString_[$id]->[$s]',
-            '$globalFunctions',
+            '$functions',
             '$getString_[$id]->[$s]',
             binaryen.createType([
                 binaryen.i64
@@ -217,7 +237,7 @@ function translateModuleStmt(compiler, module, node, binaryen) {
         );
         module.ir.addFunctionImport(
             '$getString_[$f]->[$s]',
-            '$globalFunctions',
+            '$functions',
             '$getString_[$f]->[$s]',
             binaryen.createType([
                 binaryen.f32
@@ -226,7 +246,7 @@ function translateModuleStmt(compiler, module, node, binaryen) {
         );
         module.ir.addFunctionImport(
             '$getString_[$fd]->[$s]',
-            '$globalFunctions',
+            '$functions',
             '$getString_[$fd]->[$s]',
             binaryen.createType([
                 binaryen.f64
@@ -235,7 +255,7 @@ function translateModuleStmt(compiler, module, node, binaryen) {
         );
         module.ir.addFunctionImport(
             '$getString_[$b]->[$s]',
-            '$globalFunctions',
+            '$functions',
             '$getString_[$b]->[$s]',
             binaryen.createType([
                 binaryen.i32
@@ -244,7 +264,7 @@ function translateModuleStmt(compiler, module, node, binaryen) {
         );
         module.ir.addFunctionImport(
             '$getString_[$s]->[$s]',
-            '$globalFunctions',
+            '$functions',
             '$getString_[$s]->[$s]',
             binaryen.createType([
                 getBinaryenStringType(binaryen)
@@ -255,7 +275,7 @@ function translateModuleStmt(compiler, module, node, binaryen) {
         /* Import function '$show' */
         module.ir.addFunctionImport(
             '$show',
-            '$globalFunctions',
+            '$functions',
             '$show',
             binaryen.createType([
                 getBinaryenStringType(binaryen)
@@ -317,8 +337,6 @@ function translateModuleBlock(compiler, module, node, binaryen) {
         setActiveNodeList(compiler, module, node.childIdList);
         node.status = '1';
     } else if (node.status === '1') {
-        /* The second pass is devoted to translate the signatures of functions */
-        /* Translated signatures are used to translate inferred initialization statements */
         setActiveNodeList(compiler, module, node.childIdList);
         node.status = '2';
     } else if (node.status === '2') {
@@ -334,48 +352,6 @@ function translateImportStmt(compiler, module, node, binaryen) {
         setActiveNodeList(compiler, module, [node.childIdList[1], node.childIdList[0]]);
         node.status = '1';
     } else if (node.status === '1') {
-        let submoduleNode = getNodeById(compiler, module, node.childIdList[1]);
-        let submoduleObject = getSubmoduleById(compiler, module, submoduleNode.object.id);
-        let submodule = getModuleByPath(compiler, submoduleObject.path);
-
-        for (let i = 0; i < submoduleObject.objectList.length; i++) {
-            let externalObject = submoduleObject.objectList[i];
-
-            if (externalObject.type === 'variable') {
-                let variableObject = getVariableById(compiler, module, externalObject.internalId);
-                let variableTypeObject = getTypeById(compiler, module, variableObject.typeId);
-                let externalVariableObject = getVariableById(compiler, submodule, externalObject.id);
-
-                module.ir.addGlobalImport(
-                    variableObject.name,
-                    submoduleObject.name,
-                    externalVariableObject.name,
-                    variableTypeObject.ir,
-                    !variableObject.isConstant
-                );
-            } else if (externalObject.type === 'function') {
-                let functionObject = getFunctionById(compiler, module, externalObject.internalId);
-                let functionName = getFunctionName(compiler, module, functionObject);
-                let functionTypeObject = getTypeById(compiler, module, functionObject.typeId);
-                let functionFromTypeIrList = [];
-                let functionToTypeIr = getTypeById(compiler, module, functionTypeObject.toId).ir;
-                let externalFunctionObject = getFunctionById(compiler, submodule, externalObject.id);
-                let externalFunctionName = getFunctionName(compiler, submodule, externalFunctionObject);
-
-                for (let j = 0; j < functionTypeObject.fromIdList.length; j++) {
-                    let functionFromTypeObject = getTypeById(compiler, module, functionTypeObject.fromIdList[j]);
-
-                    functionFromTypeIrList.push(functionFromTypeObject.ir);
-                }
-                module.ir.addFunctionImport(
-                    functionName,
-                    submoduleObject.name,
-                    externalFunctionName,
-                    binaryen.createType(functionFromTypeIrList),
-                    functionToTypeIr
-                );
-            }
-        }
         unsetActiveNode(compiler, module);
         node.status = 'TRANSLATED';
     } else if (node.status === 'TRANSLATED') {
@@ -384,6 +360,27 @@ function translateImportStmt(compiler, module, node, binaryen) {
 }
 
 function translateSubmodule(compiler, module, node, binaryen) {
+    if (node.status === 'CHECKED') {
+        setActiveNodeList(compiler, module, node.childIdList);
+        node.status = '1';
+    } else if (node.status === '1') {
+        unsetActiveNode(compiler, module);
+        node.status = 'TRANSLATED';
+    } else if (node.status === 'TRANSLATED') {
+        unsetActiveNode(compiler, module);
+    }
+}
+
+function translateIdentifier(compiler, module, node, binaryen) {
+    if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
+        node.status = 'TRANSLATED';
+    } else if (node.status === 'TRANSLATED') {
+        unsetActiveNode(compiler, module);
+    }
+}
+
+function translatePath(compiler, module, node, binaryen) {
     if (node.status === 'CHECKED') {
         unsetActiveNode(compiler, module);
         node.status = 'TRANSLATED';
@@ -406,9 +403,89 @@ function translateList(compiler, module, node, binaryen) {
 
 function translateExternalObject(compiler, module, node, binaryen) {
     if (node.status === 'CHECKED') {
-        setActiveNodeList(compiler, module, [node.childIdList[1]]);
+        setActiveNodeList(compiler, module, node.childIdList);
         node.status = '1';
     } else if (node.status === '1') {
+        unsetActiveNode(compiler, module);
+        node.status = 'TRANSLATED';
+    } else if (node.status === 'TRANSLATED') {
+        unsetActiveNode(compiler, module);
+    }
+}
+
+function translateOperator(compiler, module, node, binaryen) {
+    if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
+        node.status = 'TRANSLATED';
+    } else if (node.status === 'TRANSLATED') {
+        unsetActiveNode(compiler, module);
+    }
+}
+
+function translateExternalVariable(compiler, module, node, binaryen) {
+    if (node.status === 'CHECKED') {
+        setActiveNodeList(compiler, module, node.childIdList);
+        node.status = '1';
+    } else if (node.status === '1') {
+        let submoduleObject = getSubmoduleById(compiler, module, node.object.submoduleId);
+        let submodule = getModuleByPath(compiler, submoduleObject.path);
+
+        let variableNode = getNodeById(compiler, module, node.childIdList[0]);
+        let variableObject = getVariableById(compiler, module, variableNode.object.id);
+        let variableTypeObject = getTypeById(compiler, module, variableObject.typeId);
+        let outerVariableObject = getVariableById(compiler, submodule, node.object.id);
+
+        module.ir.addGlobalImport(
+            variableObject.name,
+            submoduleObject.name,
+            outerVariableObject.name,
+            variableTypeObject.ir,
+            !variableObject.isConstant
+        );
+        unsetActiveNode(compiler, module);
+        node.status = 'TRANSLATED';
+    } else if (node.status === 'TRANSLATED') {
+        unsetActiveNode(compiler, module);
+    }
+}
+
+function translateExternalFunction(compiler, module, node, binaryen) {
+    if (node.status === 'CHECKED') {
+        let functionNode = getNodeById(compiler, module, node.childIdList[0]);
+        let functionObject = getFunctionById(compiler, module, functionNode.object.id);
+
+        if (functionObject.isTemplate) {
+            unsetActiveNode(compiler, module);
+            node.status = 'TRANSLATED';
+        } else {
+            setActiveNodeList(compiler, module, node.childIdList);
+            node.status = '1';
+        }
+    } else if (node.status === '1') {
+        let submoduleObject = getSubmoduleById(compiler, module, node.object.submoduleId);
+        let submodule = getModuleByPath(compiler, submoduleObject.path);
+
+        let functionNode = getNodeById(compiler, module, node.childIdList[0]);
+        let functionObject = getFunctionById(compiler, module, functionNode.object.id);
+        let functionName = getFunctionName(compiler, module, functionObject);
+        let functionTypeObject = getTypeById(compiler, module, functionObject.typeId);
+        let functionFromTypeIrList = [];
+        let functionToTypeIr = getTypeById(compiler, module, functionTypeObject.toId).ir;
+        let outerFunctionObject = getFunctionById(compiler, submodule, node.object.id);
+        let outerFunctionName = getFunctionName(compiler, submodule, outerFunctionObject);
+
+        for (let i = 0; i < functionTypeObject.fromIdList.length; i++) {
+            let functionFromTypeObject = getTypeById(compiler, module, functionTypeObject.fromIdList[i]);
+
+            functionFromTypeIrList.push(functionFromTypeObject.ir);
+        }
+        module.ir.addFunctionImport(
+            functionName,
+            submoduleObject.name,
+            outerFunctionName,
+            binaryen.createType(functionFromTypeIrList),
+            functionToTypeIr
+        );
         unsetActiveNode(compiler, module);
         node.status = 'TRANSLATED';
     } else if (node.status === 'TRANSLATED') {
@@ -477,8 +554,15 @@ function translateFunction(compiler, module, node, binaryen) {
 
 function translateReferenceType(compiler, module, node, binaryen) {
     if (node.status === 'CHECKED') {
-        setActiveNodeList(compiler, module, node.childIdList);
-        node.status = '1';
+        let typeObject = getTypeById(compiler, module, node.object.id);
+
+        if (typeObject.isVariable) {
+            unsetActiveNode(compiler, module);
+            node.status = 'TRANSLATED';
+        } else {
+            setActiveNodeList(compiler, module, node.childIdList);
+            node.status = '1';
+        }
     } else if (node.status === '1') {
         let typeObject = getTypeById(compiler, module, node.object.id);
 
@@ -607,21 +691,22 @@ function translateBoolean(compiler, module, node, binaryen) {
 
 function translateFunctionStmt(compiler, module, node, binaryen) {
     if (node.status === 'CHECKED') {
-        setActiveNodeList(compiler, module, [node.childIdList[0]]);
-        node.status = '1';
-    } else if (node.status === '1') {
         let functionNode = getNodeById(compiler, module, node.childIdList[0]);
         let functionObject = getFunctionById(compiler, module, functionNode.object.id);
 
-        unsetActiveNode(compiler, module);
         if (functionObject.isTemplate) {
-            /* Template functions are not translated */
-            /* Copies of template functions are translated */
+            unsetActiveNode(compiler, module);
             node.status = 'TRANSLATED';
         } else {
-            node.status = '2';
+            /* Process the function */
+            setActiveNodeList(compiler, module, [node.childIdList[0]]);
+            node.status = '1';
         }
+    } else if (node.status === '1') {
+        unsetActiveNode(compiler, module);
+        node.status = '2';
     } else if (node.status === '2') {
+        /* Process the list of parameters and the body */
         setActiveNodeList(compiler, module, [node.childIdList[1], node.childIdList[2]]);
         node.status = '3';
     } else if (node.status === '3') {
@@ -829,15 +914,6 @@ function translateReference(compiler, module, node, binaryen) {
             ),
             module.ir.i32.const(functionObject.referenceIndex)
         );
-        unsetActiveNode(compiler, module);
-        node.status = 'TRANSLATED';
-    } else if (node.status === 'TRANSLATED') {
-        unsetActiveNode(compiler, module);
-    }
-}
-
-function translateIdentifier(compiler, module, node, binaryen) {
-    if (node.status === 'CHECKED') {
         unsetActiveNode(compiler, module);
         node.status = 'TRANSLATED';
     } else if (node.status === 'TRANSLATED') {
@@ -1771,15 +1847,6 @@ function translateCallByName(compiler, module, node, binaryen) {
     }
 }
 
-function translateOperator(compiler, module, node, binaryen) {
-    if (node.status === 'CHECKED') {
-        unsetActiveNode(compiler, module);
-        node.status = 'TRANSLATED';
-    } else if (node.status === 'TRANSLATED') {
-        unsetActiveNode(compiler, module);
-    }
-}
-
 function translateCallByExpression(compiler, module, node, binaryen) {
     if (node.status === 'CHECKED') {
         setActiveNodeList(compiler, module, node.childIdList);
@@ -1894,8 +1961,15 @@ function translateArray(compiler, module, node, binaryen) {
 
 function translateArrayType(compiler, module, node, binaryen) {
     if (node.status === 'CHECKED') {
-        setActiveNodeList(compiler, module, node.childIdList);
-        node.status = '1';
+        let typeObject = getTypeById(compiler, module, node.object.id);
+
+        if (typeObject.isVariable) {
+            unsetActiveNode(compiler, module);
+            node.status = 'TRANSLATED';
+        } else {
+            setActiveNodeList(compiler, module, node.childIdList);
+            node.status = '1';
+        }
     } else if (node.status === '1') {
         let typeObject = getTypeById(compiler, module, node.object.id);
         let elementTypeObject = getTypeById(compiler, module, typeObject.toId);
@@ -1910,6 +1984,7 @@ function translateArrayType(compiler, module, node, binaryen) {
 
 function translateVariableType(compiler, module, node, binaryen) {
     if (node.status === 'CHECKED') {
+        /* We should not visit this node, but we have it for the consistency with the checker */
         unsetActiveNode(compiler, module);
         node.status = 'TRANSLATED';
     } else if (node.status === 'TRANSLATED') {
@@ -1917,4 +1992,4 @@ function translateVariableType(compiler, module, node, binaryen) {
     }
 }
 
-export { translateModule };
+export { translate };

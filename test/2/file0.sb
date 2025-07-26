@@ -1,4 +1,5 @@
---( Check if starting function 'start' is not executed during the initialization )--
+--( The starting function 'start' should not be executed during
+the initialization of the corresponding WebAssembly module )--
 
 let start
 	show[123456]

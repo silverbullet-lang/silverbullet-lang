@@ -1,8 +1,8 @@
-import { getNewModule, setActiveModule, unsetActiveModule, getModuleById, getActiveModule, getActiveNode } from './module.js';
+import { getNewModule, setMainModule, setActiveModuleList, unsetActiveModule, getModuleById, getActiveModule, getActiveNode } from './module.js';
 import { readModule } from './reader.js';
 import { parseModule } from './parser/index.js';
 import { checkModule } from './checker.js';
-import { translateModule } from './translator/index.js';
+import { translate } from './translator/index.js';
 import { link } from './linker.js';
 import { write } from './writer.js';
 
@@ -14,26 +14,25 @@ async function compile(options) {
         let module;
 
         setCompilerOptions(compiler, options);
+
+        /* Read and inspect module(s) */
         module = getNewModule(compiler, compiler.options.input);
-        setActiveModule(compiler, [module.id]);
+        setMainModule(compiler, module);
+        setActiveModuleList(compiler, [module.id]);
         while (module) {
             if (module.status === 'CREATED') {
                 await readModule(compiler, module);
-            }
-            if (module.status === 'READ') {
+            } else if (module.status === 'READ') {
                 parseModule(compiler, module);
-            }
-            if (module.status === 'PARSED') {
+            } else if (module.status === 'PARSED') {
                 checkModule(compiler, module);
-            }
-            if (module.status === 'CHECKED') {
-                await translateModule(compiler, module);
-            }
-            if (module.status === 'TRANSLATED') {
+            } else if (module.status === 'CHECKED') {
                 unsetActiveModule(compiler);
             }
             module = getActiveModule(compiler);
         }
+
+        await translate(compiler);
         link(compiler);
         await write(compiler);
     } catch (err) {
@@ -60,14 +59,18 @@ function getNewCompiler() {
             maxMemorySize: 1,
 
             /* Path to a folder containing library files */
-            libraryFolder: (new URL('./library/', import.meta.url)).href
+            libraryFolder: (new URL('./library/', import.meta.url)).href,
+
+            /* If set to false, the generated JavaScript module returns at least WebAssembly memory and an object called 'exports' that contains all non-private variables and functions */
+            /* Otherwise, if there is a non-private function 'start', then it will be executed */
+            isOutputExecutable: false
         },
         modules: {
             id: 0,
             list: [],
             paths: {},
             stack: [-1],
-            mainId: 0
+            mainId: -1
         },
         executable: ''
     };

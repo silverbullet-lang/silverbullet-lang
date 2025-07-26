@@ -1,19 +1,20 @@
-import { getNewModule, setActiveModule, getModuleByPath, setModuleChild, getNewNode, getNodeById, setActiveNodeList, getActiveNode, unsetActiveNode, getMainNode, setNodeObject, getNodeFromNode, getNodeCopy, getTypeVariableNode, getNewBlock, setActiveBlock, getActiveBlock, getBlockById, getBlockObjectByName, setBlockObject, unsetActiveBlock, getNewType, getTypeByName, getTypeById, getTypeName, isTypeVoid, isTypeEquivalentTo, getNewFunction, getFunctionById, getActiveFunction, getFunctionName, setFunctionReferenceIndex, getNewVariable, getVariableById, getNewExpression, getExpressionById, isExpressionInstanceOf, getExpressionTypeName, setExpressionType, isExpressionTypeSet, getExpressionType, getExpressionTypeList, setExpressionValue, getNewSubmodule, setSubmodulePath, getSubmoduleById, setSubmoduleObject, setStringNode } from './module.js';
+import { getNewModule, setActiveModuleList, getModuleByPath, getNewNode, getNodeById, setActiveNodeList, getActiveNode, unsetActiveNode, getMainNode, setNodeObject, getNodeCopy, getTypeVariableNode, getNewBlock, setActiveBlock, getActiveBlock, getBlockById, getBlockObjectByName, setBlockObject, unsetActiveBlock, getNewType, getTypeByName, getTypeById, getTypeName, isTypeVoid, isTypeEquivalentTo, getNewFunction, getFunctionById, getActiveFunction, getFunctionName, setFunctionReferenceIndex, getNewVariable, getVariableById, getNewExpression, getExpressionById, isExpressionInstanceOf, getExpressionTypeName, setExpressionType, isExpressionTypeSet, getExpressionType, getExpressionTypeList, setExpressionValue, getNewSubmodule, setSubmodulePath, getSubmoduleById, setStringNode } from './module.js';
 
 function checkModule(compiler, module) {
-    let node = getMainNode(compiler, module);
+    let node = getActiveNode(compiler, module);
 
-    module.status = 'CHECKING';
-    if (node.status === 'CREATED') {
-        /* The checking is starting */
+    if (!node) {
+        /* This module is not checked yet */
+        node = getMainNode(compiler, module);
         setActiveNodeList(compiler, module, [node.id]);
     } else {
-        /* The checking is continuing */
-        node = getActiveNode(compiler, module);
+        /* Checking of this module already started, but an import of another module paused it */
+        /* Let's continue the checking */
     }
-    while (node && (module.status === 'CHECKING')) {
 
-        //console.log(node.id, node.name, node.status, node.location.first_line, node.value);
+    while (node && (module.status === 'PARSED')) {
+
+        //console.log(module.path, node.id, node.name, node.status, node.location.first_line, node.value);
 
         if (node.name === 'moduleStmt') {
             checkModuleStmt(compiler, module, node);
@@ -23,10 +24,20 @@ function checkModule(compiler, module) {
             checkImportStmt(compiler, module, node);
         } else if (node.name === 'submodule') {
             checkSubmodule(compiler, module, node);
+        } else if (node.name === 'identifier') {
+            checkIdentifier(compiler, module, node);
+        } else if (node.name === 'path') {
+            checkPath(compiler, module, node);
         } else if (node.name === 'list') {
             checkList(compiler, module, node);
         } else if (node.name === 'externalObject') {
             checkExternalObject(compiler, module, node);
+        } else if (node.name === 'operator') {
+            checkOperator(compiler, module, node);
+        } else if (node.name === 'externalVariable') {
+            checkExternalVariable(compiler, module, node);
+        } else if (node.name === 'externalFunction') {
+            checkExternalFunction(compiler, module, node);
         } else if (node.name === 'variable') {
             checkVariable(compiler, module, node);
         } else if (node.name === 'basicType') {
@@ -67,8 +78,6 @@ function checkModule(compiler, module) {
             checkVoid(compiler, module, node);
         } else if (node.name === 'reference') {
             checkReference(compiler, module, node);
-        } else if (node.name === 'identifier') {
-            checkIdentifier(compiler, module, node);
         } else if (node.name === 'externalIdentifier') {
             checkExternalIdentifier(compiler, module, node);
         } else if (node.name === 'name') {
@@ -77,8 +86,6 @@ function checkModule(compiler, module) {
             checkInstruction(compiler, module, node);
         } else if (node.name === 'callByName') {
             checkCallByName(compiler, module, node);
-        } else if (node.name === 'operator') {
-            checkOperator(compiler, module, node);
         } else if (node.name === 'callByExpression') {
             checkCallByExpression(compiler, module, node);
         } else if (node.name === 'exprStmt') {
@@ -94,8 +101,11 @@ function checkModule(compiler, module) {
         }
         node = getActiveNode(compiler, module);
     }
-    if (module.status === 'CHECKING') {
+
+    if (module.status === 'PARSED') {
         module.status = 'CHECKED';
+    } else if (module.status === 'CHECKING') {
+        module.status = 'PARSED';
     }
 }
 
@@ -120,7 +130,7 @@ function checkModuleBlock(compiler, module, node) {
         let blockObject = getNewBlock(compiler, module, '', -1);
 
         setActiveBlock(compiler, module, blockObject.id);
-        setNodeObject(compiler, module, node, 'block', blockObject.id);
+        setNodeObject(compiler, module, node, 'block', blockObject.id, -1);
         setActiveNodeList(compiler, module, node.childIdList);
         node.status = '1';
     } else if (node.status === '1') {
@@ -149,13 +159,15 @@ function checkImportStmt(compiler, module, node) {
 
 function checkSubmodule(compiler, module, node) {
     if (node.status === 'CREATED') {
+        setActiveNodeList(compiler, module, node.childIdList);
+        node.status = '1';
+    } else if (node.status === '1') {
         let nameNode = getNodeById(compiler, module, node.childIdList[0]);
-        let object = getBlockObjectByName(compiler, module, getActiveBlock(compiler, module), nameNode.value);
+        let activeBlockObject = getActiveBlock(compiler, module);
+        let object = getBlockObjectByName(compiler, module, activeBlockObject, nameNode.value);
         let pathNode = getNodeById(compiler, module, node.childIdList[1]);
-        let submoduleObject = getNewSubmodule(compiler, module, node.id, nameNode.value);
-        let submodule;
+        let submoduleObject = getNewSubmodule(compiler, module, node.id, nameNode.value, '');
 
-        /* Set path of the sub-module object and register it */
         if (object.type === 'variable') {
             let variableObject = getVariableById(compiler, module, object.idList[0]);
             let variableNode = getNodeById(compiler, module, variableObject.nodeId);
@@ -185,6 +197,7 @@ function checkSubmodule(compiler, module, node) {
             };
         } else if (object.type === '') {
             let path = '';
+            let submodule;
 
             if (pathNode.value === '') {
                 path = (new URL(`./${ submoduleObject.name }.sb`, module.path)).href;
@@ -192,40 +205,66 @@ function checkSubmodule(compiler, module, node) {
                 try {
                     path = (new URL(pathNode.value, module.path)).href;
                 } catch (err) {
-                    /* In order to throw, try, for instance, 'fttps:// ... sb' */
+                    /* In order to throw an error, try, for instance, the following value of the path: 'ftp::' */
                     throw {
                         code: 'E_CHECK_SUBMODULE_INVALID_URL',
-                        message: `a valid URL cannot be constructed from the given path`,
+                        message: `a valid URL cannot be constructed from the given path '${ pathNode.value }'`,
                         location: pathNode.location
                     };
                 }
             }
-            setSubmodulePath(compiler, module, submoduleObject, path);
-            setBlockObject(compiler, module, getActiveBlock(compiler, module), submoduleObject.name, 'submodule', submoduleObject.id, false);
+            submodule = getModuleByPath(compiler, path);
+            if (submodule) {
+                /* There is already a module with the constructed path */
+                if (submodule.status === 'CHECKED') {
+                    /* This module is already checked */
+                    /* Everything is OK */
+                } else {
+                    /* This module is not checked yet */
+                    /* Throw an error */
+                    throw {
+                        code: 'E_CHECK_SUBMODULE_CIRCULAR_IMPORT',
+                        message: `sub-module '${ submoduleObject.name }' cannot be imported, because it is not processed yet (circular import)`,
+                        location: nameNode.location
+                    };
+                }
+            } else {
+                /* There is no module with the constructed path */
+                /* Let's create and process one */
+                submodule = getNewModule(compiler, path);
+                setActiveModuleList(compiler, [submodule.id]);
+                module.status = 'CHECKING';
+            }
+            /* Set this sub-module as a child of the currently active module */
+            module.childIdList.push(submodule.id);
+
+            setSubmodulePath(compiler, module, submoduleObject, submodule.path);
+            setBlockObject(compiler, module, activeBlockObject, submoduleObject.name, 'submodule', submoduleObject.id, false);
         }
+        setNodeObject(compiler, module, node, 'submodule', submoduleObject.id, -1);
 
-        /* Create a sub-module */
-        submodule = getModuleByPath(compiler, submoduleObject.path);
-        if (!submodule) {
-            submodule = getNewModule(compiler, submoduleObject.path);
-            setActiveModule(compiler, [submodule.id]);
-            module.status = 'PARSED';
-        } else if (submodule.status !== 'TRANSLATED') {
-            throw {
-                code: 'E_CHECK_SUBMODULE_CIRCULAR_IMPORT',
-                message: `sub-module '${ submoduleObject.name }' is already imported, but it is still processing (circular import)`,
-                location: nameNode.location
-            };
-        }
+        /* We keep this node as an active node */
+        /* This allows us to generate better error messages when there are problems with sub-module(s) */
+        node.status = '2';
+    } else if (node.status === '2') {
+        unsetActiveNode(compiler, module);
+        node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
+    }
+}
 
-        /* Set this sub-module as a child of this module */
-        setModuleChild(compiler, module, submodule);
+function checkIdentifier(compiler, module, node) {
+    if (node.status === 'CREATED') {
+        unsetActiveNode(compiler, module);
+        node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
+    }
+}
 
-        setNodeObject(compiler, module, node, 'submodule', submoduleObject.id);
-        /* If the compilation of the sub-module will fail, the location of this node will be used in the corresponding error message */
-        /* Therefore, we keep this node as an 'active' until the compilation of the sub-module is finished */
-        node.status = '1';
-    } else if (node.status === '1') {
+function checkPath(compiler, module, node) {
+    if (node.status === 'CREATED') {
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
     } else if (node.status === 'CHECKED') {
@@ -247,169 +286,227 @@ function checkList(compiler, module, node) {
 
 function checkExternalObject(compiler, module, node) {
     if (node.status === 'CREATED') {
-        let externalNameNode = getNodeById(compiler, module, node.childIdList[0]);
-        let objectNodeListNode = getNodeById(compiler, module, node.childIdList[1]);
-        let objectNode = getNodeById(compiler, module, objectNodeListNode.childIdList[0]);
+        setActiveNodeList(compiler, module, [node.childIdList[0], node.childIdList[1], node.childIdList[2]]);
+        node.status = '1';
+    } else if (node.status === '1') {
         let externalObjectNodeListNode = getNodeById(compiler, module, node.parentIdList[0]);
         let importStmtNode = getNodeById(compiler, module, externalObjectNodeListNode.parentIdList[0]);
         let submoduleNode = getNodeById(compiler, module, importStmtNode.childIdList[1]);
         let submoduleObject = getSubmoduleById(compiler, module, submoduleNode.object.id);
         let submodule = getModuleByPath(compiler, submoduleObject.path);
-        let externalObject = getBlockObjectByName(compiler, submodule, getBlockById(compiler, submodule, 1), externalNameNode.value);
 
-        if (externalObject.type === 'variable') {
-            let externalVariableObject = getVariableById(compiler, submodule, externalObject.idList[0]);
+        let externalNameNode = getNodeById(compiler, module, node.childIdList[0]);
+        let outerBlockObject = getBlockById(compiler, submodule, 1);
+        let outerObject = getBlockObjectByName(compiler, submodule, outerBlockObject, externalNameNode.value);
+        let internalNameNode = getNodeById(compiler, module, node.childIdList[1]);
+        let typeNode = getNodeById(compiler, module, node.childIdList[2]);
+        let typeObject = getTypeById(compiler, module, typeNode.object.id);
+        let listNode = getNodeById(compiler, module, node.childIdList[3]);
 
-            if (!externalVariableObject.isPrivate) {
-                objectNode.name = 'variable';
-                if (objectNode.childIdList[2] === -1) {
-                    /* Type is not declared */
-                    /* Let's insert the type of the corresponding external variable */
-                    let externalVariableTypeObject = getTypeById(compiler, submodule, externalVariableObject.typeId);
-                    let externalVariableTypeNode = getNodeById(compiler, submodule, externalVariableTypeObject.nodeId);
-                    let variableTypeNode = getNodeFromNode(compiler, module, submodule, externalVariableTypeNode.id);
+        if (outerObject.type === 'variable') {
+            let outerVariableObject = getVariableById(compiler, submodule, outerObject.idList[0]);
 
-                    objectNode.childIdList[2] = variableTypeNode.id;
-                    variableTypeNode.parentIdList.push(objectNode.id);
+            if (!outerVariableObject.isPrivate) {
+                let outerVariableTypeObject = getTypeById(compiler, submodule, outerVariableObject.typeId);
+
+                if ((typeObject.name === outerVariableTypeObject.name) || (typeObject.name === '$v')) {
+                    /* Let's set modifiers of the imported variable */
+                    /* We copy all the modifiers of the external variable */
+                    /* Also, we append an additional modifier 'private' in order to forbid re-export of the imported variable */
+                    let outerVariableNode = getNodeById(compiler, submodule, outerVariableObject.nodeId);
+                    let outerModifierNodeListNode = getNodeById(compiler, submodule, outerVariableNode.childIdList[0]);
+                    let modifierNodeListNode = getNodeCopy(compiler, module, submodule, outerModifierNodeListNode, module, {}, true);
+                    let modifierPrivateNode = getNewNode(compiler, module, 'modifier', node.location, [], 'private');
+                    let modifierExternalNode = getNewNode(compiler, module, 'modifier', node.location, [], 'external');
+
+                    /* Let's set the type of the imported variable */
+                    let variableTypeObject = getTypeByName(compiler, module, outerVariableTypeObject.name);
+                    let variableTypeNode;
+
+                    /* This is a node of the imported variable */
+                    let variableNode;
+                    /* This node encapsulates the node of the imported variable */
+                    /* It helps us to store information related to the corresponding external variable, i.e., its ID in the sub-module, etc. */
+                    let externalVariableNode;
+
+                    modifierNodeListNode.childIdList.push(modifierPrivateNode.id);
+                    modifierPrivateNode.parentIdList.push(modifierNodeListNode.id);
+                    modifierNodeListNode.childIdList.push(modifierExternalNode.id);
+                    modifierExternalNode.parentIdList.push(modifierNodeListNode.id);
+
+                    if (variableTypeObject) {
+                        /* In this module, there is a type with the name equal to the name of the type of the external variable */
+                        variableTypeNode = getNodeById(compiler, module, variableTypeObject.nodeId);
+                    } else {
+                        /* There is no type with the same name */
+                        /* Let's create a copy of the type of the external variable */
+                        let outerVariableTypeNode = getNodeById(compiler, submodule, outerVariableTypeObject.nodeId);
+
+                        variableTypeNode = getNodeCopy(compiler, module, submodule, outerVariableTypeNode, module, {}, true);
+                    }
+                    variableNode = getNewNode(compiler, module, 'variable', node.location, [modifierNodeListNode.id, internalNameNode.id, variableTypeNode.id], '');
+                    externalVariableNode = getNewNode(compiler, module, 'externalVariable', node.location, [variableNode.id], '');
+                    setNodeObject(compiler, module, externalVariableNode, 'variable', outerVariableObject.id, submoduleObject.id);
+
+                    listNode.childIdList.push(externalVariableNode.id);
+                    externalVariableNode.parentIdList.push(listNode.id);
+
+                    /* Register this outer variable */
+                    submoduleObject.outerObjectNodeIdList.push(outerVariableNode.id);
+                } else {
+                    throw {
+                        code: 'E_CHECK_EXTERNAL_OBJECT_VARIABLE_TYPE_MISMATCH',
+                        message: `variable '${ externalNameNode.value }' cannot be imported from the sub-module '${ submoduleObject.name }' located at '${ submoduleObject.path }', because the given type ${ getTypeName(compiler, module, typeObject) } does not match with the actual type of the variable ${ getTypeName(compiler, submodule, outerVariableTypeObject) }`,
+                        location: node.location
+                    };
                 }
             } else {
                 throw {
                     code: 'E_CHECK_EXTERNAL_OBJECT_VARIABLE_IS_PRIVATE',
-                    message: `variable '${ externalNameNode.value }' cannot be imported from the sub-module '${ submoduleObject.name }' ('${ submoduleObject.path }'), because '${ externalNameNode.value }' is a private variable`,
+                    message: `variable '${ externalNameNode.value }' cannot be imported from the sub-module '${ submoduleObject.name }' located at '${ submoduleObject.path }', because '${ externalNameNode.value }' is a private variable`,
                     location: externalNameNode.location
                 };
             }
-        } else if (externalObject.type === 'function') {
-            let i = 0;
-            let next = true;
-            let isPrivate = true;
+        } else if (outerObject.type === 'function') {
+            /* Let's define a list of external functions which are non-private */
+            let outerFunctionObjectIdList = [];
 
-            while ((i < externalObject.idList.length) && next) {
-                let externalFunctionObject = getFunctionById(compiler, submodule, externalObject.idList[i]);
+            for (let i = 0; i < outerObject.idList.length; i++) {
+                let outerFunctionObject = getFunctionById(compiler, submodule, outerObject.idList[i]);
 
-                if (!externalFunctionObject.isPrivate) {
-                    isPrivate = false;
-                    if (objectNode.name === 'function') {
-                        /* Type is not declared and we are processing the next external function with the same name (therefore this external function is a polymorphic function) */
-                        /* Let's make a new node for such an external function */
-                        objectNode = getNewNode(compiler, module, 'object', objectNode.location, [objectNode.childIdList[0], objectNode.childIdList[1], -1], '');
-                        objectNodeListNode.childIdList.push(objectNode.id);
-                        objectNode.parentIdList.push(objectNodeListNode.id);
-                    }
-                    objectNode.name = 'function';
-                    if (objectNode.childIdList[2] === -1) {
-                        /* Type is not declared */
-                        /* Let's insert the type of the corresponding external function */
-                        let externalFunctionTypeObject = getTypeById(compiler, submodule, externalFunctionObject.typeId);
-                        let externalFunctionTypeNode = getNodeById(compiler, submodule, externalFunctionTypeObject.nodeId);
-                        let functionTypeNode = getNodeFromNode(compiler, module, submodule, externalFunctionTypeNode.id);
-
-                        objectNode.childIdList[2] = functionTypeNode.id;
-                        functionTypeNode.parentIdList.push(objectNode.id);
-                    } else {
-                        /* Type is declared */
-                        /* Stop the processing of the external function(s) */
-                        next = false;
-                    }
+                if (!outerFunctionObject.isPrivate) {
+                    outerFunctionObjectIdList.push(outerFunctionObject.id);
                 }
-                i++;
             }
-            if (isPrivate) {
-                throw {
-                    code: 'E_CHECK_EXTERNAL_OBJECT_FUNCTION_IS_PRIVATE',
-                    message: `function '${ externalNameNode.value }' cannot be imported from the sub-module '${ submoduleObject.name }' ('${ submoduleObject.path }'), because '${ externalNameNode.value }' is a private function`,
-                    location: externalNameNode.location
-                };
-            }
-        } else if (externalObject.type === 'submodule') {
-            throw {
-                code: 'E_CHECK_EXTERNAL_OBJECT_SUBMODULE',
-                message: `sub-module '${ externalNameNode.value }' cannot be imported from the sub-module '${ submoduleObject.name }' ('${ submoduleObject.path }')`,
-                location: externalNameNode.location
-            };
-        } else if (externalObject.type === '') {
-            throw {
-                code: 'E_CHECK_EXTERNAL_OBJECT_OBJECT_NOT_FOUND',
-                message: `'${ externalNameNode.value }' cannot be imported from the sub-module '${ submoduleObject.name }' ('${ submoduleObject.path }'), because there is no object associated with the name '${ externalNameNode.value }'`,
-                location: externalNameNode.location
-            };
-        }
-        setActiveNodeList(compiler, module, [objectNodeListNode.id]);
-        node.status = '1';
-    } else if (node.status === '1') {
-        let externalNameNode = getNodeById(compiler, module, node.childIdList[0]);
-        let objectNodeListNode = getNodeById(compiler, module, node.childIdList[1]);
-        let externalObjectNodeListNode = getNodeById(compiler, module, node.parentIdList[0]);
-        let importStmtNode = getNodeById(compiler, module, externalObjectNodeListNode.parentIdList[0]);
-        let submoduleNode = getNodeById(compiler, module, importStmtNode.childIdList[1]);
-        let submoduleObject = getSubmoduleById(compiler, module, submoduleNode.object.id);
-        let submodule = getModuleByPath(compiler, submoduleObject.path);
-        let externalObject = getBlockObjectByName(compiler, submodule, getBlockById(compiler, submodule, 1), externalNameNode.value);
 
-        if (externalObject.type === 'variable') {
-            let variableNode = getNodeById(compiler, module, objectNodeListNode.childIdList[0]);
-            let variableObject = getVariableById(compiler, module, variableNode.object.id);
-            let variableTypeObject = getTypeById(compiler, module, variableObject.typeId);
-            let externalVariableObject = getVariableById(compiler, submodule, externalObject.idList[0]);
-            let externalVariableTypeObject = getTypeById(compiler, submodule, externalVariableObject.typeId);
-
-            if (variableTypeObject.name === externalVariableTypeObject.name) {
-                /* Transfer all features of the corresponding external variable */
-                variableObject.isConstant = externalVariableObject.isConstant;
-
-                setSubmoduleObject(compiler, module, submoduleObject, 'variable', externalVariableObject.id, variableObject.id);
-            } else {
-                throw {
-                    code: 'E_CHECK_EXTERNAL_OBJECT_TYPE_MISMATCH',
-                    message: `variable '${ externalNameNode.value }' cannot be imported from the sub-module '${ submoduleObject.name }' ('${ submoduleObject.path }'), because the expected type ${ getTypeName(compiler, module, variableTypeObject) } does not match with the actual type ${ getTypeName(compiler, submodule, externalVariableTypeObject) }`,
-                    location: externalNameNode.location
-                };
-            }
-        } else if (externalObject.type === 'function') {
-            for (let i = 0; i < objectNodeListNode.childIdList.length; i++) {
-                let functionNode = getNodeById(compiler, module, objectNodeListNode.childIdList[i]);
-                let functionObject = getFunctionById(compiler, module, functionNode.object.id);
-                let functionTypeObject = getTypeById(compiler, module, functionObject.typeId);
-                let j = 0;
+            if (0 < outerFunctionObjectIdList.length) {
+                /* There is at least one non-private external function */
                 let isMatch = false;
+                let i = 0;
 
-                while ((j < externalObject.idList.length) && !isMatch) {
-                    let externalFunctionObject = getFunctionById(compiler, submodule, externalObject.idList[j]);
+                /* If a type is provided, then we find and import an external function that has the same type */
+                /* Otherwise, we import all external functions */
+                while ((!isMatch || (typeObject.name === '$v')) && (i < outerFunctionObjectIdList.length)) {
+                    let outerFunctionObject = getFunctionById(compiler, submodule, outerFunctionObjectIdList[i]);
+                    let outerFunctionTypeObject = getTypeById(compiler, submodule, outerFunctionObject.typeId);
 
-                    if (!externalFunctionObject.isPrivate) {
-                        let externalFunctionTypeObject = getTypeById(compiler, submodule, externalFunctionObject.typeId);
+                    if ((typeObject.name === outerFunctionTypeObject.name) || (typeObject.name === '$v')) {
+                        /* Here, we create various nodes in a way similar to the one of variables */
+                        let outerFunctionNode = getNodeById(compiler, submodule, outerFunctionObject.nodeId);
+                        let outerModifierNodeListNode = getNodeById(compiler, submodule, outerFunctionNode.childIdList[0]);
+                        let modifierNodeListNode = getNodeCopy(compiler, module, submodule, outerModifierNodeListNode, module, {}, true);
+                        let modifierPrivateNode = getNewNode(compiler, module, 'modifier', node.location, [], 'private');
+                        let modifierExternalNode = getNewNode(compiler, module, 'modifier', node.location, [], 'external');
+                        let functionTypeObject = getTypeByName(compiler, module, outerFunctionTypeObject.name);
+                        let functionTypeNode;
+                        let functionNode;
+                        let externalFunctionNode;
 
-                        if (functionTypeObject.name === externalFunctionTypeObject.name) {
-                            isMatch = true;
+                        modifierNodeListNode.childIdList.push(modifierPrivateNode.id);
+                        modifierPrivateNode.parentIdList.push(modifierNodeListNode.id);
+                        modifierNodeListNode.childIdList.push(modifierExternalNode.id);
+                        modifierExternalNode.parentIdList.push(modifierNodeListNode.id);
 
-                            /* Transfer all features of the corresponding external function */
-                            /* At the moment, there is no feature we can transfer */
+                        if (functionTypeObject) {
+                            functionTypeNode = getNodeById(compiler, module, functionTypeObject.nodeId);
+                        } else {
+                            let outerFunctionTypeNode = getNodeById(compiler, submodule, outerFunctionTypeObject.nodeId);
 
-                            setSubmoduleObject(compiler, module, submoduleObject, 'function', externalFunctionObject.id, functionObject.id);
+                            functionTypeNode = getNodeCopy(compiler, module, submodule, outerFunctionTypeNode, module, {}, true);
+                        }
+
+                        functionNode = getNewNode(compiler, module, 'function', node.location, [modifierNodeListNode.id, internalNameNode.id, functionTypeNode.id], '');
+                        externalFunctionNode = getNewNode(compiler, module, 'externalFunction', node.location, [functionNode.id], '');
+                        setNodeObject(compiler, module, externalFunctionNode, 'function', outerFunctionObject.id, submoduleObject.id);
+
+                        listNode.childIdList.push(externalFunctionNode.id);
+                        externalFunctionNode.parentIdList.push(listNode.id);
+
+                        isMatch = true;
+
+                        /* Register this outer function, if it is not a template function */
+                        if (!outerFunctionObject.isTemplate) {
+                            submoduleObject.outerObjectNodeIdList.push(outerFunctionNode.id);
                         }
                     }
-                    j++;
+                    i++;
                 }
                 if (!isMatch) {
-                    let typeNameList = [];
+                    /* If we are here, then a type is provided, but we could not find any external function with the same type */
+                    let message = `no function '${ externalNameNode.value }' can be imported from the sub-module '${ submoduleObject.name }' located at '${ submoduleObject.path }', because the given type ${ getTypeName(compiler, module, typeObject) } does not match with the actual type(s) of the function(s)`;
 
-                    for (let j = 0; j < externalObject.idList.length; j++) {
-                        let externalFunctionObject = getFunctionById(compiler, submodule, externalObject.idList[j]);
+                    for (let i = 0; i < outerFunctionObjectIdList.length; i++) {
+                        let outerFunctionObject = getFunctionById(compiler, submodule, outerFunctionObjectIdList[i]);
+                        let outerFunctionTypeObject = getTypeById(compiler, submodule, outerFunctionObject.typeId);
 
-                        if (!externalFunctionObject.isPrivate) {
-                            let externalFunctionTypeObject = getTypeById(compiler, submodule, externalFunctionObject.typeId);
-
-                            typeNameList.push(getTypeName(compiler, submodule, externalFunctionTypeObject));
+                        if (0 < i) {
+                            message += ',';
                         }
+                        message += ` ${ getTypeName(compiler, submodule, outerFunctionTypeObject) }`;
                     }
                     throw {
-                        code: 'E_CHECK_EXTERNAL_OBJECT_TYPE_MISMATCH',
-                        message: `function '${ externalNameNode.value }' cannot be imported from the sub-module '${ submoduleObject.name }' ('${ submoduleObject.path }'), because the expected type ${ getTypeName(compiler, module, functionTypeObject) } does not match with the actual type(s) ${ typeNameList.join(', ') }`,
-                        location: externalNameNode.location
+                        code: 'E_CHECK_EXTERNAL_OBJECT_FUNCTION_TYPE_MISMATCH',
+                        message: message,
+                        location: node.location
                     };
                 }
+            } else {
+                /* Every external function is a private function */
+                throw {
+                    code: 'E_CHECK_EXTERNAL_OBJECT_FUNCTION_IS_PRIVATE',
+                    message: `no function '${ externalNameNode.value }' can be imported from the sub-module '${ submoduleObject.name }' located at '${ submoduleObject.path }', because every '${ externalNameNode.value }' is a private function`,
+                    location: externalNameNode.location
+                };
             }
+        } else if (outerObject.type === 'submodule') {
+            throw {
+                code: 'E_CHECK_EXTERNAL_OBJECT_OBJECT_IS_SUBMODULE',
+                message: `sub-module '${ externalNameNode.value }' cannot be imported from the sub-module '${ submoduleObject.name }' located at '${ submoduleObject.path }'`,
+                location: externalNameNode.location
+            };
+        } else if (outerObject.type === '') {
+            throw {
+                code: 'E_CHECK_EXTERNAL_OBJECT_OBJECT_NOT_FOUND',
+                message: `there is no object associated with the name '${ externalNameNode.value }' in the sub-module '${ submoduleObject.name }' located at '${ submoduleObject.path }'`,
+                location: externalNameNode.location
+            };
         }
+        setActiveNodeList(compiler, module, [listNode.id]);
+        node.status = '2';
+    } else if (node.status === '2') {
+        unsetActiveNode(compiler, module);
+        node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
+    }
+}
+
+function checkOperator(compiler, module, node) {
+    if (node.status === 'CREATED') {
+        unsetActiveNode(compiler, module);
+        node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
+    }
+}
+
+function checkExternalVariable(compiler, module, node) {
+    if (node.status === 'CREATED') {
+        setActiveNodeList(compiler, module, node.childIdList);
+        node.status = '1';
+    } else if (node.status === '1') {
+        unsetActiveNode(compiler, module);
+        node.status = 'CHECKED';
+    } else if (node.status === 'CHECKED') {
+        unsetActiveNode(compiler, module);
+    }
+}
+
+function checkExternalFunction(compiler, module, node) {
+    if (node.status === 'CREATED') {
+        setActiveNodeList(compiler, module, node.childIdList);
+        node.status = '1';
+    } else if (node.status === '1') {
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
     } else if (node.status === 'CHECKED') {
@@ -427,7 +524,7 @@ function checkVariable(compiler, module, node) {
         let object = getBlockObjectByName(compiler, module, getActiveBlock(compiler, module), nameNode.value);
         let typeNode = getNodeById(compiler, module, node.childIdList[2]);
         let typeObject = getTypeById(compiler, module, typeNode.object.id);
-        let variableObject = getNewVariable(compiler, module, node.id, false, false, false, nameNode.value, typeObject.id);
+        let variableObject = getNewVariable(compiler, module, node.id, false, false, false, false, nameNode.value, typeObject.id);
 
         /* Set modifiers */
         for (let i = 0; i < modifierNodeListNode.childIdList.length; i++) {
@@ -465,6 +562,9 @@ function checkVariable(compiler, module, node) {
             } else if (modifierNode.value === 'parameter') {
                 /* Built-in modifier */
                 variableObject.isParameter = true;
+            } else if (modifierNode.value === 'external') {
+                /* Built-in modifier */
+                variableObject.isExternal = true;
             } else {
                 throw {
                     code: 'E_CHECK_VARIABLE_INVALID_MODIFIER',
@@ -529,7 +629,7 @@ function checkVariable(compiler, module, node) {
             setBlockObject(compiler, module, getActiveBlock(compiler, module), variableObject.name, 'variable', variableObject.id, false);
         }
 
-        setNodeObject(compiler, module, node, 'variable', variableObject.id);
+        setNodeObject(compiler, module, node, 'variable', variableObject.id, -1);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
     } else if (node.status === 'CHECKED') {
@@ -548,7 +648,7 @@ function checkBasicType(compiler, module, node) {
             /* Let's create a new one */
             typeObject = getNewType(compiler, module, node.id, 'basic', name, [], -1, false);
         }
-        setNodeObject(compiler, module, node, 'type', typeObject.id);
+        setNodeObject(compiler, module, node, 'type', typeObject.id, -1);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
     } else if (node.status === 'CHECKED') {
@@ -566,7 +666,7 @@ function checkFunction(compiler, module, node) {
         let object = getBlockObjectByName(compiler, module, getActiveBlock(compiler, module), nameNode.value);
         let typeNode = getNodeById(compiler, module, node.childIdList[2]);
         let typeObject = getTypeById(compiler, module, typeNode.object.id);
-        let functionObject = getNewFunction(compiler, module, node.id, false, false, false, nameNode.value, typeObject.id);
+        let functionObject = getNewFunction(compiler, module, node.id, false, false, false, false, nameNode.value, typeObject.id);
 
         /* Check if this function is a copy of a template function */
         if (node.isCopy) {
@@ -595,6 +695,9 @@ function checkFunction(compiler, module, node) {
             } else if (modifierNode.value === 'instruction') {
                 /* Built-in modifier */
                 functionObject.isInstruction = true;
+            } else if (modifierNode.value === 'external') {
+                /* Built-in modifier */
+                functionObject.isExternal = true;
             } else {
                 throw {
                     code: 'E_CHECK_FUNCTION_INVALID_MODIFIER',
@@ -699,7 +802,7 @@ function checkFunction(compiler, module, node) {
             setBlockObject(compiler, module, getActiveBlock(compiler, module), functionObject.name, 'function', functionObject.id, false);
         }
 
-        setNodeObject(compiler, module, node, 'function', functionObject.id);
+        setNodeObject(compiler, module, node, 'function', functionObject.id, -1);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
     } else if (node.status === 'CHECKED') {
@@ -750,7 +853,7 @@ function checkReferenceType(compiler, module, node) {
             typeObject = getNewType(compiler, module, node.id, 'reference', name, fromTypeObjectIdList, toTypeObject.id, isVariable);
         }
 
-        setNodeObject(compiler, module, node, 'type', typeObject.id);
+        setNodeObject(compiler, module, node, 'type', typeObject.id, -1);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
     } else if (node.status === 'CHECKED') {
@@ -762,7 +865,7 @@ function checkVoid(compiler, module, node) {
     if (node.status === 'CREATED') {
         let expressionObject = getNewExpression(compiler, module, node.id, false, [getTypeByName(compiler, module, '$v').id], 0);
 
-        setNodeObject(compiler, module, node, 'expression', expressionObject.id);
+        setNodeObject(compiler, module, node, 'expression', expressionObject.id, -1);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
     } else if (node.status === 'CHECKED') {
@@ -827,7 +930,7 @@ function checkIntegerSingleSigned(compiler, module, node) {
     if (node.status === 'CREATED') {
         let expressionObject = getNewExpression(compiler, module, node.id, true, [getTypeByName(compiler, module, '$i').id], 0);
 
-        setNodeObject(compiler, module, node, 'expression', expressionObject.id);
+        setNodeObject(compiler, module, node, 'expression', expressionObject.id, -1);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
     } else if (node.status === 'CHECKED') {
@@ -839,7 +942,7 @@ function checkIntegerSingleUnsigned(compiler, module, node) {
     if (node.status === 'CREATED') {
         let expressionObject = getNewExpression(compiler, module, node.id, true, [getTypeByName(compiler, module, '$iu').id], 0);
 
-        setNodeObject(compiler, module, node, 'expression', expressionObject.id);
+        setNodeObject(compiler, module, node, 'expression', expressionObject.id, -1);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
     } else if (node.status === 'CHECKED') {
@@ -851,7 +954,7 @@ function checkIntegerDouble(compiler, module, node) {
     if (node.status === 'CREATED') {
         let expressionObject = getNewExpression(compiler, module, node.id, true, [getTypeByName(compiler, module, '$id').id], 0);
 
-        setNodeObject(compiler, module, node, 'expression', expressionObject.id);
+        setNodeObject(compiler, module, node, 'expression', expressionObject.id, -1);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
     } else if (node.status === 'CHECKED') {
@@ -863,7 +966,7 @@ function checkFloatingPointSingle(compiler, module, node) {
     if (node.status === 'CREATED') {
         let expressionObject = getNewExpression(compiler, module, node.id, true, [getTypeByName(compiler, module, '$f').id], 0);
 
-        setNodeObject(compiler, module, node, 'expression', expressionObject.id);
+        setNodeObject(compiler, module, node, 'expression', expressionObject.id, -1);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
     } else if (node.status === 'CHECKED') {
@@ -875,7 +978,7 @@ function checkFloatingPointDouble(compiler, module, node) {
     if (node.status === 'CREATED') {
         let expressionObject = getNewExpression(compiler, module, node.id, true, [getTypeByName(compiler, module, '$fd').id], 0);
 
-        setNodeObject(compiler, module, node, 'expression', expressionObject.id);
+        setNodeObject(compiler, module, node, 'expression', expressionObject.id, -1);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
     } else if (node.status === 'CHECKED') {
@@ -887,7 +990,7 @@ function checkBoolean(compiler, module, node) {
     if (node.status === 'CREATED') {
         let expressionObject = getNewExpression(compiler, module, node.id, true, [getTypeByName(compiler, module, '$b').id], 0);
 
-        setNodeObject(compiler, module, node, 'expression', expressionObject.id);
+        setNodeObject(compiler, module, node, 'expression', expressionObject.id, -1);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
     } else if (node.status === 'CHECKED') {
@@ -963,7 +1066,7 @@ function checkNonModuleBlock(compiler, module, node) {
         let blockObject = getNewBlock(compiler, module, '', -1);
 
         setActiveBlock(compiler, module, blockObject.id);
-        setNodeObject(compiler, module, node, 'block', blockObject.id);
+        setNodeObject(compiler, module, node, 'block', blockObject.id, -1);
         setActiveNodeList(compiler, module, node.childIdList);
         node.status = '1';
     } else if (node.status === '1') {
@@ -989,7 +1092,7 @@ function checkAssignmentToNameStmt(compiler, module, node) {
             let variableObject = getVariableById(compiler, module, object.idList[0]);
             let variableTypeObject = getTypeById(compiler, module, variableObject.typeId);
 
-            setNodeObject(compiler, module, nameNode, 'variable', variableObject.id);
+            setNodeObject(compiler, module, nameNode, 'variable', variableObject.id, -1);
             if (!variableObject.isConstant) {
                 if (!isExpressionInstanceOf(compiler, module, expressionObject, variableTypeObject, true, {})) {
                     throw {
@@ -1181,16 +1284,7 @@ function checkReference(compiler, module, node) {
             };
         }
 
-        setNodeObject(compiler, module, node, 'expression', expressionObject.id);
-        unsetActiveNode(compiler, module);
-        node.status = 'CHECKED';
-    } else if (node.status === 'CHECKED') {
-        unsetActiveNode(compiler, module);
-    }
-}
-
-function checkIdentifier(compiler, module, node) {
-    if (node.status === 'CREATED') {
+        setNodeObject(compiler, module, node, 'expression', expressionObject.id, -1);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
     } else if (node.status === 'CHECKED') {
@@ -1463,6 +1557,7 @@ function checkCallByName(compiler, module, node) {
 
                 if (functionObject.isTemplate) {
                     if (functionObject.isInstruction) {
+                        /* This template function is an instruction defined locally */
                         let listNode = getNodeById(compiler, module, functionNode.parentIdList[0]);
                         let functionNodeCopy = getNodeCopy(compiler, module, module, functionNode, module, typeVariables, false);
 
@@ -1475,10 +1570,82 @@ function checkCallByName(compiler, module, node) {
                         setActiveNodeList(compiler, module, [functionNodeCopy.id]);
                         setActiveBlock(compiler, module, 0);
                     } else if (functionObject.isExternal) {
+                        /* This template function is defined in a sub-module */
+                        /* Here, first of all, we make a copy of that function in the sub-module with the calculated values of the corresponding variable types */
+                        /* Next, we process the copied non-template function in the sub-module */
+                        /* Finally, we create and process corresponding nodes which represent the processed non-template function in this module */
 
-                        console.log('callByName: 2; functionObject is external');
-                        process.exit();
+                        let externalFunctionNode = getNodeById(compiler, module, functionNode.parentIdList[0]);
+                        let externalFunctionNodeCopy;
+                        let externalFunctionNodeListNode = getNodeById(compiler, module, externalFunctionNode.parentIdList[0]);
 
+                        let submoduleObject = getSubmoduleById(compiler, module, externalFunctionNode.object.submoduleId);
+                        let submodule = getModuleByPath(compiler, submoduleObject.path);
+
+                        let outerTypeVariables = {};
+                        let outerFunctionObject = getFunctionById(compiler, submodule, externalFunctionNode.object.id);
+                        let outerFunctionNode = getNodeById(compiler, submodule, outerFunctionObject.nodeId);
+                        let outerFunctionNodeCopy;
+                        let outerFunctionStmtNode = getNodeById(compiler, submodule, outerFunctionNode.parentIdList[0]);
+                        let outerFunctionStmtNodeCopy;
+                        let outerModuleBlockNode = getNodeById(compiler, submodule, outerFunctionStmtNode.parentIdList[0]);
+                        let outerModuleStmtNode = getNodeById(compiler, submodule, outerModuleBlockNode.parentIdList[0]);
+                        let outerTypeNodeListNode = getNodeById(compiler, submodule, outerModuleStmtNode.childIdList[0]);
+
+                        /* The variable 'typeVariables' stores types which are defined in this module only */
+                        /* Let's make a copy of every type that is not present in the sub-module */
+                        for (let name in typeVariables) {
+                            if (Object.hasOwn(typeVariables, name)) {
+                                let typeNode = getNodeById(compiler, module, typeVariables[name]);
+                                let typeObject = getTypeById(compiler, module, typeNode.object.id);
+                                let outerTypeObject = getTypeByName(compiler, submodule, typeObject.name);
+                                let outerTypeNode;
+
+                                if (outerTypeObject) {
+                                    outerTypeNode = getNodeById(compiler, submodule, outerTypeObject.nodeId);
+                                } else {
+                                    outerTypeNode = getNodeCopy(compiler, module, module, typeNode, submodule, {}, true);
+                                    outerTypeNodeListNode.childIdList.push(outerTypeNode.id);
+                                    outerTypeNode.parentIdList.push(outerTypeNodeListNode.id);
+                                }
+                                outerTypeVariables[name] = outerTypeNode.id;
+                            }
+                        }
+
+                        /* Let's copy the outer template function from the sub-module in the sub-module itself */
+                        outerFunctionStmtNodeCopy = getNodeCopy(compiler, module, submodule, outerFunctionStmtNode, submodule, outerTypeVariables, false);
+                        outerModuleBlockNode.childIdList.push(outerFunctionStmtNodeCopy.id);
+                        outerFunctionStmtNodeCopy.parentIdList.push(outerModuleBlockNode.id);
+
+                        /* Let's prepare to process the outer non-template function that we just copied */
+                        /* Note that the copy is no longer a template function, it is a regular function */
+                        setActiveNodeList(compiler, submodule, [outerFunctionStmtNodeCopy.id, outerFunctionStmtNodeCopy.id]);
+                        setActiveBlock(compiler, submodule, 1);
+                        setActiveModuleList(compiler, [submodule.id]);
+                        submodule.status = 'PARSED';
+                        module.status = 'CHECKING';
+
+                        /* Let's create several nodes which will represent the just created outer non-template function in this module */
+                        externalFunctionNodeCopy = getNodeCopy(compiler, module, module, externalFunctionNode, module, typeVariables, false);
+
+                        /* The just copied outer non-template function is not processed yet in the sub-module */
+                        /* Therefore, we do not know the ID of the corresponding function object */
+                        /* Instead of ID of the function, we store ID of the node of that function */
+                        /* Later we will fix this inconsistency */
+                        outerFunctionNodeCopy = getNodeById(compiler, submodule, outerFunctionStmtNodeCopy.childIdList[0]);
+                        setNodeObject(compiler, module, externalFunctionNodeCopy, 'function', outerFunctionNodeCopy.id, submoduleObject.id);
+                        externalFunctionNodeListNode.childIdList.push(externalFunctionNodeCopy.id);
+                        externalFunctionNodeCopy.parentIdList.push(externalFunctionNodeListNode.id);
+
+                        /* Register this outer non-template function */
+                        submoduleObject.outerObjectNodeIdList.push(outerFunctionNodeCopy.id);
+
+                        /* Let's prepare to process the corresponding nodes which represent the outer non-template function in this module */
+                        node.childIdList.push(externalFunctionNodeCopy.id);
+                        externalFunctionNodeCopy.parentIdList.push(node.id);
+
+                        setActiveNodeList(compiler, module, [externalFunctionNodeCopy.id]);
+                        setActiveBlock(compiler, module, 1);
                     } else {
                         /* This template function is defined locally */
                         let functionStmtNode = getNodeById(compiler, module, functionNode.parentIdList[0]);
@@ -1547,6 +1714,26 @@ function checkCallByName(compiler, module, node) {
         node.status = '2';
     } else if (node.status === '2') {
         let objectNode = getNodeById(compiler, module, node.childIdList[2]);
+
+        if (objectNode.name === 'externalFunction') {
+            /* We had to work with an outer template function defined in a sub-module */
+            let functionNode = getNodeById(compiler, module, objectNode.childIdList[0]);
+            let submoduleObject = getSubmoduleById(compiler, module, objectNode.object.submoduleId);
+            let submodule = getModuleByPath(compiler, submoduleObject.path);
+            let outerFunctionNode = getNodeById(compiler, submodule, objectNode.object.id);
+            let outerFunctionObject = getFunctionById(compiler, submodule, outerFunctionNode.object.id);
+
+            /* Restore stack of blocks in the sub-module */
+            unsetActiveBlock(compiler, submodule);
+
+            /* Fix the inconsistency related to the ID of the outer function */
+            setNodeObject(compiler, module, objectNode, 'function', outerFunctionObject.id, submoduleObject.id);
+
+            node.childIdList[2] = functionNode.id;
+        }
+        node.status = '3';
+    } else if (node.status === '3') {
+        let objectNode = getNodeById(compiler, module, node.childIdList[2]);
         let object = objectNode.object;
         let expressionObject = getNewExpression(compiler, module, node.id, false, [], -1);
 
@@ -1572,18 +1759,12 @@ function checkCallByName(compiler, module, node) {
 
             setExpressionType(compiler, module, expressionObject, $expressionTypeObject.id, 0);
         }
-        setNodeObject(compiler, module, node, 'expression', expressionObject.id);
+        setNodeObject(compiler, module, node, 'expression', expressionObject.id, -1);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
-    } else if (node.status === 'CHECKED') {
-        unsetActiveNode(compiler, module);
-    }
-}
 
-function checkOperator(compiler, module, node) {
-    if (node.status === 'CREATED') {
-        unsetActiveNode(compiler, module);
-        node.status = 'CHECKED';
+        //process.exit();
+
     } else if (node.status === 'CHECKED') {
         unsetActiveNode(compiler, module);
     }
@@ -1696,7 +1877,7 @@ function checkCallByExpression(compiler, module, node) {
             setExpressionType(compiler, module, expressionObject, $$expressionTypeObject.id, 0);
         }
 
-        setNodeObject(compiler, module, node, 'expression', expressionObject.id);
+        setNodeObject(compiler, module, node, 'expression', expressionObject.id, -1);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
     } else if (node.status === 'CHECKED') {
@@ -1731,7 +1912,7 @@ function checkString(compiler, module, node) {
     if (node.status === 'CREATED') {
         let expressionObject = getNewExpression(compiler, module, node.id, true, [getTypeByName(compiler, module, '$s').id], 0);
 
-        setNodeObject(compiler, module, node, 'expression', expressionObject.id);
+        setNodeObject(compiler, module, node, 'expression', expressionObject.id, -1);
         if (0 < node.value.length) {
             setStringNode(compiler, module, node);
         }
@@ -1810,8 +1991,19 @@ function checkArray(compiler, module, node) {
         setActiveNodeList(compiler, module, [typeNodeListNode.id]);
         node.status = '2';
     } else if (node.status === '2') {
+        let elementNodeListNode = getNodeById(compiler, module, node.childIdList[0]);
         let typeNodeListNode = getNodeById(compiler, module, node.childIdList[1]);
-        let expressionObject = getNewExpression(compiler, module, node.id, false, [], -1);
+        let expressionObject = getNewExpression(compiler, module, node.id, true, [], -1);
+        let i = 0;
+
+        /* Let's check if this array is an array literal for sure */
+        while (expressionObject.isLiteral && (i < elementNodeListNode.childIdList.length)) {
+            let elementNode = getNodeById(compiler, module, elementNodeListNode.childIdList[i]);
+            let elementObject = getExpressionById(compiler, module, elementNode.object.id);
+
+            expressionObject.isLiteral = elementObject.isLiteral;
+            i++;
+        }
 
         if (typeNodeListNode.childIdList.length === 1) {
             /* Type of the array is unique */
@@ -1829,15 +2021,15 @@ function checkArray(compiler, module, node) {
                 };
             }
         } else {
-            for (let i = 0; i < typeNodeListNode.childIdList.length; i++) {
-                let typeNode = getNodeById(compiler, module, typeNodeListNode.childIdList[i]);
+            for (let j = 0; j < typeNodeListNode.childIdList.length; j++) {
+                let typeNode = getNodeById(compiler, module, typeNodeListNode.childIdList[j]);
                 let typeObject = getTypeById(compiler, module, typeNode.object.id);
 
                 setExpressionType(compiler, module, expressionObject, typeObject.id, -1);
             }
         }
 
-        setNodeObject(compiler, module, node, 'expression', expressionObject.id);
+        setNodeObject(compiler, module, node, 'expression', expressionObject.id, -1);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
     } else if (node.status === 'CHECKED') {
@@ -1858,7 +2050,7 @@ function checkArrayType(compiler, module, node) {
         if (!typeObject) {
             typeObject = getNewType(compiler, module, node.id, 'array', name, [], toTypeObject.id, toTypeObject.isVariable);
         }
-        setNodeObject(compiler, module, node, 'type', typeObject.id);
+        setNodeObject(compiler, module, node, 'type', typeObject.id, -1);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
     } else if (node.status === 'CHECKED') {
@@ -1874,7 +2066,7 @@ function checkVariableType(compiler, module, node) {
         if (!typeObject) {
             typeObject = getNewType(compiler, module, node.id, 'variable', name, [], -1, true);
         }
-        setNodeObject(compiler, module, node, 'type', typeObject.id);
+        setNodeObject(compiler, module, node, 'type', typeObject.id, -1);
         unsetActiveNode(compiler, module);
         node.status = 'CHECKED';
     } else if (node.status === 'CHECKED') {

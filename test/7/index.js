@@ -11,8 +11,8 @@ async function main() {
             /* Compilation is successful */
             /* Call 'start' from the compiled file */
             module = await import('./file0.sb.js');
-            console.log(module['file0']);
-            module['file0'].start();
+            console.log(module);
+            module.exports.start();
         } else {
             /* Compilation is not successful */
             /* Print error message from the compiler */

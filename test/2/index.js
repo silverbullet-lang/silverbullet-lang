@@ -8,9 +8,7 @@ async function main() {
             input: (new URL('./file0.sb', import.meta.url)).href
         });
         module = await import('./file0.sb.js');
-
-        console.log(module['file0']);
-
+        console.log(module);
     } catch (err) {
         console.log(err.message);
         console.log(err);

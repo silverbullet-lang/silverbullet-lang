@@ -1,9 +1,12 @@
+--( The character '\0' has a special meaning in a string literal - it terminates a string literal )--
+--( The string 'Hello\0, World!' will be truncated after '\0' and its size is equal to 5, but not to 14 )--
+
 use s as big-s | $s from file1
-use file2 at '\.\/\u102\i\l\e\2\.\s\u98'
+use getText from file2 at '\.\/\u102\i\l\e\2\.\s\u98'
 use s as S from file3
 
 let start
-	ascii := '\0\u1\u2\u3\u4\u5\u6\u7\b\t\n\v\f\r\u14\u15\u16\u17\u18\u19\u20\u21\u22\u23\u24\u25\u26\u27\u28\u29\u30\u31 !\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\u127'
+	ascii := '\u1\u2\u3\u4\u5\u6\u7\b\t\n\v\f\r\u14\u15\u16\u17\u18\u19\u20\u21\u22\u23\u24\u25\u26\u27\u28\u29\u30\u31 !\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\u127'
 	show[ascii]
 
 	-- Flags of the United Nations and Scotland
@@ -17,7 +20,7 @@ let start
 	show[big-s]
 
 	s-1 := getText[1] | $s
-	--show[file2.getText["Text", s-1, getText[2]]]
+	show[getText["Text", s-1, getText[2]]]
 
 	show[S]
 

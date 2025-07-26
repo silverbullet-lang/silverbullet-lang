@@ -1,7 +1,6 @@
 import fs from 'fs';
 
 async function readModule(compiler, module) {
-    module.status = 'READING';
     try {
         module.code = (await fs.promises.readFile(new URL(module.path))).toString();
     } catch (err) {
